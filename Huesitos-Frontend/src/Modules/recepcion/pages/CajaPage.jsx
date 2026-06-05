@@ -1,0 +1,387 @@
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { 
+   Wallet, Search, CheckCircle2, Clock, Receipt, Eye,
+   CreditCard, Banknote, Smartphone, X, Activity, Download, Users, FileText
+} from 'lucide-react';
+import { listarTransacciones, procesarPagoTransaccion, descargarComprobanteSeguro } from '../../../services/transaccionService';
+import { obtenerDetallesPedido } from '../../../services/posService';
+
+const CajaPage = () => {
+  const [transacciones, setTransacciones] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busqueda, setBusqueda] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('PENDIENTE'); 
+  const [triggerRecarga, setTriggerRecarga] = useState(0);
+
+  // Estados de cobro
+  const [modalPagoOpen, setModalPagoOpen] = useState(false);
+  const [transaccionSeleccionada, setTransaccionSeleccionada] = useState(null);
+  const [medioPago, setMedioPago] = useState('EFECTIVO');
+  const [procesando, setProcesando] = useState(false);
+
+  // NUEVO: Estados del Modal de Detalles
+  const [modalDetallesOpen, setModalDetallesOpen] = useState(false);
+  const [transaccionDetalle, setTransaccionDetalle] = useState(null);
+  const [detallesPedido, setDetallesPedido] = useState([]);
+  const [cargandoDetalles, setCargandoDetalles] = useState(false);
+  const [descargando, setDescargando] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchTransacciones = async () => {
+      try {
+        setLoading(true);
+        const data = await listarTransacciones();
+        if (isMounted) {
+          data.sort((a, b) => b.id - a.id);
+          setTransacciones(data);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Error cargando caja:", error);
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchTransacciones();
+    return () => { isMounted = false; };
+  }, [triggerRecarga]);
+
+  // Lógica inteligente para definir el Nombre y el Concepto visualmente en la tabla
+  const extraerInfoVisible = (t) => {
+    const esCita = !!t.cita;
+    const esPedido = !!t.pedido;
+
+    let concepto = "Servicio General";
+    if (esCita) concepto = `Cita: ${t.cita.servicio?.nombre}`;
+    if (esPedido) concepto = `Tienda: Venta de Productos`;
+    if (!esCita && !esPedido) concepto = t.motivo || t.descripcion || t.referenciaPago || 'Servicio General';
+
+    let nombreCliente = "Cliente Anónimo";
+    if (esCita) nombreCliente = t.cita.mascota?.dueño?.nombreCompleto || t.cita.mascota?.dueno?.nombreCompleto || "Cliente no asignado";
+    if (esPedido && t.pedido.cliente) nombreCliente = t.pedido.cliente.nombreCompleto || t.pedido.cliente.correo;
+
+    return { concepto, nombreCliente, esCita, esPedido };
+  };
+
+  const transaccionesFiltradas = transacciones.filter(t => {
+    const { concepto, nombreCliente } = extraerInfoVisible(t);
+    const coincideBusqueda = `${nombreCliente} ${concepto}`.toLowerCase().includes(busqueda.toLowerCase());
+    const estado = t.estadoPago || 'PENDIENTE';
+    const coincideEstado = filtroEstado === 'PENDIENTE' 
+       ? estado === 'PENDIENTE' 
+       : (estado === 'APROBADO' || estado === 'COMPLETADO' || estado === 'PAGADO');
+    return coincideBusqueda && coincideEstado;
+  });
+
+  const abrirModalCobro = (transaccion) => {
+    setTransaccionSeleccionada(transaccion);
+    setMedioPago('EFECTIVO');
+    setModalPagoOpen(true);
+  };
+
+  const handleProcesarPago = async (e) => {
+    e.preventDefault();
+    setProcesando(true);
+    try {
+      await procesarPagoTransaccion(transaccionSeleccionada.id, medioPago);
+      setModalPagoOpen(false);
+      setLoading(true);
+      setTriggerRecarga(prev => prev + 1);
+    } catch (error) {
+      console.error("Error al cobrar:", error);
+      alert("No se pudo procesar el pago.");
+    } finally {
+      setProcesando(false);
+    }
+  };
+
+  // Función para Abrir el Modal de Detalles y cargar items si es de Tienda
+  const abrirDetalles = async (tx) => {
+    setTransaccionDetalle(tx);
+    setModalDetallesOpen(true);
+    if (tx.pedido) {
+      setCargandoDetalles(true);
+      try {
+        const detalles = await obtenerDetallesPedido(tx.pedido.id);
+        setDetallesPedido(detalles);
+      } catch (error) {
+        console.error("Error al cargar los productos:", error);
+        setDetallesPedido([]);
+      } finally {
+        setCargandoDetalles(false);
+      }
+    } else {
+      setDetallesPedido([]);
+    }
+  };
+
+  // Función para descargar Boleta o Factura
+  const handleDescargarComprobante = async (id, tipo) => {
+    setDescargando(true);
+    try {
+      const blob = await descargarComprobanteSeguro(id, tipo);
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      const nombreFile = tipo === 'FACTURA' ? 'Factura' : 'Boleta';
+      link.setAttribute('download', `${nombreFile}_Huesitos_${id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error("Error al descargar:", error);
+      alert("No se pudo generar el documento. Verifica los permisos del servidor.");
+    } finally {
+      setDescargando(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+      <div className="flex flex-col lg:flex-row justify-between items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-200/60">
+        <div>
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+            <Wallet className="text-emerald-500" /> Caja y Facturación
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">Gestiona los cobros de atenciones y servicios.</p>
+        </div>
+        <div className="relative w-full lg:w-96">
+          <Search className="absolute left-3 top-3.5 text-slate-400" size={18} />
+          <input 
+            type="text" 
+            placeholder="Buscar por paciente, cliente o motivo..." 
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 border-b border-slate-200 px-2">
+        <button onClick={() => setFiltroEstado('PENDIENTE')} className={`flex items-center gap-2 pb-4 font-bold transition-all border-b-2 px-2 ${filtroEstado === 'PENDIENTE' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
+          <Clock size={18}/> Cuentas por Cobrar
+        </button>
+        <button onClick={() => setFiltroEstado('APROBADO')} className={`flex items-center gap-2 pb-4 font-bold transition-all border-b-2 px-2 ${filtroEstado === 'APROBADO' ? 'border-blue-500 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
+          <CheckCircle2 size={18}/> Pagos Realizados
+        </button>
+      </div>
+
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-200/60 overflow-hidden min-h-[400px]">
+        {loading ? (
+          <div className="flex flex-col justify-center items-center h-64 text-emerald-500 font-semibold animate-pulse gap-3">
+            <Activity className="animate-spin" size={32} />
+            <p>Calculando cuadre de caja...</p>
+          </div>
+        ) : transaccionesFiltradas.length === 0 ? (
+          <div className="flex flex-col justify-center items-center h-64 text-slate-400 bg-slate-50/50">
+            <Receipt size={48} className="mb-4 text-slate-300" />
+            <p className="text-lg font-bold text-slate-500">{filtroEstado === 'PENDIENTE' ? 'No hay cuentas pendientes por cobrar.' : 'No hay historial de pagos recientes.'}</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-100">
+              <thead className="bg-slate-50/50">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-400 uppercase tracking-widest">Recibo / Fecha</th>
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-400 uppercase tracking-widest">Concepto</th>
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-400 uppercase tracking-widest">Total</th>
+                  <th className="px-6 py-4 text-center text-xs font-black text-slate-400 uppercase tracking-widest">Estado</th>
+                  <th className="px-6 py-4 text-right text-xs font-black text-slate-400 uppercase tracking-widest">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-sm">
+                {transaccionesFiltradas.map((t) => {
+                  const fechaFormat = t.fechaHora || t.fechaCreacion ? new Date(t.fechaHora || t.fechaCreacion).toLocaleDateString('es-PE') : 'Fecha no registrada';
+                  const { concepto, nombreCliente } = extraerInfoVisible(t);
+                  
+                  return (
+                    <tr key={t.id} className="hover:bg-slate-50 transition-colors group">
+                      <td className="px-6 py-4">
+                        <div className="font-black text-slate-800 text-base">#TRX-{t.id.toString().padStart(4, '0')}</div>
+                        <div className="text-xs font-bold text-slate-400 mt-1">{fechaFormat}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-slate-700">{concepto}</div>
+                        <div className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-1">
+                          <Users size={12}/> {nombreCliente}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-lg font-black text-slate-800">S/ {t.monto ? t.monto.toFixed(2) : '0.00'}</div>
+                        {t.medioPago && (
+                          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                            {t.medioPago.replace('_', ' ')}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {filtroEstado === 'PENDIENTE' ? (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black tracking-widest uppercase bg-amber-50 text-amber-600 border border-amber-200">Pendiente</span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black tracking-widest uppercase bg-emerald-50 text-emerald-600 border border-emerald-200">Pagado</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        {filtroEstado === 'PENDIENTE' ? (
+                          <button onClick={() => abrirModalCobro(t)} className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-md shadow-emerald-500/20 transition-all">
+                            <Wallet size={16} /> Cobrar
+                          </button>
+                        ) : (
+                          <div className="flex gap-2 justify-end">
+                            <button onClick={() => abrirDetalles(t)} className="bg-sky-50 hover:bg-sky-100 text-sky-600 p-2 rounded-xl transition-all" title="Ver Detalles">
+                              <Eye size={16} />
+                            </button>
+                            <button onClick={() => handleDescargarComprobante(t.id, 'BOLETA')} disabled={descargando} className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-2 rounded-xl font-bold transition-all flex items-center gap-1.5" title="Boleta">
+                              <Download size={14} /> Boleta
+                            </button>
+                            <button onClick={() => handleDescargarComprobante(t.id, 'FACTURA')} disabled={descargando} className="bg-slate-800 hover:bg-slate-900 text-white px-3 py-2 rounded-xl font-bold transition-all flex items-center gap-1.5" title="Factura">
+                              <FileText size={14} /> Factura
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* ================= MODAL DE DETALLES ================= */}
+      {modalDetallesOpen && transaccionDetalle && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setModalDetallesOpen(false)}></div>
+          <div className="relative bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            
+            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
+              <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
+                <Receipt className="text-sky-500" /> Detalle de Transacción
+              </h3>
+              <button type="button" onClick={() => setModalDetallesOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors"><X size={24}/></button>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex-1 space-y-6">
+              <div className="flex justify-between items-center bg-sky-50 p-4 rounded-xl border border-sky-100">
+                <span className="text-sm font-bold text-sky-800">Total Cobrado</span>
+                <span className="text-2xl font-black text-sky-700">S/ {transaccionDetalle.monto?.toFixed(2)}</span>
+              </div>
+
+              {transaccionDetalle.cita && (
+                <div className="space-y-3">
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">Datos de Cita Médica</h4>
+                  <div className="text-sm font-medium text-slate-700 space-y-1 bg-slate-50 p-4 rounded-xl">
+                    <p><span className="font-bold">Mascota:</span> {transaccionDetalle.cita.mascota?.nombre} ({transaccionDetalle.cita.mascota?.especie})</p>
+                    <p><span className="font-bold">Dueño:</span> {transaccionDetalle.cita.mascota?.dueño?.nombreCompleto || transaccionDetalle.cita.mascota?.dueno?.nombreCompleto}</p>
+                    <p><span className="font-bold">Servicio:</span> {transaccionDetalle.cita.servicio?.nombre}</p>
+                    <p><span className="font-bold">Motivo:</span> {transaccionDetalle.cita.motivo}</p>
+                  </div>
+                </div>
+              )}
+
+              {transaccionDetalle.pedido && (
+                <div className="space-y-3">
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">Productos Comprados en Tienda</h4>
+                  {cargandoDetalles ? (
+                    <p className="text-xs text-sky-500 animate-pulse">Cargando ticket de productos...</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {detallesPedido.map(d => (
+                        <div key={d.id} className="flex justify-between items-center bg-slate-50 p-3 rounded-xl text-sm font-medium text-slate-700">
+                          <span className="flex-1 truncate pr-4"><span className="font-black text-slate-800">{d.cantidad}x</span> {d.producto?.nombre}</span>
+                          <span className="font-black">S/ {(d.precioUnitario * d.cantidad).toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">Información de Pago</h4>
+                <div className="text-sm font-medium text-slate-700 space-y-1">
+                  <p><span className="font-bold">Método Usado:</span> {transaccionDetalle.medioPago?.replace('_', ' ')}</p>
+                  <p><span className="font-bold">ID Referencia:</span> {transaccionDetalle.idTransaccionPasarela || transaccionDetalle.referenciaPago || 'Pago Físico'}</p>
+                  <p><span className="font-bold">Fecha Pago:</span> {new Date(transaccionDetalle.fechaPago).toLocaleString('es-PE')}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-slate-100 flex justify-end shrink-0 bg-slate-50/50">
+              <button type="button" onClick={() => setModalDetallesOpen(false)} className="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl shadow-md transition-all">
+                Cerrar Detalles
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ================= MODAL DE PROCESAMIENTO DE PAGO ================= */}
+      {modalPagoOpen && transaccionSeleccionada && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setModalPagoOpen(false)}></div>
+          <div className="relative bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            
+            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
+                <Wallet className="text-emerald-500" /> Procesar Cobro
+              </h3>
+              <button type="button" onClick={() => setModalPagoOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors"><X size={24}/></button>
+            </div>
+
+            <form onSubmit={handleProcesarPago} className="p-6 space-y-6">
+              
+              <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-center">
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Monto a Cobrar</p>
+                <p className="text-4xl font-black text-emerald-600">S/ {transaccionSeleccionada.monto?.toFixed(2) || '0.00'}</p>
+                <p className="text-sm font-semibold text-slate-600 mt-2">{transaccionSeleccionada.motivo || 'Atención Veterinaria'}</p>
+              </div>
+
+              <div className="space-y-3">
+                <label className="block text-xs font-bold text-slate-600">Método de Pago</label>
+                <div className="grid grid-cols-2 gap-3">
+                  
+                  <label className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 cursor-pointer transition-all ${medioPago === 'EFECTIVO' ? 'border-emerald-500 bg-emerald-50/50 text-emerald-700' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}`}>
+                    <input type="radio" name="medioPago" value="EFECTIVO" className="hidden" checked={medioPago === 'EFECTIVO'} onChange={(e) => setMedioPago(e.target.value)} />
+                    <Banknote size={28} className="mb-2" />
+                    <span className="text-xs font-black tracking-wide">Efectivo</span>
+                  </label>
+                  <label className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 cursor-pointer transition-all ${medioPago === 'TARJETA_CREDITO' ? 'border-emerald-500 bg-emerald-50/50 text-emerald-700' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}`}>
+                    <input type="radio" name="medioPago" value="TARJETA_CREDITO" className="hidden" checked={medioPago === 'TARJETA_CREDITO'} onChange={(e) => setMedioPago(e.target.value)} />
+                    <CreditCard size={28} className="mb-2" />
+                    <span className="text-xs font-black tracking-wide">Tarjeta</span>
+                  </label>
+                  <label className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 cursor-pointer transition-all ${medioPago === 'YAPE' ? 'border-purple-500 bg-purple-50/50 text-purple-700' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}`}>
+                    <input type="radio" name="medioPago" value="YAPE" className="hidden" checked={medioPago === 'YAPE'} onChange={(e) => setMedioPago(e.target.value)} />
+                    <Smartphone size={28} className="mb-2 text-purple-500" />
+                    <span className="text-xs font-black tracking-wide text-purple-600">Yape</span>
+                  </label>
+                  <label className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 cursor-pointer transition-all ${medioPago === 'PLIN' ? 'border-sky-500 bg-sky-50/50 text-sky-700' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}`}>
+                    <input type="radio" name="medioPago" value="PLIN" className="hidden" checked={medioPago === 'PLIN'} onChange={(e) => setMedioPago(e.target.value)} />
+                    <Smartphone size={28} className="mb-2 text-sky-500" />
+                    <span className="text-xs font-black tracking-wide text-sky-600">Plin</span>
+                  </label>
+
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                <button type="button" onClick={() => setModalPagoOpen(false)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 transition-colors">Cancelar</button>
+                <button type="submit" disabled={procesando} className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-500/30 transition-all flex items-center gap-2">
+                  {procesando ? 'Verificando...' : <><CheckCircle2 size={18}/> Confirmar Pago</>}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+    </div>
+  );
+};
+
+export default CajaPage;
