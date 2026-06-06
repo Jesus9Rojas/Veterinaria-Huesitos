@@ -46,7 +46,6 @@ const InventarioPage = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Lógica para traer inactivos o solo activos
         const [prodData, catData] = await Promise.all([
           mostrarInactivos ? listarTodosProductos() : listarProductos(),
           listarCategorias()
@@ -230,7 +229,7 @@ const InventarioPage = () => {
           </div>
           <button 
             onClick={abrirModalNuevoProd}
-            className="bg-gradient-to-r from-sky-500 to-cyan-400 hover:from-sky-600 hover:to-cyan-500 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-sky-500/30 transition-all flex items-center gap-2"
+            className="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-indigo-500/30 transition-all flex items-center gap-2"
           >
             <Plus size={20} /> <span className="hidden sm:inline">Nuevo Producto</span>
           </button>
@@ -252,13 +251,14 @@ const InventarioPage = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-100">
+            <table className="min-w-full divide-y divide-slate-100 table-auto">
               <thead className="bg-slate-50/50">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-black text-slate-400 uppercase tracking-widest">Producto</th>
-                  <th className="px-6 py-4 text-left text-xs font-black text-slate-400 uppercase tracking-widest">Precio Unit.</th>
-                  <th className="px-6 py-4 text-center text-xs font-black text-slate-400 uppercase tracking-widest">Stock Restante</th>
-                  <th className="px-6 py-4 text-right text-xs font-black text-slate-400 uppercase tracking-widest">Acciones</th>
+                  {/* CORRECCIÓN: Definimos un ancho para la columna de producto y le decimos al resto que se comporten */}
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-400 uppercase tracking-widest w-[40%]">Producto</th>
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Precio Unit.</th>
+                  <th className="px-6 py-4 text-center text-xs font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Stock Restante</th>
+                  <th className="px-6 py-4 text-right text-xs font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
@@ -269,6 +269,7 @@ const InventarioPage = () => {
 
                   return (
                     <tr key={prod.id} className={`transition-colors ${inactivo ? 'bg-slate-50/80 opacity-60 grayscale' : 'hover:bg-slate-50'}`}>
+                      {/* COLUMNA PRODUCTO */}
                       <td className="px-6 py-4 flex items-center gap-3">
                         <div className="w-10 h-10 bg-slate-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center border border-slate-200">
                           {prod.fotoUrl && prod.fotoUrl !== "/uploads/defecto-producto.png" ? (
@@ -277,25 +278,33 @@ const InventarioPage = () => {
                             <ImageIcon size={20} className="text-slate-300" />
                           )}
                         </div>
-                        <div>
+                        {/* CORRECCIÓN: El contenedor del texto ahora recorta inteligentemente con "line-clamp-2" si es muy largo, para nunca empujar la tabla */}
+                        <div className="min-w-0 max-w-[200px] sm:max-w-[300px] md:max-w-md">
                           <div className="font-black text-slate-800 text-base leading-tight flex items-center gap-2">
-                            {prod.nombre} 
-                            {inactivo && <span className="bg-slate-300 text-slate-700 text-[9px] px-2 py-0.5 rounded-full">INACTIVO</span>}
+                            <span className="line-clamp-2" title={prod.nombre}>{prod.nombre}</span>
+                            {inactivo && <span className="bg-slate-300 text-slate-700 text-[9px] px-2 py-0.5 rounded-full shrink-0">INACTIVO</span>}
                           </div>
-                          <div className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
+                          <div className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5 truncate">
                             <Tag size={12}/> {prod.categoria?.nombre || 'Sin Categoría'}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+
+                      {/* COLUMNA PRECIO */}
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-lg font-black text-emerald-600">S/ {prod.precio?.toFixed(2)}</div>
                       </td>
-                      <td className="px-6 py-4 text-center">
+
+                      {/* COLUMNA STOCK */}
+                      <td className="px-6 py-4 text-center whitespace-nowrap">
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-black border ${stockBajo && !inactivo ? 'bg-red-50 text-red-600 border-red-200' : 'bg-slate-200 text-slate-600 border-slate-300'}`}>
                           {stockActual} Unid.
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right space-x-2">
+
+                      {/* COLUMNA ACCIONES */}
+                      {/* CORRECCIÓN: "whitespace-nowrap w-1" obliga a que los botones siempre estén a la derecha y no se aplasten */}
+                      <td className="px-6 py-4 text-right whitespace-nowrap w-1 space-x-2">
                         {inactivo ? (
                           <button 
                             onClick={() => handleReactivarProducto(prod.id, prod.nombre)}
@@ -308,21 +317,21 @@ const InventarioPage = () => {
                           <>
                             <button 
                               onClick={() => abrirModalVer(prod)}
-                              className="inline-flex items-center gap-2 px-3 py-2 bg-sky-50 hover:bg-sky-100 text-sky-600 font-bold rounded-xl transition-all"
+                              className="inline-flex items-center justify-center w-10 h-10 bg-sky-50 hover:bg-sky-100 text-sky-600 font-bold rounded-xl transition-all"
                               title="Ver Detalles y Foto"
                             >
                               <Eye size={16} />
                             </button>
                             <button 
                               onClick={() => abrirModalStock(prod)}
-                              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold rounded-xl transition-all"
+                              className="inline-flex items-center gap-2 px-4 py-2 h-10 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold rounded-xl transition-all"
                               title="Sumar Inventario"
                             >
                               <PackagePlus size={16} /> Sumar
                             </button>
                             <button 
                               onClick={() => abrirModalEditarProd(prod)}
-                              className="inline-flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition-all"
+                              className="inline-flex items-center justify-center w-10 h-10 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition-all"
                               title="Editar Producto"
                             >
                               <Edit size={16} />
@@ -339,7 +348,7 @@ const InventarioPage = () => {
         )}
       </div>
 
-      {/* ================= MODAL VISUALIZAR PRODUCTO (RESPONSIVO) ================= */}
+      {/* ================= MODAL VISUALIZAR PRODUCTO ================= */}
       {modalVerOpen && productoViendo && createPortal(
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setModalVerOpen(false)}></div>
@@ -349,7 +358,7 @@ const InventarioPage = () => {
               <button onClick={() => setModalVerOpen(false)} className="text-slate-400 hover:text-slate-700"><X size={24}/></button>
             </div>
             
-            <div className="p-6 overflow-y-auto flex-1">
+            <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
               <div className="w-full h-48 bg-slate-100 rounded-2xl mb-5 overflow-hidden flex items-center justify-center border border-slate-200">
                 {productoViendo.fotoUrl && productoViendo.fotoUrl !== "/uploads/defecto-producto.png" ? (
                   <img src={productoViendo.fotoUrl} alt={productoViendo.nombre} className="w-full h-full object-contain mix-blend-multiply p-2" />
@@ -384,7 +393,7 @@ const InventarioPage = () => {
             </div>
 
             <div className="p-4 border-t border-slate-100 flex justify-end bg-slate-50 shrink-0">
-              <button onClick={() => setModalVerOpen(false)} className="bg-gradient-to-r from-sky-500 to-cyan-400 hover:from-sky-600 hover:to-cyan-500 text-white px-6 py-2.5 px-6 py-2.5 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition-colors w-full">
+              <button onClick={() => setModalVerOpen(false)} className="px-6 py-2.5 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition-colors w-full">
                 Cerrar Detalles
               </button>
             </div>
@@ -393,7 +402,7 @@ const InventarioPage = () => {
         document.body
       )}
 
-      {/* ================= MODAL PRODUCTO (RESPONSIVO CON BOTÓN ELIMINAR) ================= */}
+      {/* ================= MODAL PRODUCTO ================= */}
       {modalProductoOpen && createPortal(
         <div className="fixed inset-0 z-[99990] flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setModalProductoOpen(false)}></div>
@@ -403,7 +412,7 @@ const InventarioPage = () => {
               <button onClick={() => setModalProductoOpen(false)} className="text-slate-400 hover:text-slate-700"><X size={24}/></button>
             </div>
             
-            <form onSubmit={handleGuardarProducto} className="p-6 overflow-y-auto flex-1 space-y-4">
+            <form onSubmit={handleGuardarProducto} className="p-6 overflow-y-auto flex-1 space-y-4 custom-scrollbar">
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">Nombre del Producto</label>
                 <input required type="text" value={formProducto.nombre} onChange={e => setFormProducto({...formProducto, nombre: e.target.value})} className="w-full border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
@@ -458,12 +467,12 @@ const InventarioPage = () => {
                     type="button" 
                     onClick={handleDesactivarProducto} 
                     disabled={guardandoProd} 
-                    className="px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 text-sm font-bold rounded-xl flex items-center gap-2 transition-colors"
+                    className="px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl flex items-center gap-2 transition-colors"
                   >
                     <Trash2 size={18}/> Desactivar
                   </button>
                 ) : <div></div>}
-                <button type="submit" disabled={guardandoProd} className="bg-gradient-to-r from-sky-500 to-cyan-400 hover:from-sky-600 hover:to-cyan-500 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-sky-500/30 transition-all flex items-center gap-2">
+                <button type="submit" disabled={guardandoProd} className="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl flex items-center gap-2">
                   <CheckCircle2 size={18}/> Guardar Producto
                 </button>
               </div>
@@ -502,7 +511,7 @@ const InventarioPage = () => {
         document.body
       )}
 
-      {/* ================= MODAL INGRESO DE STOCK (RESPONSIVO) ================= */}
+      {/* ================= MODAL INGRESO DE STOCK ================= */}
       {modalStockOpen && createPortal(
         <div className="fixed inset-0 z-[99990] flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setModalStockOpen(false)}></div>
@@ -514,7 +523,7 @@ const InventarioPage = () => {
             <form onSubmit={handleIngresarStock} className="p-6 overflow-y-auto flex-1 space-y-4">
               <div className="bg-white border border-slate-200 p-4 rounded-2xl mb-2 text-center shadow-sm">
                 <p className="text-xs font-bold text-slate-400 uppercase">Producto Destino</p>
-                <p className="text-lg font-black text-slate-800 leading-tight">{productoSeleccionado?.nombre}</p>
+                <p className="text-lg font-black text-slate-800 leading-tight line-clamp-2">{productoSeleccionado?.nombre}</p>
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">Cantidad a Ingresar</label>
@@ -531,7 +540,7 @@ const InventarioPage = () => {
                 </div>
               </div>
               <div className="flex justify-end pt-4 pb-2">
-                <button type="submit" disabled={guardandoStock} className="bg-gradient-to-r from-sky-500 to-cyan-400 hover:from-sky-600 hover:to-cyan-500 text-white px-6 py-2.5 w-full px-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl flex items-center justify-center gap-2 text-lg shadow-lg shadow-indigo-500/30">
+                <button type="submit" disabled={guardandoStock} className="w-full px-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl flex items-center justify-center gap-2 text-lg shadow-lg shadow-indigo-500/30">
                   <CheckCircle2 size={22}/> Confirmar Ingreso
                 </button>
               </div>
