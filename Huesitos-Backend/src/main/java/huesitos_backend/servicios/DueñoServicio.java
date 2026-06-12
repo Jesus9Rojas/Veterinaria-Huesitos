@@ -52,7 +52,7 @@ public class DueñoServicio {
             throw new RuntimeException("El correo ya se encuentra registrado en el sistema.");
         }
 
-        // 1. Crea la cuenta de inicio de sesión
+        // 1. Crea la cuenta de inicio de sesión inicial
         Usuario usuario = new Usuario();
         usuario.setCorreo(request.getCorreo());
         usuario.setContrasena(passwordEncoder.encode(request.getContrasena()));
@@ -94,7 +94,7 @@ public class DueñoServicio {
         dueño.setTelefono(request.getTelefono());
         dueño.setDireccion(request.getDireccion());
 
-        // Actualiza el acceso si proporcionó credenciales nuevas
+        // Actualiza el acceso SOLO si hubo un error al tipear el correo
         Usuario usuario = dueño.getUsuario();
         if (usuario != null) {
             if (request.getCorreo() != null && !request.getCorreo().isBlank() && !usuario.getCorreo().equals(request.getCorreo())) {
@@ -102,11 +102,8 @@ public class DueñoServicio {
                     throw new RuntimeException("El correo modificado ya está en uso por otra cuenta.");
                 }
                 usuario.setCorreo(request.getCorreo());
+                usuarioRepositorio.save(usuario);
             }
-            if (request.getContrasena() != null && !request.getContrasena().isBlank()) {
-                usuario.setContrasena(passwordEncoder.encode(request.getContrasena()));
-            }
-            usuarioRepositorio.save(usuario);
         }
 
         dueño = dueñoRepositorio.save(dueño);

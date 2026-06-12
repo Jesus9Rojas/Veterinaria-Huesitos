@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Agregado para la navegación
+import { useNavigate } from 'react-router-dom';
 import logo from '../assets/Logo Huesitos.png';
 
 const BG_IMAGE_URL = null; 
@@ -8,48 +8,52 @@ const VetLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(''); // Estado para mostrar errores
+  const [errorMsg, setErrorMsg] = useState(''); 
   
-  const navigate = useNavigate(); // Hook para navegar entre páginas
+  const navigate = useNavigate(); 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMsg(''); // Limpiar errores previos
+    setErrorMsg(''); 
 
     try {
-      // Reemplaza localhost:8080 por tu URL de producción si es necesario
       const response = await fetch('http://localhost:8080/api/autenticacion/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        // El backend espera propiedades 'correo' y 'contrasena'
         body: JSON.stringify({ 
           correo: email, 
           contrasena: password 
         }),
       });
 
-if (response.ok) {
-  const data = await response.json(); 
-  
-  localStorage.setItem('token', data.token);
-  localStorage.setItem('usuarioCorreo', data.correo);
-  localStorage.setItem('usuarioRol', data.rol);
+      if (response.ok) {
+        const data = await response.json(); 
+        
+        // Guardamos TODA la información que manda nuestro nuevo backend
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('usuarioCorreo', data.correo);
+        localStorage.setItem('usuarioRol', data.rol);
+        localStorage.setItem('usuarioId', data.id || data.usuarioId);
+        
+        // ACTUALIZADO: Guardamos el nombre real y la foto de perfil
+        localStorage.setItem('usuarioNombre', data.nombreCompleto || data.nombre || 'Usuario');
+        localStorage.setItem('usuarioFoto', data.fotoPerfilUrl || '/uploads/defecto-usuario.png');
 
-  // Redirección dinámica según el rol
-  if (data.rol === 'ADMINISTRADOR') {
-    navigate('/admin');
-  } else if (data.rol === 'CLIENTE') {
-    navigate('/cliente');
-  } else if (data.rol === 'VETERINARIO') {
-    navigate('/veterinario');
-  } else if (data.rol === 'RECEPCIONISTA') {
-    navigate('/recepcion');
-  } else {
-    navigate('/');  
-  }
-} else {
+        // Redirección dinámica según el rol
+        if (data.rol === 'ADMINISTRADOR') {
+          navigate('/admin');
+        } else if (data.rol === 'CLIENTE') {
+          navigate('/cliente');
+        } else if (data.rol === 'VETERINARIO') {
+          navigate('/veterinario');
+        } else if (data.rol === 'RECEPCIONISTA') {
+          navigate('/recepcion');
+        } else {
+          navigate('/');  
+        }
+      } else {
         const errorText = await response.text();
         setErrorMsg(errorText || 'Credenciales incorrectas');
       }
@@ -90,7 +94,7 @@ if (response.ok) {
         overflow: 'hidden',
         border: '1px solid #e2e8f0',
         boxShadow: '0 4px 32px rgba(0,0,0,0.10)',
-        position: 'relative', // Para posicionar el botón volver
+        position: 'relative', 
       }}>
 
         {/* ======================== PANEL IZQUIERDO ======================== */}
@@ -186,7 +190,6 @@ if (response.ok) {
             <p style={{ fontSize: '13px', color: '#64748b' }}>Bienvenido de nuevo a Huesitos</p>
           </div>
 
-          {/* Mensaje de error si falla el login */}
           {errorMsg && (
             <div style={{ background: colors.red50, color: colors.red600, padding: '10px', borderRadius: '8px', fontSize: '12px', marginBottom: '1rem', border: `1px solid ${colors.red100}` }}>
               {errorMsg}

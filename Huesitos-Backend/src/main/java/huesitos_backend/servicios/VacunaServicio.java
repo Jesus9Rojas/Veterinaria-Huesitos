@@ -46,7 +46,7 @@ public class VacunaServicio {
     /**
      * Obtiene el historial de vacunas aplicadas a una mascota.
      */
-    @Transactional(readOnly = true)
+@Transactional(readOnly = true)
     public List<HistorialVacunacion> obtenerHistorialPorMascota(Long mascotaId) {
         if (!mascotaRepositorio.existsById(mascotaId)) {
             throw new RuntimeException("Mascota no encontrada");

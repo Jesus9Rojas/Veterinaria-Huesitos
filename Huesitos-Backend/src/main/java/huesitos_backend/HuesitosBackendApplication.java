@@ -23,52 +23,64 @@ public class HuesitosBackendApplication {
         SpringApplication.run(HuesitosBackendApplication.class, args);
     }
 
-    // Este bloque crea los 3 roles automáticamente al iniciar el servidor
-    @Bean
-    public CommandLineRunner inicializarDatos(UsuarioRepositorio usuarioRepo, DueñoRepositorio dueñoRepo, PasswordEncoder passwordEncoder) {
-        return args -> {
-            // Encriptamos la contraseña "123456" con tu propia configuración de seguridad
-            String claveEncriptada = passwordEncoder.encode("123456");
+    // @Bean
+    // public CommandLineRunner inicializarDatos(UsuarioRepositorio usuarioRepo, DueñoRepositorio dueñoRepo, huesitos_backend.repositorios.PersonalRepositorio personalRepo, PasswordEncoder passwordEncoder) {
+    //     return args -> {
+    //         String claveEncriptada = passwordEncoder.encode("123456");
 
-            // 1. Crear cuenta de ADMINISTRADOR
-            if (usuarioRepo.findByCorreo("admin@huesitos.com").isEmpty()) {
-                Usuario admin = new Usuario();
-                admin.setCorreo("admin@huesitos.com");
-                admin.setContrasena(claveEncriptada);
-                admin.setRol(Rol.ADMINISTRADOR);
-                admin.setActivo(true);
-                admin.setFotoPerfilUrl("/uploads/defecto-usuario.png");
-                usuarioRepo.save(admin);
-            }
+    //         // 1. Crear cuenta de ADMINISTRADOR
+    //         if (usuarioRepo.findByCorreo("admin@huesitos.com").isEmpty()) {
+    //             Usuario admin = new Usuario();
+    //             admin.setCorreo("admin@huesitos.com");
+    //             admin.setContrasena(claveEncriptada);
+    //             admin.setRol(Rol.ADMINISTRADOR);
+    //             admin.setActivo(true);
+    //             admin.setFotoPerfilUrl("/uploads/defecto-usuario.png");
+    //             Usuario adminGuardado = usuarioRepo.save(admin);
 
-            // 2. Crear cuenta de VETERINARIO
-            if (usuarioRepo.findByCorreo("vet@huesitos.com").isEmpty()) {
-                Usuario vet = new Usuario();
-                vet.setCorreo("vet@huesitos.com");
-                vet.setContrasena(claveEncriptada);
-                vet.setRol(Rol.VETERINARIO);
-                vet.setActivo(true);
-                vet.setFotoPerfilUrl("/uploads/defecto-usuario.png");
-                usuarioRepo.save(vet);
-            }
+    //             // ¡NUEVO! Le asignamos sus datos de personal
+    //             huesitos_backend.entidades.Personal personalAdmin = new huesitos_backend.entidades.Personal();
+    //             personalAdmin.setNombreCompleto("Administrador Principal");
+    //             personalAdmin.setTelefono("999111222");
+    //             personalAdmin.setUsuario(adminGuardado);
+    //             personalRepo.save(personalAdmin);
+    //         }
 
-            // 3. Crear cuenta de CLIENTE (con su vinculación obligatoria de Dueño)
-            if (usuarioRepo.findByCorreo("cliente@ejemplo.com").isEmpty()) {
-                Usuario cliente = new Usuario();
-                cliente.setCorreo("cliente@ejemplo.com");
-                cliente.setContrasena(claveEncriptada);
-                cliente.setRol(Rol.CLIENTE);
-                cliente.setActivo(true);
-                cliente.setFotoPerfilUrl("/uploads/defecto-usuario.png");
-                Usuario clienteGuardado = usuarioRepo.save(cliente); // Guardamos el usuario primero
+    //         // 2. Crear cuenta de VETERINARIO
+    //         if (usuarioRepo.findByCorreo("vet@huesitos.com").isEmpty()) {
+    //             Usuario vet = new Usuario();
+    //             vet.setCorreo("vet@huesitos.com");
+    //             vet.setContrasena(claveEncriptada);
+    //             vet.setRol(Rol.VETERINARIO);
+    //             vet.setActivo(true);
+    //             vet.setFotoPerfilUrl("/uploads/defecto-usuario.png");
+    //             Usuario vetGuardado = usuarioRepo.save(vet);
 
-                Dueño dueño = new Dueño();
-                dueño.setNombreCompleto("Usuario de Prueba Cliente");
-                dueño.setTelefono("999888777");
-                dueño.setDireccion("Avenida Siempre Viva 123");
-                dueño.setUsuario(clienteGuardado); // Lo vinculamos para cumplir el RF-05
-                dueñoRepo.save(dueño);
-            }
-        };
-    }
+    //             // ¡NUEVO! Le asignamos sus datos de personal
+    //             huesitos_backend.entidades.Personal personalVet = new huesitos_backend.entidades.Personal();
+    //             personalVet.setNombreCompleto("Médico Veterinario Jefe");
+    //             personalVet.setTelefono("999333444");
+    //             personalVet.setUsuario(vetGuardado);
+    //             personalRepo.save(personalVet);
+    //         }
+
+    //         // 3. Crear cuenta de CLIENTE
+    //         if (usuarioRepo.findByCorreo("cliente@ejemplo.com").isEmpty()) {
+    //             Usuario cliente = new Usuario();
+    //             cliente.setCorreo("cliente@ejemplo.com");
+    //             cliente.setContrasena(claveEncriptada);
+    //             cliente.setRol(Rol.CLIENTE);
+    //             cliente.setActivo(true);
+    //             cliente.setFotoPerfilUrl("/uploads/defecto-usuario.png");
+    //             Usuario clienteGuardado = usuarioRepo.save(cliente);
+
+    //             Dueño dueño = new Dueño();
+    //             dueño.setNombreCompleto("Usuario de Prueba Cliente");
+    //             dueño.setTelefono("999888777");
+    //             dueño.setDireccion("Avenida Siempre Viva 123");
+    //             dueño.setUsuario(clienteGuardado);
+    //             dueñoRepo.save(dueño);
+    //         }
+    //     };
+    // }
 }

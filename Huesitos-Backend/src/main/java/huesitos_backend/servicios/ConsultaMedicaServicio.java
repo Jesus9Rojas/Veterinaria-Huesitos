@@ -22,13 +22,12 @@ public class ConsultaMedicaServicio {
     /**
      * Registra una nueva consulta médica para una mascota.
      * Si la consulta está asociada a una cita, cambia el estado de la cita a COMPLETADA.
-     *
-     * @param consulta Los datos de la consulta a registrar.
-     * @return La consulta médica guardada.
      */
     @Transactional
     public ConsultaMedica registrarConsulta(ConsultaMedica consulta) {
-        consulta.setFecha(LocalDateTime.now());
+        if (consulta.getFecha() == null) {
+            consulta.setFecha(LocalDateTime.now());
+        }
         ConsultaMedica guardada = consultaMedicaRepositorio.save(consulta);
 
         // Si la consulta viene vinculada a una cita, buscarla y marcarla como COMPLETADA
@@ -44,9 +43,6 @@ public class ConsultaMedicaServicio {
 
     /**
      * Obtiene el historial clínico de una mascota ordenado desde la más reciente.
-     *
-     * @param mascotaId El ID de la mascota.
-     * @return Lista de consultas médicas asociadas.
      */
     @Transactional(readOnly = true)
     public List<ConsultaMedica> obtenerHistorialMascota(Long mascotaId) {

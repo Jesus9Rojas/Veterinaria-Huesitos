@@ -3,5 +3,8 @@ package huesitos_backend.dto;
 public record RespuestaLogin(
     String token,
     String correo,
-    String rol
+    String rol,
+    Long id,
+    String nombreCompleto, 
+    String fotoPerfilUrl
 ) {}

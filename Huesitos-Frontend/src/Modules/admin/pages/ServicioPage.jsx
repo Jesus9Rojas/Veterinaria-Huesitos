@@ -1,8 +1,9 @@
 import { useState } from "react";
-import ServicioForm from "../components/ServicioForm";
-import ServicioTable from "../components/ServicioTable";
-import { crearServicio, cambiarEstadoServicio, actualizarServicio } from "../services/servicioService";
-import { useServicios } from "../hooks/useServicios";
+import { createPortal } from "react-dom"; // IMPORTANTE: Agregamos createPortal
+import ServicioForm from "../../../components/ServicioForm";
+import ServicioTable from "../../../components/ServicioTable";
+import { crearServicio, cambiarEstadoServicio, actualizarServicio } from "../../../services/servicioService";
+import { useServicios } from "../../../hooks/useServicios";
 import { X, Stethoscope, Tag, Clock, FileText } from 'lucide-react';
 
 const ServiciosPage = () => {
@@ -89,23 +90,33 @@ const ServiciosPage = () => {
         />
       </div>
 
-      {/* MODAL DE EDICIÓN PREMIUM */}
-      {modalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 z-[100] p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-lg w-full max-h-[90vh] overflow-hidden">
+      {/* MODAL DE EDICIÓN PREMIUM USANDO PORTAL */}
+      {modalOpen && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6">
+          {/* Capa oscura separada (Backdrop) */}
+          <div 
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" 
+            onClick={() => setModalOpen(false)}
+          ></div>
+          
+          {/* Contenedor principal del modal */}
+          <div className="relative bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            
             <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center shrink-0 bg-slate-50/50">
               <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
                 <Stethoscope className="text-sky-500" size={20} /> Editar Servicio
               </h3>
               <button 
+                type="button"
                 onClick={() => setModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700 transition-colors"
+                className="text-slate-400 hover:text-slate-700 hover:bg-slate-200 p-2 rounded-xl transition-all"
               >
                 <X size={20}/>
               </button>
             </div>
             
-            <form onSubmit={ejecutarEdicion} className="p-6 space-y-5">
+            {/* Formulario scrolleable interno */}
+            <form onSubmit={ejecutarEdicion} className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
               <div>
                 <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Nombre del Servicio</label>
                 <input 
@@ -147,7 +158,7 @@ const ServiciosPage = () => {
                   <FileText className="absolute left-3 top-3 text-slate-400" size={18} />
                   <textarea 
                     name="descripcion" value={formEdit.descripcion} onChange={handleEditChange} required rows="3"
-                    className="w-full pl-10 border border-slate-300 p-2.5 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all bg-slate-50 focus:bg-white"
+                    className="w-full pl-10 border border-slate-300 p-2.5 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all bg-slate-50 focus:bg-white resize-none"
                   />
                 </div>
               </div>
@@ -169,7 +180,8 @@ const ServiciosPage = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

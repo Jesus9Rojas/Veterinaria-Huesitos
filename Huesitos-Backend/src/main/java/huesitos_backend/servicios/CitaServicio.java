@@ -3,10 +3,13 @@ package huesitos_backend.servicios;
 import huesitos_backend.entidades.Cita;
 import huesitos_backend.entidades.EstadoCita;
 import huesitos_backend.entidades.Servicio;
+import huesitos_backend.entidades.EstadoPago;
+import huesitos_backend.entidades.Transaccion;
 import huesitos_backend.repositorios.CitaRepositorio;
 import huesitos_backend.repositorios.MascotaRepositorio;
 import huesitos_backend.repositorios.UsuarioRepositorio;
 import huesitos_backend.repositorios.ServicioRepositorio;
+import huesitos_backend.repositorios.TransaccionRepositorio;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +22,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +33,7 @@ public class CitaServicio {
     private final UsuarioRepositorio usuarioRepositorio;
     private final ServicioRepositorio servicioRepositorio;
     private final TransaccionServicio transaccionServicio;
+    private final TransaccionRepositorio transaccionRepositorio; // Agregado para acceder a Finanzas
     private final HorarioPersonalRepositorio horarioPersonalRepositorio;
 
     @Transactional
@@ -79,13 +84,30 @@ public class CitaServicio {
                 .orElseThrow(() -> new RuntimeException("Cita no encontrada"));
 
         cita.setEstado(nuevoEstado);
+        
+        // =========================================================
+        // SINCRONIZACIÓN CON FINANZAS (CAJA)
+        // =========================================================
+        if (nuevoEstado == EstadoCita.CANCELADA) {
+            // Buscamos si esta cita tiene una orden de pago
+            Optional<Transaccion> transaccionOpt = transaccionRepositorio.findByCitaId(citaId);
+            
+            if (transaccionOpt.isPresent()) {
+                Transaccion transaccion = transaccionOpt.get();
+                // Si la persona aún no había pagado, cancelamos la deuda
+                if (transaccion.getEstadoPago() == EstadoPago.PENDIENTE) {
+                    transaccion.setEstadoPago(EstadoPago.RECHAZADO);
+                    transaccionRepositorio.save(transaccion);
+                }
+            }
+        }
+        
         return citaRepositorio.save(cita);
     }
 
-    // ¡ACTUALIZADO! Se quitó readOnly = true y se agregó la validación automática
     @Transactional
     public List<Cita> listarCitasPorDia(LocalDate fecha) {
-        cancelarCitasVencidas(); // Evalúa y cancela automáticamente las citas del pasado
+        cancelarCitasVencidas();
 
         LocalDateTime inicio = fecha.atStartOfDay();
         LocalDateTime fin = fecha.atTime(LocalTime.of(23, 59, 59));
@@ -154,10 +176,9 @@ public class CitaServicio {
         }
     }
 
-    // ¡ACTUALIZADO! Se quitó readOnly = true y se agregó la validación automática
     @Transactional
     public List<Cita> listarCitasConFiltros(LocalDate inicio, LocalDate fin, Long veterinarioId, EstadoCita estado) {
-        cancelarCitasVencidas(); // Evalúa y cancela automáticamente las citas del pasado
+        cancelarCitasVencidas(); 
 
         LocalDateTime inicioLDT = (inicio != null) ? inicio.atStartOfDay() : null;
         LocalDateTime finLDT = (fin != null) ? fin.atTime(LocalTime.of(23, 59, 59)) : null;
@@ -166,23 +187,27 @@ public class CitaServicio {
     }
 
     /**
-     * ¡NUEVO MÉTODO CENTRAL!
      * Cancela automáticamente las citas que superaron su hora programada 
      * por más de 1 hora de tolerancia y que nadie llegó a atender.
      */
     @Transactional
     public void cancelarCitasVencidas() {
-        // Tolerancia de 1 hora (Si era a las 4:00 PM, a las 5:00 PM el sistema la cancela sola)
+        // Tolerancia de 1 hora
         LocalDateTime limite = LocalDateTime.now().minusHours(1);
         
-        // Solo cancela las que estén PENDIENTES o CONFIRMADAS (Ignora las completadas o en espera)
         List<EstadoCita> estadosVulnerables = java.util.Arrays.asList(EstadoCita.PENDIENTE, EstadoCita.CONFIRMADA);
-        
         List<Cita> vencidas = citaRepositorio.buscarCitasExpiradas(limite, estadosVulnerables);
         
         if (!vencidas.isEmpty()) {
             for (Cita c : vencidas) {
                 c.setEstado(EstadoCita.CANCELADA);
+                
+                // Aplicamos la misma lógica de finanzas para las cancelaciones automáticas
+                Optional<Transaccion> tx = transaccionRepositorio.findByCitaId(c.getId());
+                if (tx.isPresent() && tx.get().getEstadoPago() == EstadoPago.PENDIENTE) {
+                    tx.get().setEstadoPago(EstadoPago.RECHAZADO);
+                    transaccionRepositorio.save(tx.get());
+                }
             }
             citaRepositorio.saveAll(vencidas);
         }

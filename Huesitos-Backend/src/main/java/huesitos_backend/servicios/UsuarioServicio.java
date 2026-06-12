@@ -3,9 +3,11 @@ package huesitos_backend.servicios;
 import huesitos_backend.entidades.Usuario;
 import huesitos_backend.entidades.Rol;
 import huesitos_backend.entidades.Dueño;
+import huesitos_backend.entidades.Personal;
 import huesitos_backend.entidades.Actividad;
 import huesitos_backend.repositorios.UsuarioRepositorio;
 import huesitos_backend.repositorios.DueñoRepositorio;
+import huesitos_backend.repositorios.PersonalRepositorio;
 import huesitos_backend.repositorios.ActividadRepositorio;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +26,7 @@ public class UsuarioServicio {
 
     private final UsuarioRepositorio usuarioRepositorio;
     private final DueñoRepositorio dueñoRepositorio;
+    private final PersonalRepositorio personalRepositorio;
     private final ActividadRepositorio actividadRepositorio;
     private final PasswordEncoder passwordEncoder;
 
@@ -35,11 +40,20 @@ public class UsuarioServicio {
         return dueñoRepositorio.findByUsuarioId(usuarioId);
     }
 
-    // ==========================================
-    // NUEVO MÉTODO: REGISTRO DE PERSONAL INTERNO
-    // ==========================================
+    @Transactional(readOnly = true)
+    public Map<String, String> obtenerDetallesPersonal(Long usuarioId) {
+        Personal p = personalRepositorio.findByUsuarioId(usuarioId).orElse(null);
+        Map<String, String> datos = new HashMap<>();
+        if (p != null) {
+            datos.put("nombreCompleto", p.getNombreCompleto());
+            datos.put("telefono", p.getTelefono());
+            datos.put("dni", p.getDni());
+        }
+        return datos;
+    }
+
     @Transactional
-    public Usuario registrarPersonal(String correo, String contrasena, Rol rol) {
+    public Usuario registrarPersonal(String correo, String contrasena, Rol rol, String nombreCompleto, String telefono, String dni) {
         if (rol == Rol.CLIENTE) {
             throw new RuntimeException("No se pueden crear cuentas de clientes desde este módulo.");
         }
@@ -50,20 +64,59 @@ public class UsuarioServicio {
 
         Usuario nuevoUsuario = new Usuario();
         nuevoUsuario.setCorreo(correo);
-        nuevoUsuario.setContrasena(passwordEncoder.encode(contrasena)); // Encriptación obligatoria
+        nuevoUsuario.setContrasena(passwordEncoder.encode(contrasena));
         nuevoUsuario.setRol(rol);
-        nuevoUsuario.setActivo(true); // Se crea activo por defecto
-
+        nuevoUsuario.setActivo(true);
+        nuevoUsuario.setFotoPerfilUrl("/uploads/defecto-usuario.png");
         Usuario guardado = usuarioRepositorio.save(nuevoUsuario);
 
-        // Registro en auditoría
+        Personal personal = new Personal();
+        personal.setNombreCompleto(nombreCompleto);
+        personal.setTelefono(telefono);
+        personal.setDni(dni);
+        personal.setUsuario(guardado);
+        personalRepositorio.save(personal);
+
         Actividad actividad = new Actividad();
-        actividad.setMensaje("Se dio de alta un nuevo personal: " + correo + " con el rol de " + rol);
+        actividad.setMensaje("Se registró un nuevo personal técnico: " + nombreCompleto + " (" + correo + ") con el rol de " + rol);
         actividad.setTipo("USUARIO");
         actividad.setFecha(LocalDateTime.now());
         actividadRepositorio.save(actividad);
 
         return guardado;
+    }
+
+    @Transactional
+    public void actualizarPersonal(Long usuarioId, String correo, String contrasena, String nombreCompleto, String telefono, String dni) {
+        Usuario usuario = usuarioRepositorio.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + usuarioId));
+
+        if (correo != null && !correo.trim().isEmpty() && !usuario.getCorreo().equals(correo)) {
+            if (usuarioRepositorio.findByCorreo(correo).isPresent()) {
+                throw new RuntimeException("El correo electrónico especificado ya se encuentra registrado por otro usuario.");
+            }
+            usuario.setCorreo(correo);
+        }
+
+        if (contrasena != null && !contrasena.trim().isEmpty()) {
+            usuario.setContrasena(passwordEncoder.encode(contrasena));
+        }
+        usuarioRepositorio.save(usuario);
+
+        Personal personal = personalRepositorio.findByUsuarioId(usuarioId)
+                .orElse(new Personal());
+        
+        personal.setUsuario(usuario);
+        personal.setNombreCompleto(nombreCompleto);
+        personal.setTelefono(telefono);
+        personal.setDni(dni);
+        personalRepositorio.save(personal);
+
+        Actividad actividad = new Actividad();
+        actividad.setMensaje("Se modificó la ficha informativa y de acceso del colaborador: " + nombreCompleto);
+        actividad.setTipo("USUARIO");
+        actividad.setFecha(LocalDateTime.now());
+        actividadRepositorio.save(actividad);
     }
 
     @Transactional
@@ -101,6 +154,9 @@ public class UsuarioServicio {
         return actualizado;
     }
 
+    // =========================================================================
+    // ¡MÉTODO RESTAURADO PARA QUE PERFILCONTROLADOR FUNCIONE PERFECTAMENTE!
+    // =========================================================================
     @Transactional
     public Usuario actualizarCredenciales(Long id, String nuevoCorreo, String nuevaContrasena) {
         Usuario usuario = usuarioRepositorio.findById(id)
@@ -109,6 +165,9 @@ public class UsuarioServicio {
         boolean huboCambios = false;
 
         if (nuevoCorreo != null && !nuevoCorreo.trim().isEmpty() && !nuevoCorreo.equals(usuario.getCorreo())) {
+            if (usuarioRepositorio.findByCorreo(nuevoCorreo).isPresent()) {
+                throw new RuntimeException("El correo ya está en uso");
+            }
             usuario.setCorreo(nuevoCorreo);
             huboCambios = true;
         }

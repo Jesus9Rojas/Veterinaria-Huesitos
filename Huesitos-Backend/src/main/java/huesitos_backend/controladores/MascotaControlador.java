@@ -5,6 +5,7 @@ import huesitos_backend.servicios.MascotaServicio;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -14,6 +15,18 @@ import java.util.List;
 public class MascotaControlador {
 
     private final MascotaServicio mascotaServicio;
+
+    /**
+     * Endpoint para listar TODAS las mascotas registradas en el sistema.
+     * Requerido para el directorio clínico del Veterinario.
+     *
+     * @return Lista completa de mascotas.
+     */
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'VETERINARIO')")
+    public ResponseEntity<List<Mascota>> listarTodasMascotas() {
+        return ResponseEntity.ok(mascotaServicio.listarTodasMascotas());
+    }
 
     /**
      * Endpoint para registrar una nueva mascota.
@@ -44,8 +57,6 @@ public class MascotaControlador {
     }
 
     /**
-     * Endpoint para buscar una mascota por su ID.
-     *
      * @param id El ID de la mascota.
      * @return La mascota encontrada o NotFound si no existe.
      */

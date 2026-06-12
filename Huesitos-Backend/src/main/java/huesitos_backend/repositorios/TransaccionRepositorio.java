@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional; // ¡Importante para evitar otro error!
 
 @Repository
 public interface TransaccionRepositorio extends JpaRepository<Transaccion, Long> {
@@ -26,6 +27,7 @@ public interface TransaccionRepositorio extends JpaRepository<Transaccion, Long>
     @Query("SELECT COALESCE(SUM(t.monto), 0) FROM Transaccion t WHERE t.estadoPago = 'APROBADO' AND t.medioPago IN :medios AND t.fechaActualizacion BETWEEN :inicio AND :fin")
     BigDecimal sumarIngresosPorMediosYFecha(@Param("medios") List<MedioPago> medios, @Param("inicio") LocalDateTime inicio, @Param("fin") LocalDateTime fin);
 
-    // Corregido: countBy... debe coincidir con los nombres de campos de tu entidad
     long countByEstadoPagoAndFechaCreacionBetween(EstadoPago estado, LocalDateTime inicio, LocalDateTime fin);
+
+    Optional<Transaccion> findByCitaId(Long citaId);
 }

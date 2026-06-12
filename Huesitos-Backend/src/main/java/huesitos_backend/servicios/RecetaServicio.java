@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -24,9 +25,6 @@ public class RecetaServicio {
     private final RecetaRepositorio recetaRepositorio;
     private final ConsultaMedicaRepositorio consultaMedicaRepositorio;
 
-    /**
-     * Registra o actualiza la receta médica para una consulta.
-     */
     @Transactional
     public Receta registrarReceta(Receta receta) {
         if (receta.getConsultaMedica() == null || receta.getConsultaMedica().getId() == null) {
@@ -42,7 +40,6 @@ public class RecetaServicio {
         ConsultaMedica consulta = consultaMedicaRepositorio.findById(receta.getConsultaMedica().getId())
                 .orElseThrow(() -> new RuntimeException("Consulta médica no encontrada"));
 
-        // Verificar si la consulta ya tiene una receta
         Optional<Receta> recetaExistente = recetaRepositorio.findByConsultaMedicaId(consulta.getId());
         Receta recetaAGuardar;
         if (recetaExistente.isPresent()) {
@@ -61,18 +58,18 @@ public class RecetaServicio {
         return recetaRepositorio.save(recetaAGuardar);
     }
 
-    /**
-     * Obtiene la receta médica por ID de la consulta.
-     */
     @Transactional(readOnly = true)
     public Receta obtenerRecetaPorConsulta(Long consultaId) {
         return recetaRepositorio.findByConsultaMedicaId(consultaId)
                 .orElseThrow(() -> new RuntimeException("No se encontró receta para esta consulta médica"));
     }
 
-    /**
-     * Genera un archivo PDF para la receta especificada.
-     */
+    // ¡MÉTODO ACTUALIZADO!
+    @Transactional(readOnly = true)
+    public List<Receta> listarPorMascota(Long mascotaId) {
+        return recetaRepositorio.findByConsultaMedicaMascotaId(mascotaId);
+    }
+
     @Transactional(readOnly = true)
     public byte[] generarPdfReceta(Long recetaId) {
         Receta receta = recetaRepositorio.findById(recetaId)
@@ -81,14 +78,13 @@ public class RecetaServicio {
         ConsultaMedica consulta = receta.getConsultaMedica();
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Document document = new Document(PageSize.A5); // Tamaño A5 es el estándar para recetas médicas
+        Document document = new Document(PageSize.A5); 
         document.setMargins(20, 20, 20, 20);
 
         try {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            // 1. Cabecera / Título Premium
             Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, new Color(44, 62, 80));
             Paragraph header = new Paragraph("VETERINARIA HUESITOS 🐶", titleFont);
             header.setAlignment(Element.ALIGN_CENTER);
@@ -100,19 +96,16 @@ public class RecetaServicio {
             subheader.setSpacingAfter(15);
             document.add(subheader);
 
-            // Línea divisoria
             Paragraph separator = new Paragraph("____________________________________________________", subFont);
             separator.setSpacingAfter(10);
             document.add(separator);
 
-            // 2. Título del Documento
             Font docTitleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, new Color(52, 152, 219));
             Paragraph docTitle = new Paragraph("RECETA MÉDICA", docTitleFont);
             docTitle.setAlignment(Element.ALIGN_CENTER);
             docTitle.setSpacingAfter(15);
             document.add(docTitle);
 
-            // 3. Tabla de Información Paciente / Dueño / Veterinario
             PdfPTable table = new PdfPTable(2);
             table.setWidthPercentage(100);
             table.setSpacingAfter(15);
@@ -120,24 +113,18 @@ public class RecetaServicio {
             Font labelFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, new Color(44, 62, 80));
             Font valueFont = FontFactory.getFont(FontFactory.HELVETICA, 9, new Color(51, 51, 51));
 
-            // Fila 1
             table.addCell(crearCeldaSinBorde("Paciente: " + consulta.getMascota().getNombre(), labelFont, valueFont));
             table.addCell(crearCeldaSinBorde("Propietario: " + consulta.getMascota().getDueño().getNombreCompleto(), labelFont, valueFont));
 
-            // Fila 2
             table.addCell(crearCeldaSinBorde("Especie/Raza: " + consulta.getMascota().getEspecie() + " / " + consulta.getMascota().getRaza(), labelFont, valueFont));
             table.addCell(crearCeldaSinBorde("Fecha Emisión: " + receta.getFechaEmision().toString(), labelFont, valueFont));
 
-            // Fila 3
             table.addCell(crearCeldaSinBorde("Veterinario: " + consulta.getVeterinario().getCorreo(), labelFont, valueFont));
             table.addCell(crearCeldaSinBorde("Consulta ID: #" + consulta.getId(), labelFont, valueFont));
 
             document.add(table);
-
-            // Línea divisoria
             document.add(separator);
 
-            // 4. Sección de Medicamentos
             Font sectionTitleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, new Color(44, 62, 80));
             Paragraph medTitle = new Paragraph("MEDICAMENTOS", sectionTitleFont);
             medTitle.setSpacingAfter(5);
@@ -148,7 +135,6 @@ public class RecetaServicio {
             medContent.setSpacingAfter(15);
             document.add(medContent);
 
-            // 5. Sección de Indicaciones
             Paragraph indTitle = new Paragraph("INDICACIONES", sectionTitleFont);
             indTitle.setSpacingAfter(5);
             document.add(indTitle);
@@ -157,7 +143,6 @@ public class RecetaServicio {
             indContent.setSpacingAfter(30);
             document.add(indContent);
 
-            // 6. Firma del Veterinario
             Paragraph firmaLine = new Paragraph("__________________________________\nFirma del Médico Veterinario", labelFont);
             firmaLine.setAlignment(Element.ALIGN_CENTER);
             document.add(firmaLine);

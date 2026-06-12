@@ -39,25 +39,21 @@ public class SeguridadConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(autorizaciones -> autorizaciones
-                // 1. Permitir acceso a la configuración y ¡DESBLOQUEAR LA RUTA DE ERRORES!
                 .requestMatchers(HttpMethod.GET, "/api/configuracion-negocio", "/api/configuracion-negocio/**").permitAll()
                 .requestMatchers("/error").permitAll() 
-                
-                // 2. Permitir el preflight de CORS
+
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                
-                // 3. Rutas públicas
+
                 .requestMatchers(
+                    "/uploads/**",             
                     "/api/autenticacion/**",
                     "/api/servicios/**",
                     "/api/categorias/**",
                     "/api/productos/**"
                 ).permitAll()
                 
-                // 4. Protección estricta para PUT (Solo Admin)
                 .requestMatchers(HttpMethod.PUT, "/api/configuracion-negocio", "/api/configuracion-negocio/**").hasRole("ADMINISTRADOR")
                 
-                // 5. Resto protegido
                 .anyRequest().authenticated()
             )
             .addFilterBefore(filtroAutenticacionJwt, UsernamePasswordAuthenticationFilter.class);

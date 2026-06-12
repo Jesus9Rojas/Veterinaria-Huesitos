@@ -53,4 +53,13 @@ public class MascotaServicio {
         return mascotaRepositorio.findById(id)
                 .orElseThrow(() -> new RuntimeException("Mascota no encontrada"));
     }
+
+    /**
+     * Obtiene todas las mascotas registradas en el sistema.
+     * * @return Lista completa de mascotas.
+     */
+    @Transactional(readOnly = true)
+    public List<Mascota> listarTodasMascotas() {
+        return mascotaRepositorio.findAll();
+    }
 }

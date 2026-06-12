@@ -229,7 +229,7 @@ const InventarioPage = () => {
           </div>
           <button 
             onClick={abrirModalNuevoProd}
-            className="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-indigo-500/30 transition-all flex items-center gap-2"
+            className="bg-gradient-to-r from-sky-500 to-cyan-400 hover:from-sky-600 hover:to-cyan-500 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-sky-500/30 transition-all flex items-center gap-2"
           >
             <Plus size={20} /> <span className="hidden sm:inline">Nuevo Producto</span>
           </button>
@@ -393,7 +393,7 @@ const InventarioPage = () => {
             </div>
 
             <div className="p-4 border-t border-slate-100 flex justify-end bg-slate-50 shrink-0">
-              <button onClick={() => setModalVerOpen(false)} className="px-6 py-2.5 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition-colors w-full">
+              <button onClick={() => setModalVerOpen(false)} className="bg-gradient-to-r from-sky-500 to-cyan-400 hover:from-sky-600 hover:to-cyan-500 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-sky-500/30 transition-all items-center gap-2 w-full">
                 Cerrar Detalles
               </button>
             </div>
@@ -472,7 +472,7 @@ const InventarioPage = () => {
                     <Trash2 size={18}/> Desactivar
                   </button>
                 ) : <div></div>}
-                <button type="submit" disabled={guardandoProd} className="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl flex items-center gap-2">
+                <button type="submit" disabled={guardandoProd} className="bg-gradient-to-r from-sky-500 to-cyan-400 hover:from-sky-600 hover:to-cyan-500 text-white px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl flex items-center gap-2">
                   <CheckCircle2 size={18}/> Guardar Producto
                 </button>
               </div>
@@ -540,7 +540,7 @@ const InventarioPage = () => {
                 </div>
               </div>
               <div className="flex justify-end pt-4 pb-2">
-                <button type="submit" disabled={guardandoStock} className="w-full px-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl flex items-center justify-center gap-2 text-lg shadow-lg shadow-indigo-500/30">
+                <button type="submit" disabled={guardandoStock} className="w-full px-6 py-4 bg-gradient-to-r from-sky-500 to-cyan-400 hover:from-sky-600 hover:to-cyan-500 text-white font-black rounded-xl flex items-center justify-center gap-2 text-lg shadow-lg shadow-indigo-500/30">
                   <CheckCircle2 size={22}/> Confirmar Ingreso
                 </button>
               </div>

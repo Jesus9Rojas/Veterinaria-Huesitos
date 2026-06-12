@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/recetas")
@@ -16,9 +17,6 @@ public class RecetaControlador {
 
     private final RecetaServicio recetaServicio;
 
-    /**
-     * Endpoint para registrar o actualizar una receta médica.
-     */
     @PostMapping
     public ResponseEntity<?> registrarReceta(@RequestBody Receta receta) {
         try {
@@ -29,9 +27,6 @@ public class RecetaControlador {
         }
     }
 
-    /**
-     * Endpoint para obtener los datos JSON de la receta asociada a una consulta.
-     */
     @GetMapping("/consulta/{consultaId}")
     public ResponseEntity<?> obtenerRecetaPorConsulta(@PathVariable Long consultaId) {
         try {
@@ -42,9 +37,12 @@ public class RecetaControlador {
         }
     }
 
-    /**
-     * Endpoint para descargar/visualizar la receta médica en formato PDF.
-     */
+    // EL ENDPOINT DE REACT FUNCIONANDO AL 100%
+    @GetMapping("/mascota/{mascotaId}")
+    public ResponseEntity<List<Receta>> listarPorMascota(@PathVariable Long mascotaId) {
+        return ResponseEntity.ok(recetaServicio.listarPorMascota(mascotaId));
+    }
+
     @GetMapping("/{id}/pdf")
     public ResponseEntity<?> descargarPdfReceta(@PathVariable Long id) {
         try {
@@ -52,7 +50,6 @@ public class RecetaControlador {
             
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
-            // inline permite mostrar el PDF directamente en el navegador/tablet
             headers.set(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=receta_" + id + ".pdf");
             headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
             

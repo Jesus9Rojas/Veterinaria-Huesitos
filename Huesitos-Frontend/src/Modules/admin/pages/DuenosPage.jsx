@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { 
   obtenerListaDuenos, 
   crearNuevoDueno, 
   actualizarDuenoExistente 
 } from "../../../services/duenoService";
-import { UserPlus, Search, MapPin, Phone, Mail, User, X, Edit2 } from 'lucide-react';
+import { UserPlus, Search, MapPin, Phone, Mail, User, X, Edit2, Lock } from 'lucide-react';
 
 const DuenosPage = () => {
   const [duenos, setDuenos] = useState([]);
@@ -51,7 +52,7 @@ const DuenosPage = () => {
     setEditandoId(dueno.id);
     setForm({
       correo: dueno.correo || "",
-      contrasena: "",
+      contrasena: "", // Se limpia porque no se va a editar
       nombreCompleto: dueno.nombreCompleto,
       telefono: dueno.telefono,
       direccion: dueno.direccion
@@ -64,9 +65,15 @@ const DuenosPage = () => {
     setProcesando(true);
     try {
       if (editandoId) {
-        await actualizarDuenoExistente(editandoId, form);
+        // Al actualizar, solo enviamos los datos personales (backend ignorará correo/clave)
+        await actualizarDuenoExistente(editandoId, {
+          nombreCompleto: form.nombreCompleto,
+          telefono: form.telefono,
+          direccion: form.direccion
+        });
         alert("Ficha del cliente actualizada exitosamente.");
       } else {
+        // Al crear, enviamos todo el formulario completo (incluyendo correo y contraseña)
         await crearNuevoDueno(form);
         alert("Nuevo cliente y cuenta de acceso creados con éxito.");
       }
@@ -146,6 +153,7 @@ const DuenosPage = () => {
                     <button
                       onClick={() => abrirEditarModal(dueno)}
                       className="bg-white hover:bg-sky-50 text-sky-600 p-2 rounded-lg transition-all border border-slate-200 hover:border-sky-200 shadow-sm"
+                      title="Editar Perfil"
                     >
                       <Edit2 size={16} />
                     </button>
@@ -157,45 +165,68 @@ const DuenosPage = () => {
         </div>
       </div>
 
-      {/* MODAL */}
-      {modalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden flex flex-col">
-            <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+      {/* MODAL CORREGIDO CON CREATEPORTAL */}
+      {modalOpen && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6">
+          <div 
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" 
+            onClick={() => setModalOpen(false)}
+          ></div>
+
+          <div className="relative z-10 bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
               <h3 className="text-lg font-black text-slate-800">
                 {editandoId ? "Actualizar Expediente" : "Registro de Cliente Nuevo"}
               </h3>
-              <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors"><X size={20}/></button>
+              <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors">
+                <X size={20}/>
+              </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide border-b pb-1">Datos de Contacto</h4>
+            <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
+              
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide border-b pb-1">Datos Personales y de Contacto</h4>
+              
               <div>
                 <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Nombre Completo</label>
                 <input type="text" name="nombreCompleto" value={form.nombreCompleto} onChange={handleChange} required placeholder="Ej: Juan Pérez Ramos" className="w-full border border-slate-300 p-2.5 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all bg-slate-50 focus:bg-white" />
               </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Teléfono / Celular</label>
-                <input type="text" name="telefono" value={form.telefono} onChange={handleChange} required placeholder="Ej: 994142421" className="w-full border border-slate-300 p-2.5 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all bg-slate-50 focus:bg-white" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Dirección Física</label>
-                <input type="text" name="direccion" value={form.direccion} onChange={handleChange} required placeholder="Ej: Av. Santo Domingo C-22, Ica" className="w-full border border-slate-300 p-2.5 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all bg-slate-50 focus:bg-white" />
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Teléfono / Celular</label>
+                  <input type="text" name="telefono" value={form.telefono} onChange={handleChange} required placeholder="Ej: 994142421" className="w-full border border-slate-300 p-2.5 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all bg-slate-50 focus:bg-white" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Dirección Física</label>
+                  <input type="text" name="direccion" value={form.direccion} onChange={handleChange} required placeholder="Ej: Av. Santo Domingo C-22" className="w-full border border-slate-300 p-2.5 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all bg-slate-50 focus:bg-white" />
+                </div>
               </div>
 
               <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide border-b pb-1 pt-3">Cuenta de Acceso</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Correo</label>
-                  <input type="email" name="correo" value={form.correo} onChange={handleChange} required={!editandoId} className="w-full border border-slate-300 p-2.5 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 outline-none transition-all bg-slate-50 focus:bg-white" />
+              
+              {/* LÓGICA CONDICIONAL: SI ESTÁ EDITANDO, BLOQUEA LAS CREDENCIALES */}
+              {editandoId ? (
+                <div className="mt-2 p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center gap-2">
+                  <Lock size={16} className="text-slate-400" />
+                  <p className="text-xs font-medium text-slate-500 text-center">
+                    Las credenciales del cliente (Correo y Contraseña) no pueden ser modificadas.
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Contraseña</label>
-                  <input type="password" name="contrasena" value={form.contrasena} onChange={handleChange} required={!editandoId} placeholder={editandoId ? "Dejar en blanco para no cambiar" : "Mínimo 6 chars"} className="w-full border border-slate-300 p-2.5 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 outline-none transition-all bg-slate-50 focus:bg-white" />
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Correo</label>
+                    <input type="email" name="correo" value={form.correo} onChange={handleChange} required className="w-full border border-slate-300 p-2.5 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 outline-none transition-all bg-slate-50 focus:bg-white" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Contraseña</label>
+                    <input type="password" name="contrasena" value={form.contrasena} onChange={handleChange} required placeholder="Mínimo 6 chars" className="w-full border border-slate-300 p-2.5 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 outline-none transition-all bg-slate-50 focus:bg-white" />
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 shrink-0">
                 <button type="button" onClick={() => setModalOpen(false)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 transition-colors">Cancelar</button>
                 <button type="submit" disabled={procesando} className="px-5 py-2.5 bg-gradient-to-r from-sky-500 to-cyan-400 hover:from-sky-600 hover:to-cyan-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-sky-500/30 transition-all disabled:opacity-50">
                   {procesando ? "Guardando..." : "Guardar Ficha"}
@@ -203,7 +234,8 @@ const DuenosPage = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

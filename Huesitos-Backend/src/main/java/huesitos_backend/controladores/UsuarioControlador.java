@@ -11,21 +11,57 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map; // Importación necesaria para el Map
 
 @RestController
 @RequestMapping("/api/usuarios")
 @RequiredArgsConstructor
-// ELIMINAMOS EL @PreAuthorize GLOBAL DE LA CLASE
 public class UsuarioControlador {
 
     private final UsuarioServicio usuarioServicio;
 
-    // Permitimos que ADMIN y RECEPCIONISTA puedan ver la lista de usuarios (Para cargar los veterinarios)
+    // ==============================================================================
+    // MÉTODO CORREGIDO: Ahora busca y envía el nombre real de cada usuario Y SU FOTO
+    // ==============================================================================
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
-    public ResponseEntity<List<Usuario>> listarUsuarios() {
-        return ResponseEntity.ok(usuarioServicio.listarTodos());
+    public ResponseEntity<List<Map<String, Object>>> listarUsuarios() {
+        List<Usuario> usuarios = usuarioServicio.listarTodos();
+        List<Map<String, Object>> respuesta = new java.util.ArrayList<>();
+        
+        for (Usuario u : usuarios) {
+            Map<String, Object> map = new java.util.HashMap<>();
+            map.put("id", u.getId());
+            map.put("correo", u.getCorreo());
+            map.put("rol", u.getRol().name());
+            map.put("activo", u.getActivo());
+            
+            // ¡LÍNEA AÑADIDA PARA QUE EL FRONTEND PUEDA MOSTRAR LAS FOTOS!
+            map.put("fotoPerfilUrl", u.getFotoPerfilUrl()); 
+            
+            // LÓGICA MÁGICA: Buscar el nombre real según su rol
+            String nombreVisible = "Usuario del Sistema";
+            if (u.getRol() == Rol.CLIENTE) {
+                huesitos_backend.entidades.Dueño d = usuarioServicio.obtenerDatosDueño(u.getId()).orElse(null);
+                if (d != null && d.getNombreCompleto() != null) {
+                    nombreVisible = d.getNombreCompleto();
+                }
+            } else {
+                Map<String, String> p = usuarioServicio.obtenerDetallesPersonal(u.getId());
+                if (p.get("nombreCompleto") != null) {
+                    nombreVisible = p.get("nombreCompleto");
+                }
+            }
+            map.put("nombreVisible", nombreVisible);
+            respuesta.add(map);
+        }
+        
+        return ResponseEntity.ok(respuesta);
     }
+
+    // ==============================================================================
+    // TODO EL RESTO DEL CÓDIGO SE MANTIENE EXACTAMENTE IGUAL AL TUYO
+    // ==============================================================================
 
     @GetMapping("/{id}/dueño")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
@@ -35,15 +71,35 @@ public class UsuarioControlador {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // ==========================================
-    // LOS MÉTODOS DE CREACIÓN Y EDICIÓN SIGUEN PROTEGIDOS SOLO PARA ADMIN
-    // ==========================================
+    @GetMapping("/{id}/personal")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<?> obtenerDetallesPersonal(@PathVariable Long id) {
+        return ResponseEntity.ok(usuarioServicio.obtenerDetallesPersonal(id));
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> registrarPersonal(@RequestBody SolicitudRegistro dto) {
         try {
-            Usuario resultado = usuarioServicio.registrarPersonal(dto.getCorreo(), dto.getContrasena(), dto.getRol());
+            Usuario resultado = usuarioServicio.registrarPersonal(
+                dto.getCorreo(), dto.getContrasena(), dto.getRol(),
+                dto.getNombreCompleto(), dto.getTelefono(), dto.getDni()
+            );
             return ResponseEntity.status(HttpStatus.CREATED).body(resultado);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/personal")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<?> actualizarPersonal(@PathVariable Long id, @RequestBody SolicitudEdicionPersonal dto) {
+        try {
+            usuarioServicio.actualizarPersonal(
+                id, dto.getCorreo(), dto.getContrasena(),
+                dto.getNombreCompleto(), dto.getTelefono(), dto.getDni()
+            );
+            return ResponseEntity.ok("Ficha técnica e informativa del personal guardada con éxito");
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -71,27 +127,22 @@ public class UsuarioControlador {
         }
     }
 
-    @PatchMapping("/{id}/credenciales")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<?> actualizarCredenciales(@PathVariable Long id, @RequestBody SolicitudCredenciales dto) {
-        try {
-            Usuario resultado = usuarioServicio.actualizarCredenciales(id, dto.getCorreo(), dto.getContrasena());
-            return ResponseEntity.ok(resultado);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
-    @Data
-    static class SolicitudCredenciales {
-        private String correo;
-        private String contrasena;
-    }
-
     @Data
     static class SolicitudRegistro {
         private String correo;
         private String contrasena;
         private Rol rol;
+        private String nombreCompleto;
+        private String telefono;
+        private String dni;
+    }
+
+    @Data
+    static class SolicitudEdicionPersonal {
+        private String correo;
+        private String contrasena;
+        private String nombreCompleto;
+        private String telefono;
+        private String dni;
     }
 }

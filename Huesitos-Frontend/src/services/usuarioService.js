@@ -5,7 +5,6 @@ export const obtenerListaUsuarios = async () => {
   return response.data;
 };
 
-// NUEVA FUNCIÓN AÑADIDA
 export const registrarNuevoPersonal = async (datosPersonales) => {
   const response = await usuarioAPI.post("", datosPersonales);
   return response.data;
@@ -26,7 +25,12 @@ export const obtenerDetallesDueño = async (usuarioId) => {
   return response.data;
 };
 
-export const actualizarCredencialesUsuario = async (usuarioId, datos) => {
-  const response = await usuarioAPI.patch(`/${usuarioId}/credenciales`, datos);
+export const obtenerDetallesPersonal = async (id) => {
+  const response = await usuarioAPI.get(`/${id}/personal`);
+  return response.data;
+};
+
+export const actualizarPersonal = async (id, data) => {
+  const response = await usuarioAPI.put(`/${id}/personal`, data);
   return response.data;
 };
