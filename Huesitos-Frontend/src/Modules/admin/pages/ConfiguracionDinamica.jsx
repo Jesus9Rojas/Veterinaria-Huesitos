@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Save, Settings, Mail, Clock, DollarSign, Activity } from 'lucide-react';
 import axios from 'axios';
-import Swal from 'sweetalert2';
-
-const Toast = Swal.mixin({
-  toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true
-});
+import { sileo } from 'sileo';
 
 const ConfiguracionDinamica = () => {
   const [config, setConfig] = useState({
@@ -36,11 +32,17 @@ const ConfiguracionDinamica = () => {
     setGuardando(true);
     try {
       const token = localStorage.getItem("token");
-      await axios.put("http://localhost:8080/api/configuracion-negocio", config, { headers: { Authorization: `Bearer ${token}` } });
-      Toast.fire({ icon: 'success', title: 'Configuración guardada (Visible en Pagina Principal)' });
+      const peticion = axios.put("http://localhost:8080/api/configuracion-negocio", config, { headers: { Authorization: `Bearer ${token}` } });
+      
+      sileo.promise(peticion, {
+         loading: { title: 'Guardando configuración...' },
+         success: { title: '¡Éxito!', description: 'Configuración guardada (Visible en Web)' },
+         error: { title: 'Error', description: 'No se pudo actualizar la configuración' }
+      });
+
+      await peticion;
     } catch (error) {
       console.error("Error guardando:", error);
-      Toast.fire({ icon: 'error', title: 'No se pudo actualizar la configuración' });
     } finally {
       setGuardando(false);
     }

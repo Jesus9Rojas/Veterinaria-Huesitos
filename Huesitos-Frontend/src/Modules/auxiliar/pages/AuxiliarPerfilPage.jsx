@@ -1,18 +1,14 @@
 import { useState, useEffect, useRef } from "react";
-import { User, Mail, Lock, Phone, CreditCard, Camera, Save, Activity } from 'lucide-react';
+import { User, Mail, Lock, Phone, CreditCard, Camera, Save, Activity, UserCircle } from 'lucide-react';
 import axios from 'axios';
-import Swal from 'sweetalert2';
+import { sileo } from 'sileo';
 import { obtenerDetallesPersonal, actualizarPersonal } from "../../../services/usuarioService";
-
-const Toast = Swal.mixin({
-  toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true,
-  didOpen: (toast) => { toast.onmouseenter = Swal.stopTimer; toast.onmouseleave = Swal.resumeTimer; }
-});
 
 const AuxiliarPerfilPage = () => {
   const [loading, setLoading] = useState(true);
   const [procesando, setProcesando] = useState(false);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
+  const [imgError, setImgError] = useState(false); 
   const fileInputRef = useRef(null);
 
   const usuarioId = localStorage.getItem("usuarioId");
@@ -64,25 +60,30 @@ const AuxiliarPerfilPage = () => {
     formData.append("archivo", file);
 
     setSubiendoFoto(true);
+    setImgError(false); // Reiniciamos el error al subir nueva foto
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.post(`http://localhost:8080/api/perfiles/usuario/${usuarioId}/foto`, formData, {
+      const peticion = axios.post(`http://localhost:8080/api/perfiles/usuario/${usuarioId}/foto`, formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         }
       });
 
+      sileo.promise(peticion, {
+        loading: { title: 'Subiendo imagen...' },
+        success: { title: '¡Actualizado!', description: 'Tu foto de perfil se guardó' },
+        error: { title: 'Error', description: 'Ocurrió un problema (Solo JPG/PNG)' }
+      });
+
+      const response = await peticion;
       const nuevaFotoUrl = response.data.fotoPerfilUrl;
       setFotoUrl(nuevaFotoUrl);
       localStorage.setItem("usuarioFoto", nuevaFotoUrl);
       
-      Toast.fire({ icon: 'success', title: 'Foto actualizada' });
-      // Retrasamos el reload para que el usuario pueda ver el mensajito verde
-      setTimeout(() => { window.location.reload(); }, 1000); 
+      setTimeout(() => { window.location.reload(); }, 1500); 
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al subir imagen (Solo JPG/PNG)' });
     } finally {
       setSubiendoFoto(false);
     }
@@ -92,16 +93,25 @@ const AuxiliarPerfilPage = () => {
     e.preventDefault();
     setProcesando(true);
     try {
-      await actualizarPersonal(usuarioId, form);
+      const peticion = actualizarPersonal(usuarioId, form);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Guardando datos...' },
+        success: { title: 'Perfil actualizado', description: 'Tu información está al día' },
+        error: (err) => ({ 
+          title: 'Error', 
+          description: typeof err.response?.data === 'string' ? err.response.data : 'Error al actualizar perfil' 
+        })
+      });
+
+      await peticion;
       
       localStorage.setItem("usuarioNombre", form.nombreCompleto);
       localStorage.setItem("usuarioCorreo", form.correo);
       
-      Toast.fire({ icon: 'success', title: 'Perfil actualizado exitosamente' });
       setTimeout(() => { window.location.reload(); }, 1500); 
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: error.response?.data || 'Error al actualizar perfil' });
     } finally {
       setProcesando(false);
     }
@@ -122,13 +132,20 @@ const AuxiliarPerfilPage = () => {
       <div className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col md:flex-row items-center gap-6">
         
         <div className="relative group">
-          <div className="w-28 h-28 rounded-full border-4 border-white shadow-lg overflow-hidden bg-slate-100 relative">
-            <img 
-              src={`http://localhost:8080${fotoUrl}`} 
-              alt="Mi Perfil" 
-              className={`w-full h-full object-cover transition-opacity duration-300 ${subiendoFoto ? 'opacity-50' : 'group-hover:opacity-70'}`}
-              onError={(e) => { e.target.onerror = null; e.target.src='/uploads/defecto-usuario.png'; }}
-            />
+          <div className="w-28 h-28 rounded-full border-4 border-white shadow-lg overflow-hidden bg-slate-100 relative flex items-center justify-center">
+            
+            {/* LÓGICA DE IMAGEN BLINDADA */}
+            {!imgError ? (
+              <img 
+                src={`http://localhost:8080${fotoUrl}`} 
+                alt="Mi Perfil" 
+                className={`w-full h-full object-cover transition-opacity duration-300 ${subiendoFoto ? 'opacity-50' : 'group-hover:opacity-70'}`}
+                onError={() => setImgError(true)} 
+              />
+            ) : (
+              <UserCircle size={48} strokeWidth={1.5} className="text-slate-400" />
+            )}
+
             {subiendoFoto && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <Activity className="text-sky-600 animate-spin" size={28} />

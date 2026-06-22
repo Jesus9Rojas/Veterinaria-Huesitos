@@ -230,7 +230,6 @@ const MisPacientesPage = () => {
                       <p className="text-sm font-bold text-slate-700 mt-0.5">{telefonoDueno}</p>
                     </div>
                     
-                    {/* ACCEDIENDO AL CORREO DEL USUARIO */}
                     <div>
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5"><Mail size={12}/> Correo Electrónico</p>
                       <p className="text-sm font-bold text-slate-700 mt-0.5 truncate" title={correoDueno}>

@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from "react";
-import { User, Mail, Lock, Phone, CreditCard, Camera, Save, Activity } from 'lucide-react';
+import { User, Mail, Lock, Phone, CreditCard, Camera, Save, Activity, UserCircle } from 'lucide-react';
 import axios from 'axios';
+import { sileo } from 'sileo';
 import { obtenerDetallesPersonal, actualizarPersonal } from "../../../services/usuarioService";
 
 const MiPerfilPage = () => {
   const [loading, setLoading] = useState(true);
   const [procesando, setProcesando] = useState(false);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
+  const [imgError, setImgError] = useState(false); // <--- ESCUDO DE IMAGEN
   const fileInputRef = useRef(null);
 
   const usuarioId = localStorage.getItem("usuarioId");
@@ -16,11 +18,7 @@ const MiPerfilPage = () => {
   const [fotoUrl, setFotoUrl] = useState(localStorage.getItem("usuarioFoto") || "/uploads/defecto-usuario.png");
 
   const [form, setForm] = useState({
-    nombreCompleto: "",
-    dni: "",
-    telefono: "",
-    correo: correoActual,
-    contrasena: ""
+    nombreCompleto: "", dni: "", telefono: "", correo: correoActual, contrasena: ""
   });
 
   useEffect(() => {
@@ -62,22 +60,29 @@ const MiPerfilPage = () => {
     formData.append("archivo", file);
 
     setSubiendoFoto(true);
+    setImgError(false); // Reinicia escudo al subir nueva
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.post(`http://localhost:8080/api/perfiles/usuario/${usuarioId}/foto`, formData, {
+      const peticion = axios.post(`http://localhost:8080/api/perfiles/usuario/${usuarioId}/foto`, formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         }
       });
 
+      sileo.promise(peticion, {
+        loading: { title: 'Subiendo imagen...' },
+        success: { title: '¡Actualizado!', description: 'Foto de perfil guardada exitosamente' },
+        error: { title: 'Error', description: 'Verifica que sea formato JPG o PNG' }
+      });
+
+      const response = await peticion;
       const nuevaFotoUrl = response.data.fotoPerfilUrl;
       setFotoUrl(nuevaFotoUrl);
       localStorage.setItem("usuarioFoto", nuevaFotoUrl);
-      window.location.reload(); 
+      setTimeout(() => { window.location.reload(); }, 1500); 
     } catch (error) {
       console.error(error);
-      alert("Error al subir la imagen. Verifica que sea un formato válido (JPG, PNG).");
     } finally {
       setSubiendoFoto(false);
     }
@@ -86,18 +91,27 @@ const MiPerfilPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.dni && form.dni.length > 0 && form.dni.length < 8) {
-      return alert("El DNI debe tener exactamente 8 dígitos.");
+      return sileo.warning({ title: 'Atención', description: 'El DNI debe tener exactamente 8 dígitos.' });
     }
     setProcesando(true);
     try {
-      await actualizarPersonal(usuarioId, form);
+      const peticion = actualizarPersonal(usuarioId, form);
+      
+      sileo.promise(peticion, {
+        loading: { title: 'Guardando datos...' },
+        success: { title: 'Perfil actualizado', description: 'Tu información está al día' },
+        error: (err) => ({ 
+          title: 'Error', 
+          description: typeof err.response?.data === 'string' ? err.response.data : 'Error al actualizar el perfil' 
+        })
+      });
+
+      await peticion;
       localStorage.setItem("usuarioNombre", form.nombreCompleto);
       localStorage.setItem("usuarioCorreo", form.correo);
-      alert("Tu perfil médico ha sido actualizado exitosamente.");
-      window.location.reload(); 
+      setTimeout(() => { window.location.reload(); }, 1500); 
     } catch (error) {
       console.error(error);
-      alert(error.response?.data || "Ocurrió un error al intentar actualizar el perfil.");
     } finally {
       setProcesando(false);
     }
@@ -118,13 +132,20 @@ const MiPerfilPage = () => {
       {/* CABECERA */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col md:flex-row items-center gap-6">
         <div className="relative group shrink-0">
-          <div className="w-28 h-28 rounded-full border-4 border-white shadow-lg overflow-hidden bg-slate-100 relative">
-            <img 
-              src={`http://localhost:8080${fotoUrl}`} 
-              alt="Mi Perfil" 
-              className={`w-full h-full object-cover transition-opacity duration-300 ${subiendoFoto ? 'opacity-50' : 'group-hover:opacity-70'}`}
-              onError={(e) => { e.target.onerror = null; e.target.src='/uploads/defecto-usuario.png'; }}
-            />
+          <div className="w-28 h-28 rounded-full border-4 border-white shadow-lg overflow-hidden bg-slate-100 relative flex items-center justify-center">
+            
+            {/* ESCUDO DE IMAGEN */}
+            {!imgError ? (
+              <img 
+                src={`http://localhost:8080${fotoUrl}`} 
+                alt="Mi Perfil" 
+                className={`w-full h-full object-cover transition-opacity duration-300 ${subiendoFoto ? 'opacity-50' : 'group-hover:opacity-70'}`}
+                onError={() => setImgError(true)}
+              />
+            ) : (
+              <UserCircle size={48} strokeWidth={1.5} className="text-slate-400" />
+            )}
+
             {subiendoFoto && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <Activity className="text-sky-600 animate-spin" size={28} />
@@ -133,9 +154,7 @@ const MiPerfilPage = () => {
           </div>
           
           <button 
-            type="button"
-            onClick={() => fileInputRef.current.click()}
-            disabled={subiendoFoto}
+            type="button" onClick={() => fileInputRef.current.click()} disabled={subiendoFoto}
             className="absolute bottom-0 right-0 p-2.5 bg-gradient-to-tr from-sky-500 to-cyan-400 text-white rounded-full shadow-lg border-2 border-white hover:scale-110 transition-transform disabled:opacity-50"
             title="Cambiar foto de perfil"
           >

@@ -2,12 +2,8 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Pill, Plus, Activity, X, Info, Edit, Trash2, ArchiveRestore, Search, Eye, EyeOff, FlaskConical } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { sileo } from 'sileo';
 import { obtenerCatalogoMedicinas, registrarMedicina, actualizarMedicina, desactivarMedicina, reactivarMedicina } from "../../../services/medicinaService";
-
-const Toast = Swal.mixin({
-  toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true,
-  didOpen: (toast) => { toast.onmouseenter = Swal.stopTimer; toast.onmouseleave = Swal.resumeTimer; }
-});
 
 const MedicinasPage = () => {
   const [medicinas, setMedicinas] = useState([]);
@@ -41,7 +37,6 @@ const MedicinasPage = () => {
     return () => { isMounted = false; };
   }, [refreshTrigger]);
 
-  // SOLUCIÓN APLICADA: Filtro estricto (O solo activos, O solo suspendidos)
   const medicinasFiltradas = medicinas.filter(m => {
     const matchBusqueda = (m.nombre || '').toLowerCase().includes(busqueda.toLowerCase()) || 
                           (m.proveedor || '').toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -87,18 +82,19 @@ const MedicinasPage = () => {
         activo: form.id ? (medicinas.find(m => m.id === form.id)?.activo !== false) : true
       };
 
-      if (form.id) {
-        await actualizarMedicina(form.id, payload);
-        Toast.fire({ icon: 'success', title: 'Fármaco actualizado con éxito' });
-      } else {
-        await registrarMedicina(payload);
-        Toast.fire({ icon: 'success', title: 'Nuevo fármaco registrado' });
-      }
+      const peticion = form.id ? actualizarMedicina(form.id, payload) : registrarMedicina(payload);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Guardando fármaco...' },
+        success: { title: '¡Éxito!', description: form.id ? 'Fármaco actualizado' : 'Nuevo fármaco registrado' },
+        error: { title: 'Error', description: 'Error al guardar la información' }
+      });
+
+      await peticion;
       setModalOpen(false);
       setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al guardar fármaco' });
     } finally {
       setProcesando(false);
     }
@@ -107,19 +103,31 @@ const MedicinasPage = () => {
   const handleDesactivar = async (id, nombre) => {
     const result = await Swal.fire({
       title: '¿Suspender fármaco?', text: `"${nombre}" ya no estará disponible para recetas.`,
-      icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#94a3b8',
-      confirmButtonText: 'Sí, suspender', cancelButtonText: 'Cancelar'
+      icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, suspender', cancelButtonText: 'Cancelar',
+      buttonsStyling: false,
+      customClass: {
+        popup: 'rounded-3xl shadow-2xl border border-slate-100',
+        title: 'text-xl font-black text-slate-800',
+        confirmButton: 'bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl px-5 py-2.5 mx-2',
+        cancelButton: 'bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl px-5 py-2.5 mx-2'
+      }
     });
     if (!result.isConfirmed) return;
 
     try {
       setLoading(true);
-      await desactivarMedicina(id);
+      const peticion = desactivarMedicina(id);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Suspendiendo...' },
+        success: { title: 'Suspendido', description: 'El medicamento fue ocultado' },
+        error: { title: 'Error', description: 'No se pudo suspender' }
+      });
+
+      await peticion;
       setRefreshTrigger(prev => prev + 1);
-      Toast.fire({ icon: 'info', title: 'Fármaco suspendido' });
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al suspender' });
       setLoading(false);
     }
   };
@@ -127,19 +135,31 @@ const MedicinasPage = () => {
   const handleReactivar = async (id, nombre) => {
     const result = await Swal.fire({
       title: '¿Habilitar fármaco?', text: `"${nombre}" volverá a estar disponible.`,
-      icon: 'question', showCancelButton: true, confirmButtonColor: '#10b981', cancelButtonColor: '#94a3b8',
-      confirmButtonText: 'Sí, habilitar', cancelButtonText: 'Cancelar'
+      icon: 'question', showCancelButton: true, confirmButtonText: 'Sí, habilitar', cancelButtonText: 'Cancelar',
+      buttonsStyling: false,
+      customClass: {
+        popup: 'rounded-3xl shadow-2xl border border-slate-100',
+        title: 'text-xl font-black text-slate-800',
+        confirmButton: 'bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl px-5 py-2.5 mx-2',
+        cancelButton: 'bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl px-5 py-2.5 mx-2'
+      }
     });
     if (!result.isConfirmed) return;
 
     try {
       setLoading(true);
-      await reactivarMedicina(id);
+      const peticion = reactivarMedicina(id);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Habilitando...' },
+        success: { title: '¡Listo!', description: 'Fármaco reactivado' },
+        error: { title: 'Error', description: 'No se pudo habilitar' }
+      });
+
+      await peticion;
       setRefreshTrigger(prev => prev + 1);
-      Toast.fire({ icon: 'success', title: 'Fármaco reactivado' });
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al reactivar' });
       setLoading(false);
     }
   };

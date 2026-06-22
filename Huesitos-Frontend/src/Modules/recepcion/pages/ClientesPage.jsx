@@ -4,6 +4,7 @@ import {
   Users, Search, UserPlus, PawPrint, ChevronRight, X, Phone, 
   MapPin, Mail, Weight, CalendarDays, Activity, ShieldAlert, CheckCircle2, Lock, Plus 
 } from 'lucide-react';
+import { sileo } from 'sileo';
 import { obtenerListaDuenos, crearNuevoDueno } from '../../../services/duenoService';
 import { obtenerMascotasPorDueno, crearMascota } from '../../../services/mascotaService';
 
@@ -64,7 +65,15 @@ const ClientesPage = () => {
     e.preventDefault();
     setGuardandoDueno(true);
     try {
-      await crearNuevoDueno(formDueno);
+      const peticion = crearNuevoDueno(formDueno);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Registrando cliente...' },
+        success: { title: '¡Éxito!', description: 'El cliente fue registrado correctamente' },
+        error: { title: 'Error', description: 'Es posible que el correo ya exista.' }
+      });
+
+      await peticion;
       setModalDuenoOpen(false);
       setFormDueno({ nombreCompleto: '', telefono: '', correo: '', direccion: '', contrasena: '' });
       
@@ -72,7 +81,6 @@ const ClientesPage = () => {
       setTriggerRecarga(prev => prev + 1); 
     } catch (error) {
       console.error("Error al guardar dueño:", error);
-      alert("No se pudo registrar el cliente. Es posible que el correo ya exista.");
     } finally {
       setGuardandoDueno(false);
     }
@@ -109,7 +117,18 @@ const ClientesPage = () => {
         dueño: { id: duenoSeleccionado.id } 
       };
 
-      await crearMascota(payload);
+      const peticion = crearMascota(payload);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Registrando mascota...' },
+        success: { title: '¡Mascota registrada!', description: 'El paciente fue vinculado a su dueño.' },
+        error: (err) => ({
+          title: 'Error de Servidor',
+          description: err.response?.data?.message || err.response?.data || err.message
+        })
+      });
+
+      await peticion;
       
       const data = await obtenerMascotasPorDueno(duenoSeleccionado.id);
       setMascotas(data);
@@ -118,10 +137,6 @@ const ClientesPage = () => {
       setFormMascota({ nombre: '', especie: 'Perro', raza: '', sexo: 'Macho', fechaNacimiento: '', pesoActual: '', alertasMedicas: '' });
     } catch (error) {
       console.error("Error guardando mascota completo:", error);
-      
-      const mensajeBackend = error.response?.data?.message || error.response?.data || error.message;
-      alert(`Hubo un error al registrar el paciente.\n\nMotivo del servidor:\n${mensajeBackend}`);
-      
     } finally {
       setGuardandoMascota(false);
     }

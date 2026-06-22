@@ -1,13 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Activity, Clock, CheckCircle2, Stethoscope, Search, User, BookOpen, Pill } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Swal from 'sweetalert2';
+import { sileo } from 'sileo';
 import { obtenerCitasHoy, cambiarEstadoCita } from '../../../services/citaService';
 import RecetaCobroAdicionalModal from '../../../components/RecetaCobroAdicionalModal';
-
-const Toast = Swal.mixin({
-  toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true
-});
 
 const ConsultasVeterinarioPage = () => {
   const [citas, setCitas] = useState([]);
@@ -44,12 +40,18 @@ const ConsultasVeterinarioPage = () => {
 
   const actualizarEstado = async (id, nuevoEstado) => {
     try {
-      await cambiarEstadoCita(id, nuevoEstado);
-      Toast.fire({ icon: 'success', title: `Estado actualizado a ${nuevoEstado.replace('_', ' ')}` });
+      const peticion = cambiarEstadoCita(id, nuevoEstado);
+      
+      sileo.promise(peticion, {
+        loading: { title: 'Actualizando estado...' },
+        success: { title: '¡Listo!', description: `Paciente ${nuevoEstado.replace('_', ' ')}` },
+        error: { title: 'Error', description: 'No se pudo actualizar la cita' }
+      });
+
+      await peticion;
       setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al cambiar el estado' });
     }
   };
 
@@ -114,7 +116,7 @@ const ConsultasVeterinarioPage = () => {
                               <BookOpen size={16} /> Historial
                             </Link>
 
-                            {/* 2. ATAJO RÁPIDO PARA RECETAS/INSUMOS (RESTAURADO) */}
+                            {/* 2. ATAJO RÁPIDO PARA RECETAS/INSUMOS */}
                             <button onClick={() => abrirModalReceta(cita)} className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-400 hover:from-orange-600 hover:to-amber-500 text-white font-bold rounded-xl shadow-md transition-all">
                               <Pill size={16} /> Insumos
                             </button>
@@ -137,7 +139,6 @@ const ConsultasVeterinarioPage = () => {
         )}
       </div>
 
-      {/* MODAL RESTAURADO */}
       {modalRecetaOpen && citaActiva && (
         <RecetaCobroAdicionalModal 
           citaId={citaActiva.id}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import logo from '../assets/Logo Huesitos.png';
+import { sileo } from 'sileo';
 
 const BG_IMAGE_URL = null; 
 
@@ -38,6 +39,8 @@ const VetLogin = () => {
         localStorage.setItem('usuarioNombre', data.nombreCompleto || data.nombre || 'Usuario');
         localStorage.setItem('usuarioFoto', data.fotoPerfilUrl || '/uploads/defecto-usuario.png');
 
+        sileo.success({ title: '¡Bienvenido!', description: 'Iniciando sesión...' });
+
         if (data.rol === 'ADMINISTRADOR') {
           navigate('/admin');
         } else if (data.rol === 'CLIENTE') {
@@ -54,10 +57,12 @@ const VetLogin = () => {
       } else {
         const errorText = await response.text();
         setErrorMsg(errorText || 'Credenciales incorrectas');
+        sileo.error({ title: 'Acceso Denegado', description: errorText || 'Verifica tu correo y contraseña' });
       }
     } catch (error) {
       console.error('Error de red:', error);
       setErrorMsg('Error de conexión con el servidor.');
+      sileo.error({ title: 'Error de Red', description: 'No hay conexión con el servidor' });
     }
   };
 
@@ -239,7 +244,6 @@ const VetLogin = () => {
             <hr style={{ flex: 1, border: 'none', borderTop: '1px solid #e2e8f0' }} />
           </div>
 
-          {/* AQUÍ ESTÁ EL ENLACE CORREGIDO PARA IR AL REGISTRO */}
           <p style={{ textAlign: 'center', fontSize: '12px', color: '#64748b', marginTop: '1rem' }}>
             ¿Nuevo aquí? <Link to="/registro" style={{ color: colors.blue600, textDecoration: 'none', fontWeight: 600 }}>Crea una cuenta</Link>
           </p>

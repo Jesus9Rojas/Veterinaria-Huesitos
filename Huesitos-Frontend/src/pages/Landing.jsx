@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import { sileo } from 'sileo';
 import { 
   Stethoscope, Syringe, Activity, Microscope, HeartPulse, 
   Phone, MapPin, Mail, CheckCircle2, ShieldPlus,
@@ -59,9 +60,16 @@ const Landing = () => {
   });
 
   useEffect(() => {
-    axios.get("http://localhost:8080/api/configuracion-negocio")
-      .then(res => { if(res.data) setConfig(res.data); })
-      .catch(err => console.error("Error cargando la configuración: ", err));
+    const cargarConfig = async () => {
+      try {
+        const res = await axios.get("http://localhost:8080/api/configuracion-negocio");
+        if(res.data) setConfig(res.data);
+      } catch (err) {
+        console.error("Error cargando la configuración: ", err);
+        sileo.error({ title: 'Modo Offline', description: 'Usando información de contacto de respaldo.' });
+      }
+    };
+    cargarConfig();
   }, []);
 
   const handleLogout = () => {
@@ -69,6 +77,7 @@ const Landing = () => {
     setIsLoggedIn(false);
     setUsuarioNombre('');
     setPerfilAbierto(false);
+    sileo.success({ title: 'Sesión Cerrada', description: '¡Vuelve pronto!' });
     navigate('/');
   };
 

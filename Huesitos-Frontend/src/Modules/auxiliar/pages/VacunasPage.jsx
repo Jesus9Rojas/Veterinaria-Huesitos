@@ -2,12 +2,8 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Syringe, Plus, Activity, X, Info, Edit, Trash2, ArchiveRestore, Search, Eye, EyeOff, Truck } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { sileo } from 'sileo';
 import { obtenerCatalogoVacunas, registrarVacunaCatalogo, actualizarVacunaCatalogo, desactivarVacuna, reactivarVacuna } from "../../../services/vacunaService";
-
-const Toast = Swal.mixin({
-  toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true,
-  didOpen: (toast) => { toast.onmouseenter = Swal.stopTimer; toast.onmouseleave = Swal.resumeTimer; }
-});
 
 const VacunasPage = () => {
   const [vacunas, setVacunas] = useState([]);
@@ -86,18 +82,19 @@ const VacunasPage = () => {
         activo: form.id ? (vacunas.find(v => v.id === form.id)?.activo !== false) : true
       };
 
-      if (form.id) {
-        await actualizarVacunaCatalogo(form.id, payload);
-        Toast.fire({ icon: 'success', title: 'Vacuna actualizada con éxito' });
-      } else {
-        await registrarVacunaCatalogo(payload);
-        Toast.fire({ icon: 'success', title: 'Nueva vacuna registrada' });
-      }
+      const peticion = form.id ? actualizarVacunaCatalogo(form.id, payload) : registrarVacunaCatalogo(payload);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Guardando registro...' },
+        success: { title: '¡Éxito!', description: form.id ? 'Vacuna actualizada' : 'Nueva vacuna registrada' },
+        error: { title: 'Error', description: 'Ocurrió un error al guardar la información' }
+      });
+
+      await peticion;
       setModalOpen(false);
       setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Ocurrió un error al guardar la información' });
     } finally {
       setProcesando(false);
     }
@@ -106,19 +103,31 @@ const VacunasPage = () => {
   const handleDesactivar = async (id, nombre) => {
     const result = await Swal.fire({
       title: '¿Suspender biológico?', text: `"${nombre}" ya no aparecerá en las consultas.`,
-      icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#94a3b8',
-      confirmButtonText: 'Sí, suspender', cancelButtonText: 'Cancelar'
+      icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, suspender', cancelButtonText: 'Cancelar',
+      buttonsStyling: false,
+      customClass: {
+        popup: 'rounded-3xl shadow-2xl border border-slate-100',
+        title: 'text-xl font-black text-slate-800',
+        confirmButton: 'bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl px-5 py-2.5 mx-2',
+        cancelButton: 'bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl px-5 py-2.5 mx-2'
+      }
     });
     if (!result.isConfirmed) return;
 
     try {
       setLoading(true);
-      await desactivarVacuna(id);
+      const peticion = desactivarVacuna(id);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Suspendiendo...' },
+        success: { title: 'Suspendido', description: 'El biológico ha sido ocultado' },
+        error: { title: 'Error', description: 'No se pudo suspender' }
+      });
+
+      await peticion;
       setRefreshTrigger(prev => prev + 1);
-      Toast.fire({ icon: 'info', title: 'Biológico suspendido' });
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al suspender' });
       setLoading(false);
     }
   };
@@ -126,19 +135,31 @@ const VacunasPage = () => {
   const handleReactivar = async (id, nombre) => {
     const result = await Swal.fire({
       title: '¿Habilitar biológico?', text: `"${nombre}" volverá a estar disponible.`,
-      icon: 'question', showCancelButton: true, confirmButtonColor: '#10b981', cancelButtonColor: '#94a3b8',
-      confirmButtonText: 'Sí, habilitar', cancelButtonText: 'Cancelar'
+      icon: 'question', showCancelButton: true, confirmButtonText: 'Sí, habilitar', cancelButtonText: 'Cancelar',
+      buttonsStyling: false,
+      customClass: {
+        popup: 'rounded-3xl shadow-2xl border border-slate-100',
+        title: 'text-xl font-black text-slate-800',
+        confirmButton: 'bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl px-5 py-2.5 mx-2',
+        cancelButton: 'bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl px-5 py-2.5 mx-2'
+      }
     });
     if (!result.isConfirmed) return;
 
     try {
       setLoading(true);
-      await reactivarVacuna(id);
+      const peticion = reactivarVacuna(id);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Habilitando...' },
+        success: { title: '¡Listo!', description: 'Biológico habilitado' },
+        error: { title: 'Error', description: 'No se pudo habilitar' }
+      });
+
+      await peticion;
       setRefreshTrigger(prev => prev + 1);
-      Toast.fire({ icon: 'success', title: 'Biológico habilitado' });
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al habilitar' });
       setLoading(false);
     }
   };

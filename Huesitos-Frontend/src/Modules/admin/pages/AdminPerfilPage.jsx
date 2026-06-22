@@ -1,13 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { User, Mail, Lock, Phone, CreditCard, Camera, Save, Activity } from 'lucide-react';
 import axios from 'axios';
-import Swal from 'sweetalert2';
 import { obtenerDetallesPersonal, actualizarPersonal } from "../../../services/usuarioService";
-
-const Toast = Swal.mixin({
-  toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true,
-  didOpen: (toast) => { toast.onmouseenter = Swal.stopTimer; toast.onmouseleave = Swal.resumeTimer; }
-});
+import { sileo } from 'sileo';
 
 const AdminPerfilPage = () => {
   const [loading, setLoading] = useState(true);
@@ -66,19 +61,24 @@ const AdminPerfilPage = () => {
     setSubiendoFoto(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.post(`http://localhost:8080/api/perfiles/usuario/${usuarioId}/foto`, formData, {
+      const peticion = axios.post(`http://localhost:8080/api/perfiles/usuario/${usuarioId}/foto`, formData, {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
       });
 
+      sileo.promise(peticion, {
+        loading: { title: 'Subiendo foto...' },
+        success: { title: '¡Éxito!', description: 'Foto de perfil actualizada' },
+        error: { title: 'Error', description: 'Verifica que sea imagen JPG/PNG' }
+      });
+
+      const response = await peticion;
       const nuevaFotoUrl = response.data.fotoPerfilUrl;
       setFotoUrl(nuevaFotoUrl);
       localStorage.setItem("usuarioFoto", nuevaFotoUrl);
       
-      Toast.fire({ icon: 'success', title: 'Foto de perfil actualizada' });
       setTimeout(() => { window.location.reload(); }, 1500); 
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al subir la imagen (Solo JPG/PNG)' });
     } finally {
       setSubiendoFoto(false);
     }
@@ -88,15 +88,23 @@ const AdminPerfilPage = () => {
     e.preventDefault();
     setProcesando(true);
     try {
-      await actualizarPersonal(usuarioId, form);
+      const peticion = actualizarPersonal(usuarioId, form);
+      sileo.promise(peticion, {
+        loading: { title: 'Guardando perfil...' },
+        success: { title: '¡Actualizado!', description: 'Perfil modificado exitosamente' },
+        error: (err) => ({ 
+          title: 'Error', 
+          description: typeof err.response?.data === 'string' ? err.response.data : "Ocurrió un error al actualizar." 
+        })
+      });
+
+      await peticion;
       localStorage.setItem("usuarioNombre", form.nombreCompleto);
       localStorage.setItem("usuarioCorreo", form.correo);
       
-      Toast.fire({ icon: 'success', title: 'Perfil actualizado exitosamente' });
       setTimeout(() => { window.location.reload(); }, 1500); 
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: error.response?.data || "Ocurrió un error al actualizar el perfil." });
     } finally {
       setProcesando(false);
     }

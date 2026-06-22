@@ -1,4 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'sileo'; 
+
 import Landing from './pages/Landing';
 import VetLogin from './pages/Login';
 import ServiciosPage from './Modules/admin/pages/ServicioPage';
@@ -30,43 +32,60 @@ import AuxiliarDashboard from './pages/AuxiliarDashboard';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<VetLogin />} />
-        <Route path="/registro" element={<RegistroClientePage />} />
-        <Route path="/servicios" element={<ServiciosPage/>} />
-        
-        <Route path="/cliente" element={<ClienteDashboard />}>
-          <Route index element={<MisMascotasCliente />} />
-          <Route path="mascotas" element={<MisMascotasCliente />} />
-          <Route path="citas" element={<MisCitasCliente />} />
-        </Route>
+    <>
+<Toaster 
+        position="top-right" 
+        theme="dark" 
+        options={{ 
+          fill: "#020617", 
+          roundness: 16, 
+          styles: { 
+            title: "!text-white font-black tracking-wide", 
+            description: "!text-slate-300", 
+            badge: "!bg-slate-800", 
+            button: "!bg-slate-800 hover:!bg-slate-700 !text-white" 
+          } 
+        }} 
+      />
 
-        <Route path="/admin" element={<AdminDashboard />} />
-        
-        <Route path="/recepcion" element={<RecepcionDashboard />}>
-          <Route index element={<InicioRecepcion />} /> 
-          <Route path="citas" element={<CitasPage />} />
-          <Route path="clientes" element={<ClientesPage />} />
-          <Route path="caja" element={<CajaPage />} />
-          <Route path="tienda" element={<PuntoVentaPage />} /> 
-          <Route path="perfil" element={<RecepcionPerfilPage />} />
-        </Route>
-        
-        <Route path="/veterinario" element={<VeterinarioDashboard />}>
-          <Route index element={<InicioVeterinario />} />
-          <Route path="agenda" element={<MiAgendaPage />} />
-          <Route path="pacientes" element={<MisPacientesPage />} />
-          <Route path="pacientes/:id/historial" element={<HistorialClinicoPage />} />
-          <Route path="horarios" element={<MisHorariosPage />} />
-          <Route path="consultas" element={<ConsultasVeterinarioPage />} />
-          <Route path="perfil" element={<MiPerfilPage />} />
-        </Route>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<VetLogin />} />
+          <Route path="/registro" element={<RegistroClientePage />} />
+          <Route path="/servicios" element={<ServiciosPage/>} />
+          
+          <Route path="/cliente" element={<ClienteDashboard />}>
+            <Route index element={<MisMascotasCliente />} />
+            <Route path="mascotas" element={<MisMascotasCliente />} />
+            <Route path="citas" element={<MisCitasCliente />} />
+          </Route>
 
-        <Route path="/auxiliar/*" element={<AuxiliarDashboard />} />  
-      </Routes>
-    </Router>
+          <Route path="/admin" element={<AdminDashboard />} />
+          
+          <Route path="/recepcion" element={<RecepcionDashboard />}>
+            <Route index element={<InicioRecepcion />} /> 
+            <Route path="citas" element={<CitasPage />} />
+            <Route path="clientes" element={<ClientesPage />} />
+            <Route path="caja" element={<CajaPage />} />
+            <Route path="tienda" element={<PuntoVentaPage />} /> 
+            <Route path="perfil" element={<RecepcionPerfilPage />} />
+          </Route>
+          
+          <Route path="/veterinario" element={<VeterinarioDashboard />}>
+            <Route index element={<InicioVeterinario />} />
+            <Route path="agenda" element={<MiAgendaPage />} />
+            <Route path="pacientes" element={<MisPacientesPage />} />
+            <Route path="pacientes/:id/historial" element={<HistorialClinicoPage />} />
+            <Route path="horarios" element={<MisHorariosPage />} />
+            <Route path="consultas" element={<ConsultasVeterinarioPage />} />
+            <Route path="perfil" element={<MiPerfilPage />} />
+          </Route>
+
+          <Route path="/auxiliar/*" element={<AuxiliarDashboard />} />  
+        </Routes>
+      </Router>
+    </>
   );
 }
 export default App;

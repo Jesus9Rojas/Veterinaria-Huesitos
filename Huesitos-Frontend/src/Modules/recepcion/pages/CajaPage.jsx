@@ -5,6 +5,7 @@ import {
   CreditCard, Banknote, Smartphone, X, Activity, Download, Users, FileText,
   AlertCircle, QrCode, ToggleLeft, ToggleRight, ShoppingCart
 } from 'lucide-react';
+import { sileo } from 'sileo';
 import { listarTransacciones, procesarPagoTransaccion, descargarComprobanteSeguro } from '../../../services/transaccionService';
 import { obtenerDetallesPedido } from '../../../services/posService';
 
@@ -22,7 +23,10 @@ const CajaPage = () => {
   
   const [cuentaConPOS, setCuentaConPOS] = useState(true); 
   const [montoRecibido, setMontoRecibido] = useState('');
-  const [nroReferencia, setNroReferencia] = useState('');
+
+  // ESTADOS ESPECÍFICOS DE REFERENCIA
+  const [datosTarjeta, setDatosTarjeta] = useState({ numero: '', fecha: '', cvv: '' });
+  const [referenciaYape, setReferenciaYape] = useState('');
 
   const [modalDetallesOpen, setModalDetallesOpen] = useState(false);
   const [transaccionDetalle, setTransaccionDetalle] = useState(null);
@@ -81,22 +85,37 @@ const CajaPage = () => {
     setTransaccionSeleccionada(transaccion);
     setMedioPago('EFECTIVO');
     setMontoRecibido('');
-    setNroReferencia('');
+    setDatosTarjeta({ numero: '', fecha: '', cvv: '' });
+    setReferenciaYape('');
     setCuentaConPOS(true);
     setModalPagoOpen(true);
+  };
+
+  const handleCambioMedioPago = (e) => {
+    setMedioPago(e.target.value);
+    setMontoRecibido('');
+    setDatosTarjeta({ numero: '', fecha: '', cvv: '' });
+    setReferenciaYape('');
   };
 
   const handleProcesarPago = async (e) => {
     e.preventDefault();
     setProcesando(true);
     try {
-      await procesarPagoTransaccion(transaccionSeleccionada.id, medioPago);
+      const peticion = procesarPagoTransaccion(transaccionSeleccionada.id, medioPago);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Procesando cobro...' },
+        success: { title: '¡Pago aprobado!', description: 'El recibo ha sido cerrado correctamente' },
+        error: { title: 'Error', description: 'No se pudo procesar el pago' }
+      });
+
+      await peticion;
+
       setModalPagoOpen(false);
-      setLoading(true);
       setTriggerRecarga(prev => prev + 1);
     } catch (error) {
       console.error("Error al cobrar:", error);
-      alert("No se pudo procesar el pago.");
     } finally {
       setProcesando(false);
     }
@@ -124,6 +143,8 @@ const CajaPage = () => {
   const handleDescargarComprobante = async (id, tipo) => {
     setDescargando(true);
     try {
+      sileo.show({ title: 'Generando PDF...', description: 'Espera un momento', icon: <Activity className="animate-spin text-sky-500"/> });
+      
       const blob = await descargarComprobanteSeguro(id, tipo);
       const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
       const link = document.createElement('a');
@@ -133,13 +154,26 @@ const CajaPage = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      
+      sileo.success({ title: '¡Listo!', description: 'Comprobante descargado' });
     } catch (error) {
       console.error("Error al descargar:", error);
-      alert("No se pudo generar el documento. Verifica los permisos del servidor.");
+      sileo.error({ title: 'Error', description: 'No se pudo generar el documento. Verifica los permisos del servidor.' });
     } finally {
       setDescargando(false);
     }
   };
+
+  const vuelto = parseFloat(montoRecibido || 0) - (transaccionSeleccionada?.monto || 0);
+  const vueltoValido = vuelto >= 0;
+
+  const botonHabilitado = !procesando && (
+    (medioPago === 'EFECTIVO' && vueltoValido && montoRecibido !== '') ||
+    (medioPago === 'TARJETA_CREDITO' && datosTarjeta.numero.length >= 15) ||
+    (medioPago === 'TARJETA_DEBITO' && datosTarjeta.numero.length >= 15) ||
+    ((medioPago === 'YAPE' || medioPago === 'PLIN') && referenciaYape.length >= 4) ||
+    ((medioPago !== 'EFECTIVO') && cuentaConPOS)
+  );
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
@@ -397,22 +431,22 @@ const CajaPage = () => {
                 <div className="grid grid-cols-4 gap-2">
                   
                   <label className={`flex flex-col items-center justify-center py-3 rounded-xl border-2 cursor-pointer transition-all ${medioPago === 'EFECTIVO' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-400 hover:bg-slate-50'}`}>
-                    <input type="radio" name="medioPago" value="EFECTIVO" className="hidden" checked={medioPago === 'EFECTIVO'} onChange={(e) => setMedioPago(e.target.value)} />
+                    <input type="radio" name="medioPago" value="EFECTIVO" className="hidden" checked={medioPago === 'EFECTIVO'} onChange={handleCambioMedioPago} />
                     <Banknote size={24} className="mb-1" />
                     <span className="text-[10px] font-black uppercase">Efectivo</span>
                   </label>
                   <label className={`flex flex-col items-center justify-center py-3 rounded-xl border-2 cursor-pointer transition-all ${medioPago === 'TARJETA_CREDITO' ? 'border-sky-500 bg-sky-50 text-sky-700' : 'border-slate-200 bg-white text-slate-400 hover:bg-slate-50'}`}>
-                    <input type="radio" name="medioPago" value="TARJETA_CREDITO" className="hidden" checked={medioPago === 'TARJETA_CREDITO'} onChange={(e) => setMedioPago(e.target.value)} />
+                    <input type="radio" name="medioPago" value="TARJETA_CREDITO" className="hidden" checked={medioPago === 'TARJETA_CREDITO'} onChange={handleCambioMedioPago} />
                     <CreditCard size={24} className="mb-1" />
                     <span className="text-[10px] font-black uppercase">Tarjeta</span>
                   </label>
                   <label className={`flex flex-col items-center justify-center py-3 rounded-xl border-2 cursor-pointer transition-all ${medioPago === 'YAPE' ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-slate-200 bg-white text-slate-400 hover:bg-slate-50'}`}>
-                    <input type="radio" name="medioPago" value="YAPE" className="hidden" checked={medioPago === 'YAPE'} onChange={(e) => setMedioPago(e.target.value)} />
+                    <input type="radio" name="medioPago" value="YAPE" className="hidden" checked={medioPago === 'YAPE'} onChange={handleCambioMedioPago} />
                     <Smartphone size={24} className="mb-1" />
                     <span className="text-[10px] font-black uppercase">Yape</span>
                   </label>
                   <label className={`flex flex-col items-center justify-center py-3 rounded-xl border-2 cursor-pointer transition-all ${medioPago === 'PLIN' ? 'border-sky-500 bg-sky-50 text-sky-700' : 'border-slate-200 bg-white text-slate-400 hover:bg-slate-50'}`}>
-                    <input type="radio" name="medioPago" value="PLIN" className="hidden" checked={medioPago === 'PLIN'} onChange={(e) => setMedioPago(e.target.value)} />
+                    <input type="radio" name="medioPago" value="PLIN" className="hidden" checked={medioPago === 'PLIN'} onChange={handleCambioMedioPago} />
                     <Smartphone size={24} className="mb-1" />
                     <span className="text-[10px] font-black uppercase">Plin</span>
                   </label>
@@ -427,7 +461,7 @@ const CajaPage = () => {
                     </div>
                     <button 
                       type="button" 
-                      onClick={() => { setCuentaConPOS(!cuentaConPOS); setNroReferencia(''); }}
+                      onClick={() => { setCuentaConPOS(!cuentaConPOS); setDatosTarjeta({ numero: '', fecha: '', cvv: '' }); setReferenciaYape(''); }}
                       className={`transition-colors ${cuentaConPOS ? 'text-emerald-500' : 'text-slate-300'}`}
                     >
                       {cuentaConPOS ? <ToggleRight size={36} /> : <ToggleLeft size={36} />}
@@ -476,11 +510,11 @@ const CajaPage = () => {
                         <CreditCard size={22} className="text-sky-400" />
                       </div>
                       <div className="flex-1">
-                        <label className="block text-xs font-bold text-sky-700 mb-1">N° de Voucher / Referencia</label>
+                        <label className="block text-xs font-bold text-sky-700 mb-1">N° de Tarjeta (Falsa para demo)</label>
                         <input 
-                          type="text" required value={nroReferencia} onChange={(e) => setNroReferencia(e.target.value)} 
-                          className="w-full px-3 py-2.5 bg-white border border-sky-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-sky-500"
-                          placeholder="Ej: 00012345"
+                          type="text" required maxLength="16" value={datosTarjeta.numero} onChange={(e) => setDatosTarjeta({...datosTarjeta, numero: e.target.value.replace(/\D/g, '')})} 
+                          className="w-full px-3 py-2.5 bg-white border border-sky-200 rounded-xl text-sm font-bold tracking-widest text-slate-800 outline-none focus:ring-2 focus:ring-sky-500"
+                          placeholder="0000 0000 0000 0000"
                         />
                       </div>
                     </div>
@@ -494,7 +528,7 @@ const CajaPage = () => {
                       <div className="flex-1">
                         <label className={`block text-xs font-bold mb-1 ${medioPago === 'YAPE' ? 'text-purple-700' : 'text-sky-700'}`}>Número de Operación Celular</label>
                         <input 
-                          type="text" required value={nroReferencia} onChange={(e) => setNroReferencia(e.target.value)} 
+                          type="text" required value={referenciaYape} onChange={(e) => setReferenciaYape(e.target.value)} 
                           className={`w-full px-3 py-2.5 bg-white border rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 ${medioPago === 'YAPE' ? 'border-purple-200 focus:ring-purple-500' : 'border-sky-200 focus:ring-sky-500'}`}
                           placeholder="Código de 6 dígitos"
                         />
@@ -507,7 +541,11 @@ const CajaPage = () => {
 
               <div className="flex justify-end gap-3 pt-6 border-t border-slate-100 mt-6">
                 <button type="button" onClick={() => setModalPagoOpen(false)} className="px-5 py-3 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 transition-colors">Cancelar</button>
-                <button type="submit" disabled={procesando} className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-black rounded-xl shadow-lg shadow-emerald-500/30 transition-all flex items-center gap-2">
+                <button 
+                  type="submit" 
+                  disabled={!botonHabilitado} 
+                  className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-black rounded-xl shadow-lg shadow-emerald-500/30 flex items-center gap-2 transition-all"
+                >
                   {procesando ? <Activity size={18} className="animate-spin"/> : <CheckCircle2 size={18}/>}
                   {procesando ? 'Verificando...' : 'Confirmar e Imprimir'}
                 </button>

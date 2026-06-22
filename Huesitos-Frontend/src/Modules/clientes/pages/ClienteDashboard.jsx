@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, LogOut, ChevronUp, CalendarPlus, Heart, CalendarDays } from 'lucide-react';
+import { Menu, X, LogOut, ChevronUp, CalendarPlus, Heart, CalendarDays, UserCircle } from 'lucide-react';
 import logo from '../../../assets/Logo Huesitos.png';
 import ModalReservaCliente from '../../../components/ModalReservaCliente';
 
@@ -8,6 +8,9 @@ const ClienteDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [menuPerfilOpen, setMenuPerfilOpen] = useState(false);
   const [modalReservaAbierto, setModalReservaAbierto] = useState(false);
+  
+  // ESTADO DE DEFENSA: Evita el bucle infinito de imágenes rotas
+  const [imgError, setImgError] = useState(false); 
   
   const usuarioNombre = localStorage.getItem('usuarioNombre') || 'Cliente';
   const usuarioFoto = localStorage.getItem('usuarioFoto') || '/uploads/defecto-usuario.png';
@@ -94,17 +97,21 @@ const ClienteDashboard = () => {
             className="w-full flex items-center justify-between gap-3 hover:bg-slate-800/50 rounded-2xl p-3 transition-colors cursor-pointer group"
           >
             <div className="flex items-center gap-3 overflow-hidden">
-              <img 
-                src={`http://localhost:8080${usuarioFoto}`} 
-                alt="Perfil" 
-                className="w-10 h-10 rounded-full border border-slate-700 object-cover bg-slate-900 shrink-0" 
-                onError={(e) => { 
-                  if (!e.target.dataset.error) {
-                    e.target.dataset.error = true;
-                    e.target.src = '/uploads/defecto-usuario.png'; 
-                  }
-                }} 
-              />
+              
+              {/* SOLUCIÓN AL BUCLE DE IMAGEN */}
+              {!imgError ? (
+                <img 
+                  src={`http://localhost:8080${usuarioFoto}`} 
+                  alt="Perfil" 
+                  className="w-10 h-10 rounded-full border border-slate-600 object-cover bg-slate-900 shrink-0" 
+                  onError={() => setImgError(true)} 
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full border border-slate-600 bg-slate-800 flex items-center justify-center text-slate-400 shrink-0">
+                  <UserCircle size={24} strokeWidth={1.5} />
+                </div>
+              )}
+
               <div className="text-left overflow-hidden">
                 <p className="text-sm font-bold text-white truncate group-hover:text-sky-400 transition-colors">{usuarioNombre}</p>
                 <p className="text-[10px] font-black uppercase text-sky-500 tracking-widest truncate">Cliente</p>

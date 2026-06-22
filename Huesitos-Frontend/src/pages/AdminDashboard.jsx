@@ -114,7 +114,18 @@ const AdminDashboard = () => {
                 <p className="text-sm font-bold text-slate-800">{usuarioNombre}</p>
                 <p className="text-[10px] font-black uppercase text-sky-600 tracking-widest">{usuarioRol}</p>
               </div>
-              <img src={`http://localhost:8080${usuarioFoto}`} alt="Perfil" className="w-10 h-10 rounded-full border-2 border-slate-200 object-cover bg-white shadow-sm" onError={(e) => { e.target.onerror = null; e.target.src='/uploads/defecto-usuario.png'; }} />
+              
+              <img 
+                src={`http://localhost:8080${usuarioFoto}`} 
+                alt="Perfil" 
+                className="w-10 h-10 rounded-full border-2 border-slate-200 object-cover bg-white shadow-sm shrink-0" 
+                onError={(e) => { 
+                  if (!e.target.dataset.error) {
+                    e.target.dataset.error = true;
+                    e.target.src = '/uploads/defecto-usuario.png'; 
+                  }
+                }} 
+              />
               <ChevronDown size={16} className="text-slate-400" />
             </button>
 
@@ -123,7 +134,19 @@ const AdminDashboard = () => {
                 <div className="fixed inset-0 z-40" onClick={() => setMenuPerfilOpen(false)}></div>
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-50 animate-in slide-in-from-top-2">
                   <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center gap-3">
-                    <img src={`http://localhost:8080${usuarioFoto}`} alt="" className="w-12 h-12 rounded-full object-cover border border-slate-200 bg-white" onError={(e) => { e.target.onerror = null; e.target.src='/uploads/defecto-usuario.png'; }}/>
+                    
+                    <img 
+                      src={`http://localhost:8080${usuarioFoto}`} 
+                      alt="" 
+                      className="w-12 h-12 rounded-full object-cover border border-slate-200 bg-white shrink-0" 
+                      onError={(e) => { 
+                        if (!e.target.dataset.error) {
+                          e.target.dataset.error = true;
+                          e.target.src = '/uploads/defecto-usuario.png'; 
+                        }
+                      }}
+                    />
+                    
                     <div className="overflow-hidden">
                       <p className="font-bold text-slate-800 truncate">{usuarioNombre}</p>
                       <p className="text-xs text-slate-500 truncate">{usuarioCorreo}</p>

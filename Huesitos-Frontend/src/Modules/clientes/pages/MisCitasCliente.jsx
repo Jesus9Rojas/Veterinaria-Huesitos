@@ -274,8 +274,8 @@ const MisCitasCliente = () => {
           <div className="space-y-4">
             <div className="flex justify-end mb-4">
                <button 
-                  onClick={() => setModalCarnet(true)}
-                  className="bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm"
+                 onClick={() => setModalCarnet(true)}
+                 className="bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm"
                >
                  <FileText size={18}/> Ver Carnet Clínico
                </button>

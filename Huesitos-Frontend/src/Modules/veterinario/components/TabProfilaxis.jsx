@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Syringe, ShieldAlert, Plus, HelpCircle } from 'lucide-react';
 import axios from 'axios';
+import { sileo } from 'sileo';
+import Swal from 'sweetalert2';
 
 const TabProfilaxis = ({ vacunas, desparasitaciones, onGuardarVacuna, onGuardarDesparasitacion }) => {
   const [catalogoVacunas, setCatalogoVacunas] = useState([]);
@@ -30,26 +32,57 @@ const TabProfilaxis = ({ vacunas, desparasitaciones, onGuardarVacuna, onGuardarD
     return `${partes[2]}/${partes[1]}/${partes[0]}`; 
   };
 
-  const handleVacunaSubmit = (e) => {
+  const handleVacunaSubmit = async (e) => {
     e.preventDefault();
-    if (!formV.vacunaId) return alert("Por favor, seleccione una vacuna de la lista.");
+    if (!formV.vacunaId) {
+      Swal.fire({
+        title: 'Error', text: 'Por favor, seleccione una vacuna de la lista.', icon: 'warning',
+        buttonsStyling: false,
+        customClass: {
+          container: 'z-[99999]',
+          popup: 'rounded-3xl shadow-2xl border border-slate-100',
+          title: 'text-xl font-black text-slate-800',
+          confirmButton: 'bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl px-5 py-2.5 mx-2'
+        }
+      });
+      return;
+    }
     
-    onGuardarVacuna({
-      vacuna: { id: parseInt(formV.vacunaId) },
-      dosis: formV.dosis,
-      fechaProximaDosis: formV.proximaDosis
-    });
-    setFormV({ vacunaId: '', dosis: 'Primera', proximaDosis: '' });
+    try {
+      sileo.promise(Promise.resolve(onGuardarVacuna({
+        vacuna: { id: parseInt(formV.vacunaId) },
+        dosis: formV.dosis,
+        fechaProximaDosis: formV.proximaDosis
+      })), {
+        loading: { title: 'Procesando biológico...' },
+        success: { title: '¡Éxito!', description: 'Vacuna aplicada y cobro enviado a Caja.' },
+        error: { title: 'Error', description: 'No se pudo registrar la vacuna.' }
+      });
+
+      setFormV({ vacunaId: '', dosis: 'Primera', proximaDosis: '' });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const handleDesparasitacionSubmit = (e) => {
+  const handleDesparasitacionSubmit = async (e) => {
     e.preventDefault();
-    onGuardarDesparasitacion({
+    
+    try {
+      sileo.promise(Promise.resolve(onGuardarDesparasitacion({
         tipo: formD.tipo,
         producto: formD.producto,
         proximaFecha: formD.proximaFecha
-    });
-    setFormD({ tipo: 'INTERNA', producto: '', proximaFecha: '' });
+      })), {
+        loading: { title: 'Registrando desparasitación...' },
+        success: { title: '¡Éxito!', description: 'Procedimiento guardado y cobro enviado a Caja.' },
+        error: { title: 'Error', description: 'No se pudo registrar.' }
+      });
+
+      setFormD({ tipo: 'INTERNA', producto: '', proximaFecha: '' });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (

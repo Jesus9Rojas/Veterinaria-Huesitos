@@ -87,8 +87,8 @@ const AuxiliarDashboard = () => {
             <Pill size={20} className={vistaActual === 'medicinas' ? "text-white" : "text-slate-500 group-hover:text-sky-400 transition-colors"} /> Medicinas y Suplementos
           </button>
           <button onClick={() => setVistaActual('antiparasitarios')} className={vistaActual === 'antiparasitarios' ? activeBtnClass : inactiveBtnClass}>
-  <Bug size={20} className={vistaActual === 'antiparasitarios' ? "text-white" : "text-slate-500 group-hover:text-sky-400 transition-colors"} /> Antiparasitarios
-</button>
+            <Bug size={20} className={vistaActual === 'antiparasitarios' ? "text-white" : "text-slate-500 group-hover:text-sky-400 transition-colors"} /> Antiparasitarios
+          </button>
         </nav>
 
         <div className="p-4 border-t border-slate-800/50 bg-slate-950/50">
@@ -114,14 +114,15 @@ const AuxiliarDashboard = () => {
                 <img 
                   src={`http://localhost:8080${usuarioFoto}`} 
                   alt="Perfil" 
-                  className="w-10 h-10 rounded-full border-2 border-slate-200 object-cover bg-white shadow-sm" 
+                  className="w-10 h-10 rounded-full border-2 border-slate-200 object-cover bg-white shadow-sm shrink-0" 
                   onError={() => setImgError(true)} 
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-white border-2 border-slate-200 flex items-center justify-center text-slate-400 shadow-sm">
+                <div className="w-10 h-10 rounded-full bg-white border-2 border-slate-200 flex items-center justify-center text-slate-400 shadow-sm shrink-0">
                   <UserCircle size={24} strokeWidth={1.5} />
                 </div>
               )}
+              
               <ChevronDown size={16} className="text-slate-400" />
             </button>
 
@@ -130,18 +131,20 @@ const AuxiliarDashboard = () => {
                 <div className="fixed inset-0 z-40" onClick={() => setMenuPerfilOpen(false)}></div>
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-50 animate-in slide-in-from-top-2">
                   <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center gap-3">
+                    
                     {!imgError ? (
                       <img 
                         src={`http://localhost:8080${usuarioFoto}`} 
                         alt="" 
-                        className="w-12 h-12 rounded-full object-cover border border-slate-200 bg-white" 
+                        className="w-12 h-12 rounded-full object-cover border border-slate-200 bg-white shrink-0" 
                         onError={() => setImgError(true)}
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+                      <div className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
                         <UserCircle size={28} strokeWidth={1.5} />
                       </div>
                     )}
+                    
                     <div className="overflow-hidden">
                       <p className="font-bold text-slate-800 truncate">{usuarioNombre}</p>
                       <p className="text-xs text-slate-500 truncate">{usuarioCorreo}</p>

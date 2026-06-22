@@ -1,11 +1,7 @@
 import { useState, useEffect } from "react";
 import { Download, Search, Filter, DollarSign, Activity, FileText, CalendarDays, Archive } from 'lucide-react';
 import axios from 'axios';
-import Swal from 'sweetalert2';
-
-const Toast = Swal.mixin({
-  toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true
-});
+import { sileo } from 'sileo';
 
 const FinanzasPage = () => {
   const [transacciones, setTransacciones] = useState([]);
@@ -84,7 +80,7 @@ const FinanzasPage = () => {
 
   const exportarExcel = () => {
     if (transaccionesFiltradas.length === 0) {
-      return Toast.fire({ icon: 'warning', title: 'No hay transacciones para exportar' });
+      return sileo.warning({ title: 'Aviso', description: 'No hay transacciones para exportar' });
     }
 
     const headers = ["ID Transaccion", "Fecha", "Concepto", "Medio de Pago", "Estado", "Monto (S/.)"];
@@ -105,7 +101,7 @@ const FinanzasPage = () => {
     link.click();
     document.body.removeChild(link);
     
-    Toast.fire({ icon: 'success', title: 'Archivo descargado' });
+    sileo.success({ title: '¡Listo!', description: 'Archivo Excel generado y descargado' });
   };
 
   if (loading) return <div className="flex flex-col justify-center items-center h-64 text-emerald-500 font-semibold animate-pulse gap-3"><Activity className="animate-spin" size={36} /><p>Cargando registros financieros...</p></div>;

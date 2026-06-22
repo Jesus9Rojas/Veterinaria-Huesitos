@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { FileText, Syringe, Bug, BookOpen, Save, FileDown, CheckCircle2, Pill, Activity, Plus, Trash2, Clock } from 'lucide-react';
-import Swal from 'sweetalert2';
+import { FileText, Syringe, Bug, BookOpen, Save, FileDown, CheckCircle2, Pill, Activity, Clock, Plus, Trash2 } from 'lucide-react';
+import { sileo } from 'sileo';
 import axios from 'axios';
 import { 
   guardarConsultaMedica, obtenerConsultasMascota,
@@ -9,8 +9,6 @@ import {
   aplicarDesparasitacion, obtenerHistorialAnti,
   recetarMedicinasYCobrar, emitirRecetaPdf, obtenerRecetasMascota
 } from '../../../services/historialClinicoService';
-
-const Toast = Swal.mixin({ toast: true, position: "top-end", showConfirmButton: false, timer: 3000 });
 
 const HistorialClinicoPage = () => {
   const { id: mascotaId } = useParams();
@@ -90,43 +88,64 @@ const HistorialClinicoPage = () => {
       };
       if (citaId) payload.cita = { id: citaId };
       
-      await guardarConsultaMedica(payload);
-      Toast.fire({ icon: 'success', title: 'Consulta registrada en el historial' });
+      const peticion = guardarConsultaMedica(payload);
+      
+      sileo.promise(peticion, {
+        loading: { title: 'Guardando expediente...' },
+        success: { title: '¡Guardado!', description: 'Consulta registrada en el historial' },
+        error: { title: 'Error', description: 'No se pudo guardar la consulta' }
+      });
+
+      await peticion;
+
       setFormConsulta({ motivoConsulta: '', sintomas: '', diagnostico: '', tratamiento: '', observaciones: '' });
       setRefresh(prev => prev + 1);
     } catch (error) {
       console.error(error); 
-      Toast.fire({ icon: 'error', title: 'Error al guardar la consulta' });
     } finally { setProcesando(false); }
   };
 
   const handleGuardarVacuna = async (e) => {
     e.preventDefault();
-    if (!citaId) return Toast.fire({ icon: 'warning', title: 'Para descontar stock necesitas abrir desde una Cita activa.' });
+    if (!citaId) return sileo.warning({ title: 'Aviso', description: 'Para descontar stock necesitas abrir desde una Cita activa.' });
     setProcesando(true);
     try {
-      await aplicarVacuna(mascotaId, citaId, formVacuna);
-      Toast.fire({ icon: 'success', title: 'Vacuna aplicada y cobro enviado a Caja.' });
+      const peticion = aplicarVacuna(mascotaId, citaId, formVacuna);
+      
+      sileo.promise(peticion, {
+        loading: { title: 'Aplicando biológico...' },
+        success: { title: '¡Vacuna aplicada!', description: 'El cobro fue enviado a Caja.' },
+        error: { title: 'Error', description: 'No se pudo aplicar la vacuna' }
+      });
+
+      await peticion;
+
       setFormVacuna({ itemId: '', dosisOTipo: '', fechaAplicacion: new Date().toISOString().slice(0,10), fechaProxima: '', observaciones: '' });
       setRefresh(prev => prev + 1);
     } catch (error) { 
       console.error(error); 
-      Toast.fire({ icon: 'error', title: 'Error al aplicar vacuna' }); 
     } finally { setProcesando(false); }
   };
 
   const handleGuardarAnti = async (e) => {
     e.preventDefault();
-    if (!citaId) return Toast.fire({ icon: 'warning', title: 'Para descontar stock necesitas abrir desde una Cita activa.' });
+    if (!citaId) return sileo.warning({ title: 'Aviso', description: 'Para descontar stock necesitas abrir desde una Cita activa.' });
     setProcesando(true);
     try {
-      await aplicarDesparasitacion(mascotaId, citaId, formAnti);
-      Toast.fire({ icon: 'success', title: 'Desparasitación guardada y cobro enviado a Caja.' });
+      const peticion = aplicarDesparasitacion(mascotaId, citaId, formAnti);
+      
+      sileo.promise(peticion, {
+        loading: { title: 'Aplicando producto...' },
+        success: { title: '¡Éxito!', description: 'Desparasitación guardada y cobro enviado a Caja.' },
+        error: { title: 'Error', description: 'No se pudo aplicar el producto' }
+      });
+
+      await peticion;
+
       setFormAnti({ itemId: '', fechaAplicacion: new Date().toISOString().slice(0,10), fechaProxima: '', observaciones: '' });
       setRefresh(prev => prev + 1);
     } catch (error) { 
       console.error(error); 
-      Toast.fire({ icon: 'error', title: 'Error al aplicar antiparasitario' }); 
     } finally { setProcesando(false); }
   };
 
@@ -151,32 +170,39 @@ const HistorialClinicoPage = () => {
 
   const handleEmitirReceta = async (e) => {
     e.preventDefault();
-    if (!recetaConsultaId) return Toast.fire({ icon: 'error', title: 'Debes tener una consulta registrada primero.' });
+    if (!recetaConsultaId) return sileo.error({ title: 'Error', description: 'Debes tener una consulta registrada primero.' });
     
     if (!formReceta.medicamentos || formReceta.medicamentos.trim() === '') {
-      return Toast.fire({ icon: 'warning', title: 'Escribe o selecciona al menos un medicamento.' });
+      return sileo.warning({ title: 'Atención', description: 'Escribe o selecciona al menos un medicamento.' });
     }
 
     setProcesando(true);
     try {
+      let peticionCobro = null;
       if (carritoMedicinas.length > 0) {
         if (!citaId) throw new Error("Para vender medicinas de clínica debes estar en una cita activa.");
         const payloadCobro = carritoMedicinas.map(c => ({ tipoItem: 'MEDICINA', itemId: c.id, cantidad: c.cantidad }));
-        await recetarMedicinasYCobrar(citaId, payloadCobro);
+        peticionCobro = recetarMedicinasYCobrar(citaId, payloadCobro);
       }
 
-      await emitirRecetaPdf(recetaConsultaId, { 
+      const peticionReceta = emitirRecetaPdf(recetaConsultaId, { 
         medicamentos: formReceta.medicamentos, 
         indicaciones: formReceta.indicaciones 
       });
+
+      sileo.promise(Promise.all([peticionCobro, peticionReceta]), {
+        loading: { title: 'Generando documentos...' },
+        success: { title: '¡Receta Emitida!', description: 'Se generó el PDF y los cobros en caja.' },
+        error: (err) => ({ title: 'Error', description: err.message || 'No se pudo emitir la receta' })
+      });
+
+      await Promise.all([peticionCobro, peticionReceta]);
       
-      Toast.fire({ icon: 'success', title: 'Receta generada y cobros enviados a caja.' });
       setCarritoMedicinas([]); 
       setFormReceta({ medicamentos: '', indicaciones: '' });
       setRefresh(prev => prev + 1);
     } catch (error) {
       console.error(error); 
-      Toast.fire({ icon: 'error', title: error.message || 'Error al emitir receta' });
     } finally { setProcesando(false); }
   };
 
@@ -325,7 +351,7 @@ const HistorialClinicoPage = () => {
         )}
 
         {/* ==================================================== */}
-        {/* TABS 3: RECETAS (SOLUCIÓN DEL BOTÓN RESPONSIVO) */}
+        {/* TABS 3: RECETAS */}
         {/* ==================================================== */}
         {activeTab === 'RECETAS' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -340,7 +366,6 @@ const HistorialClinicoPage = () => {
                 </select>
               </div>
 
-              {/* CONTENEDOR CON FLEXBOX RESPONSIVO */}
               <div className="bg-white p-5 rounded-2xl border border-emerald-200 shadow-sm">
                 <label className="block text-xs font-bold text-emerald-700 mb-2">Paso 1: Agregar Medicamentos de Clínica (Cobro Automático en Caja)</label>
                 

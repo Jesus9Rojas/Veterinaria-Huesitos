@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Stethoscope, Plus, ClipboardList } from 'lucide-react';
+import { sileo } from 'sileo';
 
 const TabConsultas = ({ consultas, onGuardar }) => {
   const [formOpen, setFormOpen] = useState(false);
@@ -7,17 +8,30 @@ const TabConsultas = ({ consultas, onGuardar }) => {
     motivoConsulta: '', sintomas: '', diagnostico: '', tratamiento: '', observaciones: '' 
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onGuardar({
-      motivoConsulta: form.motivoConsulta,
-      sintomas: form.sintomas,
-      diagnostico: form.diagnostico,
-      tratamiento: form.tratamiento,
-      observaciones: form.observaciones
-    });
-    setForm({ motivoConsulta: '', sintomas: '', diagnostico: '', tratamiento: '', observaciones: '' });
-    setFormOpen(false);
+
+    try {
+      const payload = {
+        motivoConsulta: form.motivoConsulta,
+        sintomas: form.sintomas,
+        diagnostico: form.diagnostico,
+        tratamiento: form.tratamiento,
+        observaciones: form.observaciones
+      };
+
+      // Llamamos a la función onGuardar del padre envolviéndola en Sileo
+      sileo.promise(Promise.resolve(onGuardar(payload)), {
+        loading: { title: 'Guardando consulta...' },
+        success: { title: '¡Éxito!', description: 'La consulta médica ha sido anexada al historial.' },
+        error: { title: 'Error', description: 'No se pudo guardar la consulta.' }
+      });
+
+      setForm({ motivoConsulta: '', sintomas: '', diagnostico: '', tratamiento: '', observaciones: '' });
+      setFormOpen(false);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (

@@ -3,8 +3,7 @@ import { CalendarDays, Clock, User, Save, Trash2, Activity, CalendarClock, Alert
 import Swal from 'sweetalert2';
 import axios from 'axios';
 import { listarHorariosPorUsuario, crearHorario, eliminarHorario } from '../../../services/horarioService';
-
-const Toast = Swal.mixin({ toast: true, position: "top-end", showConfirmButton: false, timer: 3000 });
+import { sileo } from 'sileo';
 
 const GestionHorariosPage = () => {
   const [usuarios, setUsuarios] = useState([]);
@@ -45,7 +44,7 @@ const GestionHorariosPage = () => {
         }
       } catch (error) {
         console.error("Error al cargar usuarios:", error);
-        Toast.fire({ icon: 'error', title: 'Error al cargar la lista del personal' });
+        sileo.error({ title: 'Error', description: 'Error al cargar la lista del personal' });
       }
     };
     cargarUsuarios();
@@ -84,16 +83,15 @@ const GestionHorariosPage = () => {
   const handleGuardarHorario = async (e) => {
     e.preventDefault();
     if (!usuarioSeleccionado) {
-      return Toast.fire({ icon: 'warning', title: 'Selecciona un miembro del personal primero' });
+      return sileo.warning({ title: 'Atención', description: 'Selecciona un miembro del personal primero' });
     }
     if (diasSeleccionados.length === 0) {
-      return Toast.fire({ icon: 'warning', title: 'Selecciona al menos un día para aplicar el horario' });
+      return sileo.warning({ title: 'Atención', description: 'Selecciona al menos un día para aplicar el horario' });
     }
 
     setProcesando(true);
     try {
       const promesasGuardado = diasSeleccionados.map(dia => {
-        // AHORA PASAMOS EL USUARIO SELECCIONADO CORRECTAMENTE AL SERVICIO
         return crearHorario(usuarioSeleccionado, {
           diaSemana: dia,
           horaEntrada: form.horaEntrada,
@@ -101,8 +99,15 @@ const GestionHorariosPage = () => {
         });
       });
 
-      await Promise.all(promesasGuardado);
-      Toast.fire({ icon: 'success', title: `Se asignaron ${diasSeleccionados.length} turnos correctamente` });
+      const peticion = Promise.all(promesasGuardado);
+
+      sileo.promise(peticion, {
+         loading: { title: 'Asignando turnos...' },
+         success: { title: '¡Guardado!', description: `Se asignaron ${diasSeleccionados.length} turnos correctamente` },
+         error: { title: 'Error', description: 'Verifica la conexión con el servidor.' }
+      });
+
+      await peticion;
       
       setDiasSeleccionados([]);
       setForm({ horaEntrada: '', horaSalida: '' });
@@ -111,7 +116,6 @@ const GestionHorariosPage = () => {
 
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al guardar. Verifica la conexión con el servidor.' });
     } finally {
       setProcesando(false);
     }
@@ -130,12 +134,17 @@ const GestionHorariosPage = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await eliminarHorario(id);
+          const peticion = eliminarHorario(id);
+          sileo.promise(peticion, {
+            loading: { title: 'Eliminando...' },
+            success: { title: 'Turno eliminado' },
+            error: { title: 'Error', description: 'No se pudo eliminar el turno' }
+          });
+
+          await peticion;
           setHorarios(horarios.filter(h => h.id !== id));
-          Toast.fire({ icon: 'success', title: 'Turno eliminado' });
         } catch (error) {
           console.error(error);
-          Toast.fire({ icon: 'error', title: 'Error al eliminar el turno' });
         }
       }
     });
@@ -284,7 +293,7 @@ const GestionHorariosPage = () => {
                 </div>
               </div>
 
-              <button type="submit" disabled={procesando} className="bg-gradient-to-r from-sky-500 to-cyan-400 text-white shadow-lg transition-all w-full mt-2 py-3 bg-slate-800 hover:bg-slate-900 text-white font-black rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+              <button type="submit" disabled={procesando} className="bg-gradient-to-r from-sky-500 to-cyan-400 text-white shadow-lg transition-all w-full mt-2 py-3 bg-slate-800 hover:bg-slate-900 font-black rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
                 {procesando ? <Activity className="animate-spin" size={18}/> : <Save size={18}/>}
                 Guardar {diasSeleccionados.length > 0 ? diasSeleccionados.length : ''} Turno(s)
               </button>

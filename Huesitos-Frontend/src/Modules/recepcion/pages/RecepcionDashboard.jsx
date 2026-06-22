@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, CalendarDays, Users, Wallet, 
-  ShoppingBag, LogOut, Menu, X, Bell, User, ChevronUp, Trash2, CheckCircle2 
+  ShoppingBag, LogOut, Menu, X, Bell, User, ChevronUp, Trash2, CheckCircle2, UserCircle 
 } from 'lucide-react';
 import logo from '../../../assets/Logo Huesitos.png';
 import { 
@@ -18,6 +18,9 @@ const RecepcionDashboard = () => {
   
   const [notificacionesOpen, setNotificacionesOpen] = useState(false);
   const [notificaciones, setNotificaciones] = useState([]);
+  
+  // ESTADO DE DEFENSA: Evita bucle infinito si la imagen del usuario no carga
+  const [imgError, setImgError] = useState(false);
   
   const usuarioId = localStorage.getItem('usuarioId');
   const usuarioCorreo = localStorage.getItem('usuarioCorreo') || 'usuario@huesitos.com';
@@ -172,17 +175,21 @@ const RecepcionDashboard = () => {
             className="w-full flex items-center justify-between gap-3 hover:bg-slate-800/50 rounded-2xl p-3 transition-colors cursor-pointer group"
           >
             <div className="flex items-center gap-3 overflow-hidden">
-              <img 
-                src={`http://localhost:8080${usuarioFoto}`} 
-                alt="Perfil" 
-                className="w-10 h-10 rounded-full border border-slate-700 object-cover bg-slate-900 shrink-0" 
-                onError={(e) => { 
-                  if (!e.target.dataset.error) {
-                    e.target.dataset.error = true;
-                    e.target.src = '/uploads/defecto-usuario.png'; 
-                  }
-                }} 
-              />
+              
+              {/* LÓGICA DE ESCUDO ANTI-BUCLE APLICADA AQUÍ */}
+              {!imgError ? (
+                <img 
+                  src={`http://localhost:8080${usuarioFoto}`} 
+                  alt="Perfil" 
+                  className="w-10 h-10 rounded-full border border-slate-700 object-cover bg-slate-900 shrink-0" 
+                  onError={() => setImgError(true)} 
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full border border-slate-700 bg-slate-900 shrink-0 flex items-center justify-center text-slate-400">
+                  <UserCircle size={24} strokeWidth={1.5} />
+                </div>
+              )}
+
               <div className="text-left overflow-hidden">
                 <p className="text-sm font-bold text-white truncate group-hover:text-sky-400 transition-colors">{usuarioNombre}</p>
                 <p className="text-[10px] font-black uppercase text-sky-500 tracking-widest truncate">{usuarioRol}</p>

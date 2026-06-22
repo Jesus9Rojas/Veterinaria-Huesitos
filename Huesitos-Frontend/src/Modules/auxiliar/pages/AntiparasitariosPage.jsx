@@ -2,15 +2,11 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Bug, Plus, Activity, X, Info, Edit, Trash2, ArchiveRestore, Search, Eye, EyeOff, Shield } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { sileo } from 'sileo';
 import { 
   obtenerCatalogoAntiparasitarios, registrarAntiparasitario, 
   actualizarAntiparasitario, desactivarAntiparasitario, reactivarAntiparasitario 
 } from "../../../services/antiparasitarioService";
-
-const Toast = Swal.mixin({
-  toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true,
-  didOpen: (toast) => { toast.onmouseenter = Swal.stopTimer; toast.onmouseleave = Swal.resumeTimer; }
-});
 
 const AntiparasitariosPage = () => {
   const [antiparasitarios, setAntiparasitarios] = useState([]);
@@ -44,7 +40,6 @@ const AntiparasitariosPage = () => {
     return () => { isMounted = false; };
   }, [refreshTrigger]);
 
-  // Filtro Estricto
   const antiparasitariosFiltrados = antiparasitarios.filter(a => {
     const matchBusqueda = (a.nombre || '').toLowerCase().includes(busqueda.toLowerCase()) || 
                           (a.proveedor || '').toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -84,18 +79,19 @@ const AntiparasitariosPage = () => {
         activo: form.id ? (antiparasitarios.find(a => a.id === form.id)?.activo !== false) : true
       };
 
-      if (form.id) {
-        await actualizarAntiparasitario(form.id, payload);
-        Toast.fire({ icon: 'success', title: 'Registro actualizado con éxito' });
-      } else {
-        await registrarAntiparasitario(payload);
-        Toast.fire({ icon: 'success', title: 'Nuevo antiparasitario registrado' });
-      }
+      const peticion = form.id ? actualizarAntiparasitario(form.id, payload) : registrarAntiparasitario(payload);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Guardando registro...' },
+        success: { title: '¡Éxito!', description: form.id ? 'Registro actualizado con éxito' : 'Nuevo antiparasitario registrado' },
+        error: { title: 'Error', description: 'Error al guardar la información' }
+      });
+
+      await peticion;
       setModalOpen(false);
       setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al guardar la información' });
     } finally {
       setProcesando(false);
     }
@@ -104,19 +100,31 @@ const AntiparasitariosPage = () => {
   const handleDesactivar = async (id, nombre) => {
     const result = await Swal.fire({
       title: '¿Suspender producto?', text: `"${nombre}" ya no aparecerá en las ventas.`,
-      icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#94a3b8',
-      confirmButtonText: 'Sí, suspender', cancelButtonText: 'Cancelar'
+      icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, suspender', cancelButtonText: 'Cancelar',
+      buttonsStyling: false,
+      customClass: {
+        popup: 'rounded-3xl shadow-2xl border border-slate-100',
+        title: 'text-xl font-black text-slate-800',
+        confirmButton: 'bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl px-5 py-2.5 mx-2',
+        cancelButton: 'bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl px-5 py-2.5 mx-2'
+      }
     });
     if (!result.isConfirmed) return;
 
     try {
       setLoading(true);
-      await desactivarAntiparasitario(id);
+      const peticion = desactivarAntiparasitario(id);
+      
+      sileo.promise(peticion, {
+        loading: { title: 'Suspendiendo...' },
+        success: { title: 'Suspendido', description: 'El producto ha sido ocultado' },
+        error: { title: 'Error', description: 'No se pudo suspender' }
+      });
+
+      await peticion;
       setRefreshTrigger(prev => prev + 1);
-      Toast.fire({ icon: 'info', title: 'Producto suspendido' });
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al suspender' });
       setLoading(false);
     }
   };
@@ -124,19 +132,31 @@ const AntiparasitariosPage = () => {
   const handleReactivar = async (id, nombre) => {
     const result = await Swal.fire({
       title: '¿Habilitar producto?', text: `"${nombre}" volverá a estar disponible.`,
-      icon: 'question', showCancelButton: true, confirmButtonColor: '#10b981', cancelButtonColor: '#94a3b8',
-      confirmButtonText: 'Sí, habilitar', cancelButtonText: 'Cancelar'
+      icon: 'question', showCancelButton: true, confirmButtonText: 'Sí, habilitar', cancelButtonText: 'Cancelar',
+      buttonsStyling: false,
+      customClass: {
+        popup: 'rounded-3xl shadow-2xl border border-slate-100',
+        title: 'text-xl font-black text-slate-800',
+        confirmButton: 'bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl px-5 py-2.5 mx-2',
+        cancelButton: 'bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl px-5 py-2.5 mx-2'
+      }
     });
     if (!result.isConfirmed) return;
 
     try {
       setLoading(true);
-      await reactivarAntiparasitario(id);
+      const peticion = reactivarAntiparasitario(id);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Habilitando...' },
+        success: { title: '¡Listo!', description: 'El producto está activo nuevamente' },
+        error: { title: 'Error', description: 'No se pudo habilitar' }
+      });
+
+      await peticion;
       setRefreshTrigger(prev => prev + 1);
-      Toast.fire({ icon: 'success', title: 'Producto habilitado' });
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al habilitar' });
       setLoading(false);
     }
   };

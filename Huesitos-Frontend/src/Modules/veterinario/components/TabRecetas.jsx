@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Plus, Receipt } from 'lucide-react';
+import { sileo } from 'sileo';
 
 const TabRecetas = ({ recetas, consultas, onGuardar }) => {
   const [formOpen, setFormOpen] = useState(false);
@@ -13,15 +14,26 @@ const TabRecetas = ({ recetas, consultas, onGuardar }) => {
     return `${partes[2]}/${partes[1]}/${partes[0]}`;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onGuardar({ 
-      consultaMedicaId: form.consultaMedicaId, 
-      medicamentos: form.medicamentos, 
-      indicaciones: form.indicaciones 
-    });
-    setForm({ consultaMedicaId: '', medicamentos: '', indicaciones: '' });
-    setFormOpen(false);
+    try {
+      const payload = { 
+        consultaMedicaId: form.consultaMedicaId, 
+        medicamentos: form.medicamentos, 
+        indicaciones: form.indicaciones 
+      };
+
+      sileo.promise(Promise.resolve(onGuardar(payload)), {
+        loading: { title: 'Guardando receta...' },
+        success: { title: '¡Éxito!', description: 'La receta médica ha sido emitida y enlazada a la consulta.' },
+        error: { title: 'Error', description: 'No se pudo guardar la receta.' }
+      });
+
+      setForm({ consultaMedicaId: '', medicamentos: '', indicaciones: '' });
+      setFormOpen(false);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (

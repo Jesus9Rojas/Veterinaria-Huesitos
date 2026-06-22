@@ -2,9 +2,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { X, Search, Pill, Syringe, Bug, Plus, Trash2, ShoppingCart, CheckCircle2 } from "lucide-react";
 import axios from "axios";
-import Swal from "sweetalert2";
-
-const Toast = Swal.mixin({ toast: true, position: "top-end", showConfirmButton: false, timer: 3000 });
+import { sileo } from "sileo";
 
 const RecetaCobroAdicionalModal = ({ citaId, onClose, onGuardadoExitoso }) => {
   const [catalogo, setCatalogo] = useState([]);
@@ -40,7 +38,7 @@ const RecetaCobroAdicionalModal = ({ citaId, onClose, onGuardadoExitoso }) => {
   const agregarAlCarrito = (item) => {
     const existe = carrito.find(c => c.itemId === item.id && c.tipoItem === item.tipoItem);
     if (existe) {
-      if (existe.cantidad >= item.stock) return Toast.fire({ icon: 'warning', title: 'Stock máximo alcanzado' });
+      if (existe.cantidad >= item.stock) return sileo.warning({ title: 'Aviso', description: 'Stock máximo alcanzado' });
       setCarrito(carrito.map(c => c.itemId === item.id && c.tipoItem === item.tipoItem ? { ...c, cantidad: c.cantidad + 1, subtotal: (c.cantidad + 1) * c.precioUnitario } : c));
     } else {
       setCarrito([...carrito, { tipoItem: item.tipoItem, itemId: item.id, nombre: item.nombre, precioUnitario: item.precio, cantidad: 1, subtotal: item.precio, stockMax: item.stock }]);
@@ -52,18 +50,26 @@ const RecetaCobroAdicionalModal = ({ citaId, onClose, onGuardadoExitoso }) => {
   };
 
   const confirmarRecetaYCobro = async () => {
-    if (carrito.length === 0) return Toast.fire({ icon: 'warning', title: 'Agrega al menos un ítem' });
+    if (carrito.length === 0) return sileo.warning({ title: 'Aviso', description: 'Agrega al menos un ítem' });
     setProcesando(true);
     try {
       const payload = carrito.map(c => ({ tipoItem: c.tipoItem, itemId: c.itemId, cantidad: c.cantidad }));
-      await axios.post(`http://localhost:8080/api/citas/${citaId}/recetar-items`, payload, {
+      
+      const peticion = axios.post(`http://localhost:8080/api/citas/${citaId}/recetar-items`, payload, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
-      Toast.fire({ icon: 'success', title: 'Receta registrada y enviada a Caja' });
+
+      sileo.promise(peticion, {
+        loading: { title: 'Registrando...' },
+        success: { title: '¡Éxito!', description: 'Receta registrada y enviada a Caja' },
+        error: (err) => ({ title: 'Error', description: err.response?.data || 'Error al procesar la receta' })
+      });
+
+      await peticion;
       onGuardadoExitoso();
       onClose();
     } catch (error) {
-      Toast.fire({ icon: 'error', title: error.response?.data || 'Error al procesar la receta' });
+      console.error(error);
     } finally {
       setProcesando(false);
     }

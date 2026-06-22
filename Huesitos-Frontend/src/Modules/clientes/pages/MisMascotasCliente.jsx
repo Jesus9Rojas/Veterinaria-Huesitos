@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { Plus, Heart, Activity, X, AlertCircle, ShieldCheck, Info, PawPrint, Calendar, User, ActivitySquare } from 'lucide-react';
-import Swal from 'sweetalert2';
+import { createPortal } from 'react-dom';
+import { sileo } from 'sileo';
 
 const MisMascotasCliente = () => {
   const [mascotas, setMascotas] = useState([]);
@@ -77,7 +77,7 @@ const MisMascotasCliente = () => {
   const handleGuardar = async (e) => {
     e.preventDefault();
     if (!idDueño) {
-        Swal.fire('Error', 'No se pudo validar tu cuenta. Recarga la página.', 'error');
+        sileo.error({ title: 'Error', description: 'No se pudo validar tu cuenta. Recarga la página.' });
         return;
     }
 
@@ -93,19 +93,24 @@ const MisMascotasCliente = () => {
         dueno: { id: parseInt(idDueño) }  
       };
 
-      const res = await axios.post('http://localhost:8080/api/mascotas', payload, getConfig());
+      const peticion = axios.post('http://localhost:8080/api/mascotas', payload, getConfig());
       
-      Swal.fire({ icon: 'success', title: 'Mascota Registrada', showConfirmButton: false, timer: 1500 });
+      sileo.promise(peticion, {
+        loading: { title: 'Registrando mascota...' },
+        success: { title: '¡Mascota Registrada!', description: 'Se añadió a tu lista de engreídos' },
+        error: (err) => ({
+          title: 'No se pudo guardar',
+          description: typeof err.response?.data === 'string' ? err.response.data : 'Verifica los campos.'
+        })
+      });
+
+      const res = await peticion;
       setMascotas([...mascotas, res.data]);
       setModalAbierto(false);
       setForm({ nombre: '', especie: 'PERRO', raza: '', sexo: 'MACHO', pesoActual: '', fechaNacimiento: '', alertasMedicas: '' });
       
     } catch (error) {
       console.error(error);
-      const mensajeBackend = typeof error.response?.data === 'string' 
-          ? error.response.data 
-          : error.response?.data?.message || 'Verifica los campos.';
-      Swal.fire('No se pudo guardar', mensajeBackend, 'error');
     }
   };
 
@@ -192,9 +197,7 @@ const MisMascotasCliente = () => {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* MODAL DETALLES DE MASCOTA (CON FECHAS CORREGIDAS)                         */}
-      {/* ========================================================================= */}
+      {/* MODAL DETALLES DE MASCOTA */}
       {mascotaSeleccionada && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setMascotaSeleccionada(null)}></div>

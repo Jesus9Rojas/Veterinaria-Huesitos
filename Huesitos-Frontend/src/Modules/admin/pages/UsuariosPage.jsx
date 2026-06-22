@@ -3,10 +3,7 @@ import { createPortal } from "react-dom";
 import { obtenerListaUsuarios, modificarRolUsuario, modificarEstadoUsuario, obtenerDetallesDueño, obtenerDetallesPersonal, actualizarPersonal, registrarNuevoPersonal } from "../../../services/usuarioService";
 import { UserPlus, ShieldAlert, ShieldCheck, Edit, Mail, Lock, UserCircle, X, Info, Phone, CreditCard, User } from 'lucide-react';
 import Swal from 'sweetalert2';
-
-const Toast = Swal.mixin({
-  toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true
-});
+import { sileo } from 'sileo';
 
 const UsuariosPage = () => {
   const [usuarios, setUsuarios] = useState([]);
@@ -41,17 +38,22 @@ const UsuariosPage = () => {
 
   const handleRolChange = async (id, nuevoRol) => {
     try {
-      await modificarRolUsuario(id, nuevoRol);
+      const peticion = modificarRolUsuario(id, nuevoRol);
+      sileo.promise(peticion, {
+        loading: { title: 'Actualizando rol...' },
+        success: { title: '¡Listo!', description: 'Rol de usuario actualizado' },
+        error: { title: 'Error', description: 'No se pudo cambiar el rol' }
+      });
+
+      await peticion;
       setRefreshTrigger(prev => prev + 1);
-      Toast.fire({ icon: 'success', title: 'Rol de usuario actualizado' });
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'No se pudo cambiar el rol' });
     }
   };
 
   const handleEstadoToggle = async (id, estadoActual) => {
-    const estadoTxt = estadoActual ? "suspender" : "habilitar";
+    const estadoTxt = estadoActual ? "Suspender" : "Habilitar";
     const result = await Swal.fire({
       title: `¿${estadoTxt} usuario?`, icon: estadoActual ? 'warning' : 'question', showCancelButton: true,
       confirmButtonColor: estadoActual ? '#ef4444' : '#10b981', cancelButtonColor: '#94a3b8',
@@ -61,12 +63,17 @@ const UsuariosPage = () => {
     if (!result.isConfirmed) return;
 
     try {
-      await modificarEstadoUsuario(id, !estadoActual);
+      const peticion = modificarEstadoUsuario(id, !estadoActual);
+      sileo.promise(peticion, {
+        loading: { title: 'Procesando solicitud...' },
+        success: { title: 'Completado', description: `Acceso ${estadoActual ? 'suspendido' : 'habilitado'}` },
+        error: { title: 'Error', description: 'No se pudo procesar el cambio de estado' }
+      });
+
+      await peticion;
       setRefreshTrigger(prev => prev + 1);
-      Toast.fire({ icon: 'success', title: `Acceso ${estadoActual ? 'suspendido' : 'habilitado'}` });
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al cambiar estado' });
     }
   };
 
@@ -109,18 +116,25 @@ const UsuariosPage = () => {
   const ejecutarGuardadoCredenciales = async (e) => {
     e.preventDefault();
     if (editForm.dni && editForm.dni.length > 0 && editForm.dni.length < 8) {
-      return Toast.fire({ icon: 'warning', title: 'El DNI debe tener 8 dígitos' });
+      return sileo.warning({ title: 'Atención', description: 'El DNI debe tener 8 dígitos' });
     }
     setProcesandoForm(true);
     try {
-      await actualizarPersonal(usuarioSeleccionado.id, editForm);
+      const peticion = actualizarPersonal(usuarioSeleccionado.id, editForm);
+      sileo.promise(peticion, {
+        loading: { title: 'Actualizando ficha...' },
+        success: { title: '¡Éxito!', description: 'Ficha actualizada correctamente' },
+        error: (err) => ({ 
+          title: 'Error', 
+          description: typeof err.response?.data === 'string' ? err.response.data : "Ocurrió un error al actualizar" 
+        })
+      });
+
+      await peticion;
       setModalOpen(false);
       setRefreshTrigger(prev => prev + 1);
-      Toast.fire({ icon: 'success', title: 'Ficha actualizada' });
     } catch (error) {
       console.error(error);
-      const msg = typeof error.response?.data === 'string' ? error.response.data : error.response?.data?.message || "Error al actualizar";
-      Toast.fire({ icon: 'error', title: msg });
     } finally {
       setProcesandoForm(false);
     }
@@ -129,19 +143,26 @@ const UsuariosPage = () => {
   const ejecutarCreacionPersonal = async (e) => {
     e.preventDefault();
     if (crearForm.dni && crearForm.dni.length > 0 && crearForm.dni.length < 8) {
-      return Toast.fire({ icon: 'warning', title: 'El DNI debe tener 8 dígitos' });
+      return sileo.warning({ title: 'Atención', description: 'El DNI debe tener 8 dígitos' });
     }
     setProcesandoCreacion(true);
     try {
-      await registrarNuevoPersonal(crearForm);
+      const peticion = registrarNuevoPersonal(crearForm);
+      sileo.promise(peticion, {
+        loading: { title: 'Registrando personal...' },
+        success: { title: '¡Personal registrado!', description: 'El colaborador ahora tiene acceso al sistema' },
+        error: (err) => ({ 
+          title: 'Error', 
+          description: typeof err.response?.data === 'string' ? err.response.data : "Ocurrió un error. Verifica el correo." 
+        })
+      });
+
+      await peticion;
       setModalCrearOpen(false);
       setCrearForm({ nombreCompleto: "", dni: "", telefono: "", correo: "", contrasena: "", rol: "RECEPCIONISTA" });
       setRefreshTrigger(prev => prev + 1);
-      Toast.fire({ icon: 'success', title: 'Personal registrado exitosamente' });
     } catch (error) {
       console.error(error);
-      const msg = typeof error.response?.data === 'string' ? error.response.data : error.response?.data?.message || "Ocurrió un error. Verifica el correo.";
-      Toast.fire({ icon: 'error', title: msg });
     } finally {
       setProcesandoCreacion(false);
     }

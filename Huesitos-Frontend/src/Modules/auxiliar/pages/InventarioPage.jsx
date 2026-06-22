@@ -5,22 +5,11 @@ import {
   Layers, Tag, Activity, CheckCircle2, X, Image as ImageIcon, Eye, Trash2, ArchiveRestore, EyeOff
 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { sileo } from 'sileo';
 import { 
   listarProductos, listarTodosProductos, listarCategorias, guardarProducto, 
   ingresarLoteInventario, crearCategoria, desactivarProducto, activarProducto 
 } from '../../../services/inventarioService';
-
-const Toast = Swal.mixin({
-  toast: true,
-  position: "top-end",
-  showConfirmButton: false,
-  timer: 3000,
-  timerProgressBar: true,
-  didOpen: (toast) => {
-    toast.onmouseenter = Swal.stopTimer;
-    toast.onmouseleave = Swal.resumeTimer;
-  }
-});
 
 const InventarioPage = () => {
   const [productos, setProductos] = useState([]);
@@ -71,7 +60,6 @@ const InventarioPage = () => {
     return () => { isMounted = false; };
   }, [triggerRecarga, mostrarInactivos]);
 
-  // SOLUCIÓN APLICADA: Filtro estricto (O solo activos, O solo suspendidos)
   const productosFiltrados = productos.filter(p => {
     const matchBusqueda = (p.nombre || '').toLowerCase().includes(busqueda.toLowerCase()) ||
                           (p.categoria?.nombre || '').toLowerCase().includes(busqueda.toLowerCase());
@@ -111,13 +99,20 @@ const InventarioPage = () => {
         categoria: { id: parseInt(formProducto.categoriaId) },
         fotoUrl: formProducto.fotoUrl || "/uploads/defecto-producto.png", activo: true
       };
-      await guardarProducto(payload);
+      
+      const peticion = guardarProducto(payload);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Guardando producto...' },
+        success: { title: '¡Éxito!', description: formProducto.id ? 'Producto actualizado' : 'Producto registrado' },
+        error: { title: 'Error', description: 'No se pudo guardar el producto' }
+      });
+
+      await peticion;
       setModalProductoOpen(false);
       setTriggerRecarga(prev => prev + 1);
-      Toast.fire({ icon: 'success', title: formProducto.id ? 'Producto actualizado' : 'Producto registrado' });
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al guardar producto' });
     } finally {
       setGuardandoProd(false);
     }
@@ -126,20 +121,33 @@ const InventarioPage = () => {
   const handleDesactivarProducto = async () => {
     const result = await Swal.fire({
       title: '¿Suspender producto?', text: `"${formProducto.nombre}" dejará de estar disponible.`,
-      icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#94a3b8',
-      confirmButtonText: 'Sí, suspender', cancelButtonText: 'Cancelar'
+      icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, suspender', cancelButtonText: 'Cancelar',
+      buttonsStyling: false,
+      customClass: {
+        container: 'z-[99999]', // SOLUCIÓN: Z-Index ultra alto para que resalte
+        popup: 'rounded-3xl shadow-2xl border border-slate-100',
+        title: 'text-xl font-black text-slate-800',
+        confirmButton: 'bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl px-5 py-2.5 mx-2',
+        cancelButton: 'bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl px-5 py-2.5 mx-2'
+      }
     });
     if (!result.isConfirmed) return;
 
     setGuardandoProd(true);
     try {
-      await desactivarProducto(formProducto.id);
+      const peticion = desactivarProducto(formProducto.id);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Suspendiendo...' },
+        success: { title: 'Suspendido', description: 'El producto ha sido ocultado' },
+        error: { title: 'Error', description: 'No se pudo suspender' }
+      });
+
+      await peticion;
       setModalProductoOpen(false);
       setTriggerRecarga(prev => prev + 1);
-      Toast.fire({ icon: 'info', title: 'Producto suspendido' });
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al suspender' });
     } finally {
       setGuardandoProd(false);
     }
@@ -147,20 +155,33 @@ const InventarioPage = () => {
 
   const handleReactivarProducto = async (id, nombre) => {
     const result = await Swal.fire({
-      title: '¿Habilitar producto?', text: `"${nombre}" volverá a aparecer en el Punto de Venta.`,
-      icon: 'question', showCancelButton: true, confirmButtonColor: '#10b981', cancelButtonColor: '#94a3b8',
-      confirmButtonText: 'Sí, habilitar', cancelButtonText: 'Cancelar'
+      title: '¿Habilitar producto?', text: `"${nombre}" volverá a aparecer en la tienda.`,
+      icon: 'question', showCancelButton: true, confirmButtonText: 'Sí, habilitar', cancelButtonText: 'Cancelar',
+      buttonsStyling: false,
+      customClass: {
+        container: 'z-[99999]',
+        popup: 'rounded-3xl shadow-2xl border border-slate-100',
+        title: 'text-xl font-black text-slate-800',
+        confirmButton: 'bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl px-5 py-2.5 mx-2',
+        cancelButton: 'bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl px-5 py-2.5 mx-2'
+      }
     });
     if (!result.isConfirmed) return;
 
     try {
       setLoading(true);
-      await activarProducto(id);
+      const peticion = activarProducto(id);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Habilitando...' },
+        success: { title: '¡Listo!', description: 'Producto activo nuevamente' },
+        error: { title: 'Error', description: 'No se pudo habilitar' }
+      });
+
+      await peticion;
       setTriggerRecarga(prev => prev + 1);
-      Toast.fire({ icon: 'success', title: 'Producto reactivado' });
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al reactivar' });
       setLoading(false);
     }
   };
@@ -179,13 +200,20 @@ const InventarioPage = () => {
         producto: { id: productoSeleccionado.id }, stock: parseInt(formStock.stock),
         codigoLote: formStock.codigoLote || "", fechaVencimiento: formStock.fechaVencimiento || null, activo: true
       };
-      await ingresarLoteInventario(payload);
+      
+      const peticion = ingresarLoteInventario(payload);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Ingresando stock...' },
+        success: { title: '¡Añadido!', description: 'El inventario ha sido actualizado' },
+        error: { title: 'Error', description: 'Error al registrar el lote' }
+      });
+
+      await peticion;
       setModalStockOpen(false);
       setTriggerRecarga(prev => prev + 1);
-      Toast.fire({ icon: 'success', title: 'Stock ingresado correctamente' });
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al registrar el stock' });
     } finally {
       setGuardandoStock(false);
     }
@@ -195,15 +223,21 @@ const InventarioPage = () => {
     e.preventDefault();
     setGuardandoCat(true);
     try {
-      const nuevaCat = await crearCategoria(formCat);
+      const peticion = crearCategoria(formCat);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Creando categoría...' },
+        success: { title: '¡Categoría creada!', description: 'Ya puedes asignarla a los productos' },
+        error: { title: 'Error', description: 'No se pudo crear la categoría' }
+      });
+
+      const nuevaCat = await peticion;
       setCategorias([...categorias, nuevaCat]);
       setFormProducto({ ...formProducto, categoriaId: nuevaCat.id });
       setModalCatOpen(false);
       setFormCat({ nombre: '', descripcion: '' });
-      Toast.fire({ icon: 'success', title: 'Categoría creada' });
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al crear la categoría' });
     } finally {
       setGuardandoCat(false);
     }

@@ -2,10 +2,9 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { } from 'lucide-react'; 
+import { sileo } from 'sileo';
 import logo from '../assets/Logo Huesitos.png';
 
-const Toast = Swal.mixin({ toast: true, position: "top-end", showConfirmButton: false, timer: 3000 });
 const BG_IMAGE_URL = null; 
 
 const RegistroClientePage = () => {
@@ -35,7 +34,7 @@ const RegistroClientePage = () => {
     e.preventDefault();
 
     if (form.telefono.length !== 9) {
-      return Toast.fire({ icon: 'warning', title: 'El teléfono celular debe tener exactamente 9 dígitos.' });
+      return sileo.warning({ title: 'Atención', description: 'El teléfono celular debe tener exactamente 9 dígitos.' });
     }
 
     setCargando(true);
@@ -54,22 +53,35 @@ const RegistroClientePage = () => {
         }
       };
 
-      await axios.post('http://localhost:8080/api/autenticacion/registro', payload);
+      const peticion = axios.post('http://localhost:8080/api/autenticacion/registro', payload);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Creando cuenta...' },
+        success: { title: '¡Perfecto!' },
+        error: (err) => ({
+          title: 'Error de Registro',
+          description: err.response?.data?.message || 'El correo o teléfono ya están registrados.'
+        })
+      });
+
+      await peticion;
       
       Swal.fire({
+        icon: 'success',
         title: '¡Cuenta creada!',
         text: 'Bienvenido a Vet.Huesitos. Ya puedes iniciar sesión para agendar tu primera cita.',
-        icon: 'success',
-        confirmButtonColor: '#185FA5', 
-        confirmButtonText: 'Ir a Iniciar Sesión'
+        confirmButtonText: 'Ir a Iniciar Sesión',
+        buttonsStyling: false,
+        customClass: {
+          popup: 'rounded-3xl shadow-2xl border border-slate-100',
+          title: 'text-2xl font-black text-slate-800',
+          htmlContainer: 'text-slate-600 font-medium',
+          confirmButton: 'bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl px-6 py-3 mt-4 w-full transition-colors shadow-md'
+        }
       }).then(() => navigate('/login'));
 
     } catch (error) {
       console.error(error);
-      Toast.fire({ 
-        icon: 'error', 
-        title: error.response?.data?.message || 'Error: El correo o teléfono ya podrían estar registrados.' 
-      });
     } finally {
       setCargando(false);
     }
@@ -152,14 +164,12 @@ const RegistroClientePage = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '0.8rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Teléfono</label>
-                {/* MAX LENGTH DE 9 Y SOLO NÚMEROS */}
                 <input type="text" name="telefono" maxLength="9" value={form.telefono} onChange={handleChange} required placeholder="987654321"
                   style={{ width: '100%', padding: '0 10px', height: '38px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', fontSize: '13px', color: '#0f172a', outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Dirección</label>
-                {/* Reemplazamos DNI por Dirección */}
                 <input type="text" name="direccion" value={form.direccion} onChange={handleChange} required placeholder="Calle Ej. 123"
                   style={{ width: '100%', padding: '0 10px', height: '38px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', fontSize: '13px', color: '#0f172a', outline: 'none', boxSizing: 'border-box' }}
                 />

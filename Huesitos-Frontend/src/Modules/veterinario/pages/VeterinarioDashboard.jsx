@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios'; 
 import { 
   LayoutDashboard, CalendarDays, Users, Clock, 
-  LogOut, Menu, X, Bell, User, ChevronDown, Stethoscope, CheckCircle2
+  LogOut, Menu, X, Bell, User, ChevronDown, Stethoscope, CheckCircle2, UserCircle
 } from 'lucide-react';
 import logo from '../../../assets/Logo Huesitos.png';
 import { obtenerNotificaciones, marcarNotificacionLeida } from '../../../services/notificacionService';
@@ -13,6 +13,8 @@ const VeterinarioDashboard = () => {
   const [menuPerfilOpen, setMenuPerfilOpen] = useState(false);
   const [menuNotificacionesOpen, setMenuNotificacionesOpen] = useState(false);
   const [notificaciones, setNotificaciones] = useState([]);
+  
+  const [imgError, setImgError] = useState(false);
   
   const usuarioCorreo = localStorage.getItem('usuarioCorreo') || 'doctor@huesitos.com';
   let nombreReal = localStorage.getItem('usuarioNombre');
@@ -234,14 +236,28 @@ const VeterinarioDashboard = () => {
               )}
             </div>
 
-            {/* PERFIL DROPDOWN (ESTILO ADMINISTRADOR EN LA CABECERA) */}
+            {/* PERFIL DROPDOWN */}
             <div className="relative">
               <button onClick={() => { setMenuPerfilOpen(!menuPerfilOpen); setMenuNotificacionesOpen(false); }} className="flex items-center gap-3 hover:bg-slate-100 p-2 rounded-2xl transition-colors cursor-pointer">
                 <div className="text-right hidden sm:block">
                   <p className="text-sm font-bold text-slate-800">{usuarioNombre}</p>
                   <p className="text-[10px] font-black uppercase text-sky-600 tracking-widest">{usuarioRol}</p>
                 </div>
-                <img src={`http://localhost:8080${usuarioFoto}`} alt="Perfil" className="w-10 h-10 rounded-full border-2 border-slate-200 object-cover bg-white shadow-sm" onError={(e) => { e.target.onerror = null; e.target.src='/uploads/defecto-usuario.png'; }} />
+
+                {/* ESCUDO DE IMAGEN CABECERA */}
+                {!imgError ? (
+                  <img 
+                    src={`http://localhost:8080${usuarioFoto}`} 
+                    alt="Perfil" 
+                    className="w-10 h-10 rounded-full border-2 border-slate-200 object-cover bg-white shadow-sm shrink-0" 
+                    onError={() => setImgError(true)}
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full border-2 border-slate-200 bg-slate-100 flex items-center justify-center text-slate-400 shadow-sm shrink-0">
+                    <UserCircle size={24} strokeWidth={1.5} />
+                  </div>
+                )}
+                
                 <ChevronDown size={16} className="text-slate-400" />
               </button>
 
@@ -250,7 +266,21 @@ const VeterinarioDashboard = () => {
                   <div className="fixed inset-0 z-40" onClick={() => setMenuPerfilOpen(false)}></div>
                   <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-50 animate-in slide-in-from-top-2">
                     <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center gap-3">
-                      <img src={`http://localhost:8080${usuarioFoto}`} alt="" className="w-12 h-12 rounded-full object-cover border border-slate-200 bg-white" onError={(e) => { e.target.onerror = null; e.target.src='/uploads/defecto-usuario.png'; }}/>
+                      
+                      {/* ESCUDO DE IMAGEN DROPDOWN */}
+                      {!imgError ? (
+                        <img 
+                          src={`http://localhost:8080${usuarioFoto}`} 
+                          alt="" 
+                          className="w-12 h-12 rounded-full object-cover border border-slate-200 bg-white shrink-0" 
+                          onError={() => setImgError(true)}
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full border border-slate-200 bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
+                          <UserCircle size={28} strokeWidth={1.5} />
+                        </div>
+                      )}
+
                       <div className="overflow-hidden">
                         <p className="font-bold text-slate-800 truncate">{usuarioNombre}</p>
                         <p className="text-xs text-slate-500 truncate">{usuarioCorreo}</p>

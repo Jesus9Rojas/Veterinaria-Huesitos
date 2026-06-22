@@ -1,13 +1,24 @@
 import { useState } from 'react';
 import { FileCode, Plus, ExternalLink } from 'lucide-react';
+import { sileo } from 'sileo';
 
 const TabArchivos = ({ archivos, onGuardar }) => {
   const [form, setForm] = useState({ nombre: '', tipoArchivo: 'LABORATORIO', urlArchivo: '' });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onGuardar(form);
-    setForm({ nombre: '', tipoArchivo: 'LABORATORIO', urlArchivo: '' });
+    
+    // Aquí envolvemos la llamada onGuardar (que viene del componente padre) en una promesa
+    try {
+      sileo.promise(Promise.resolve(onGuardar(form)), {
+        loading: { title: 'Vinculando documento...' },
+        success: { title: '¡Éxito!', description: 'El documento fue enlazado al historial del paciente.' },
+        error: { title: 'Error', description: 'No se pudo vincular el documento.' }
+      });
+      setForm({ nombre: '', tipoArchivo: 'LABORATORIO', urlArchivo: '' });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
@@ -19,11 +30,11 @@ const TabArchivos = ({ archivos, onGuardar }) => {
         <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs items-end">
           <div>
             <label className="block font-bold text-slate-600 mb-1">Nombre descriptivo del examen</label>
-            <input required type="text" placeholder="Ej. Hemograma Completo Digital" value={form.nombre} onChange={e => setForm({...form, nombre: e.target.value})} className="w-full p-2.5 border bg-white rounded-xl outline-none" />
+            <input required type="text" placeholder="Ej. Hemograma Completo Digital" value={form.nombre} onChange={e => setForm({...form, nombre: e.target.value})} className="w-full p-2.5 border bg-white rounded-xl outline-none focus:ring-2 focus:ring-slate-500" />
           </div>
           <div>
             <label className="block font-bold text-slate-600 mb-1">Categoría Médica</label>
-            <select value={form.tipoArchivo} onChange={e => setForm({...form, tipoArchivo: e.target.value})} className="w-full p-2.5 border bg-white rounded-xl outline-none font-bold">
+            <select value={form.tipoArchivo} onChange={e => setForm({...form, tipoArchivo: e.target.value})} className="w-full p-2.5 border bg-white rounded-xl outline-none font-bold focus:ring-2 focus:ring-slate-500">
               <option value="LABORATORIO">ANÁLISIS LABORATORIO</option>
               <option value="IMAGENOLOGIA">ECOGRAFÍA / RAYOS X</option>
               <option value="OTROS">OTROS DOCUMENTOS</option>
@@ -31,9 +42,9 @@ const TabArchivos = ({ archivos, onGuardar }) => {
           </div>
           <div>
             <label className="block font-bold text-slate-600 mb-1">URL de Documento / Visor</label>
-            <input required type="text" placeholder="http://..." value={form.urlArchivo} onChange={e => setForm({...form, urlArchivo: e.target.value})} className="w-full p-2.5 border bg-white rounded-xl outline-none" />
+            <input required type="text" placeholder="http://..." value={form.urlArchivo} onChange={e => setForm({...form, urlArchivo: e.target.value})} className="w-full p-2.5 border bg-white rounded-xl outline-none focus:ring-2 focus:ring-slate-500" />
           </div>
-          <button type="submit" className="sm:col-span-3 py-3 bg-slate-800 hover:bg-slate-900 text-white font-black rounded-xl transition-all flex items-center justify-center gap-2 shadow-md"><FileCode size={16}/> Enlazar Documento Clínico</button>
+          <button type="submit" className="sm:col-span-3 py-3 bg-slate-800 hover:bg-slate-900 text-white font-black rounded-xl transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg hover:-translate-y-0.5"><FileCode size={16}/> Enlazar Documento Clínico</button>
         </form>
       </div>
 

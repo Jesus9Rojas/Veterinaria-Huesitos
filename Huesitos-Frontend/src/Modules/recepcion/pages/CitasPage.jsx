@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
+import { sileo } from 'sileo';
 import { 
   CalendarDays, Plus, Search, User, Clock, 
   Activity, X, CheckCircle2, ChevronRight, ChevronLeft, Stethoscope, ChevronDown, PawPrint, UserPlus, Loader2
@@ -132,7 +133,7 @@ const CitasPage = () => {
 
   const abrirModalAsignacion = (citaId) => {
     if (veterinarios.length === 0) {
-      return Swal.fire('Sin doctores', 'No hay veterinarios activos registrados en el sistema.', 'info');
+      return sileo.warning({ title: 'Aviso', description: 'No hay veterinarios activos registrados en el sistema.' });
     }
     setCitaActivaId(citaId);
     setVetAsignarId(""); 
@@ -142,20 +143,28 @@ const CitasPage = () => {
   const handleConfirmarAsignacion = async (e) => {
     e.preventDefault();
     if (!vetAsignarId) {
-      Swal.fire('Atención', 'Debes seleccionar un médico de la lista.', 'warning');
+      sileo.warning({ title: 'Atención', description: 'Debes seleccionar un médico de la lista.' });
       return;
     }
 
     setAsignando(true);
     try {
-      await axios.patch(`http://localhost:8080/api/citas/${citaActivaId}/asignar-veterinario?veterinarioId=${vetAsignarId}`, null, getConfig());
-      Swal.fire({ icon: 'success', title: '¡Asignado!', text: 'El médico ha sido asignado con éxito.', timer: 1500, showConfirmButton: false });
+      const peticion = axios.patch(`http://localhost:8080/api/citas/${citaActivaId}/asignar-veterinario?veterinarioId=${vetAsignarId}`, null, getConfig());
+      
+      sileo.promise(peticion, {
+        loading: { title: 'Asignando médico...' },
+        success: { title: '¡Asignado!', description: 'El médico ha sido asignado con éxito.' },
+        error: (err) => ({
+          title: 'Horario no disponible',
+          description: typeof err.response?.data === 'string' ? err.response.data : 'El especialista está ocupado o no labora a esta hora.'
+        })
+      });
+
+      await peticion;
       setModalAsignarOpen(false);
       setTriggerRecarga(prev => prev + 1); 
     } catch (error) {
       console.error(error);
-      const mensajeBackend = typeof error.response?.data === 'string' ? error.response.data : 'El especialista está ocupado o no labora a esta hora.';
-      Swal.fire('Horario no disponible', mensajeBackend, 'error');
     } finally {
       setAsignando(false);
     }
@@ -180,31 +189,65 @@ const CitasPage = () => {
         nuevaCitaPayload.veterinario = { id: parseInt(formCita.veterinarioId) };
       }
 
-      await crearCita(nuevaCitaPayload);
+      const peticion = crearCita(nuevaCitaPayload);
+      
+      sileo.promise(peticion, {
+        loading: { title: 'Registrando cita...' },
+        success: { title: '¡Cita Registrada!', description: 'El turno ha sido guardado exitosamente.' },
+        error: (err) => ({
+          title: 'No se pudo registrar',
+          description: err.response?.data || "Verifica las restricciones de horario."
+        })
+      });
+
+      await peticion;
+      
       setModalOpen(false);
       setFormCita({ duenoId: "", mascotaId: "", servicioId: "", veterinarioId: "", hora: "", motivo: "" });
       setMascotas([]); 
       
       setLoading(true);
       setTriggerRecarga(prev => prev + 1); 
-      Swal.fire({ icon: 'success', title: 'Cita Registrada', showConfirmButton: false, timer: 1500 });
     } catch (error) {
       console.error("Error al guardar:", error);
-      const msg = error.response?.data || "Verifica las restricciones de horario.";
-      Swal.fire('No se pudo registrar', msg, 'error');
     } finally {
       setGuardando(false);
     }
   };
 
   const handleCambiarEstado = async (citaId, nuevoEstado) => {
-    if (!window.confirm(`¿Seguro que deseas cambiar el estado a ${renderEstadoTexto(nuevoEstado)}?`)) return;
+    const result = await Swal.fire({
+      title: '¿Modificar estado de cita?',
+      text: `La cita cambiará al estado: ${renderEstadoTexto(nuevoEstado)}`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, cambiar',
+      cancelButtonText: 'Cancelar',
+      buttonsStyling: false,
+      customClass: {
+        container: 'z-[99999]',
+        popup: 'rounded-3xl shadow-2xl border border-slate-100',
+        title: 'text-xl font-black text-slate-800',
+        confirmButton: 'bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-xl px-5 py-2.5 mx-2',
+        cancelButton: 'bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl px-5 py-2.5 mx-2'
+      }
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
-      await cambiarEstadoCita(citaId, nuevoEstado);
+      const peticion = cambiarEstadoCita(citaId, nuevoEstado);
+      
+      sileo.promise(peticion, {
+        loading: { title: 'Actualizando estado...' },
+        success: { title: 'Actualizado', description: 'El estado de la cita fue modificado.' },
+        error: { title: 'Error', description: 'No se pudo actualizar el estado de la cita.' }
+      });
+
+      await peticion;
       setTriggerRecarga(prev => prev + 1); 
     } catch (error) {
       console.error("Error al actualizar estado:", error);
-      Swal.fire('Error', "No se pudo actualizar el estado de la cita.", 'error');
     }
   };
 

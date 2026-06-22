@@ -7,12 +7,7 @@ import {
 } from 'lucide-react';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import Swal from 'sweetalert2';
-
-const Toast = Swal.mixin({
-  toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true,
-  didOpen: (toast) => { toast.onmouseenter = Swal.stopTimer; toast.onmouseleave = Swal.resumeTimer; }
-});
+import { sileo } from 'sileo';
 
 const InventarioCompletoPage = () => {
   const [inventarioGlobal, setInventarioGlobal] = useState([]);
@@ -89,7 +84,7 @@ const InventarioCompletoPage = () => {
     .slice(0, 12); 
 
   const exportarExcelProfesional = async () => {
-    if (inventarioFiltrado.length === 0) return Toast.fire({ icon: 'warning', title: 'No hay datos para exportar' });
+    if (inventarioFiltrado.length === 0) return sileo.warning({ title: 'Aviso', description: 'No hay datos para exportar' });
     
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Reporte Maestro', { views: [{ showGridLines: false }] });
@@ -151,11 +146,11 @@ const InventarioCompletoPage = () => {
 
     const buffer = await workbook.xlsx.writeBuffer();
     saveAs(new Blob([buffer]), `Huesitos_Reporte_Inventario_${new Date().getTime()}.xlsx`);
-    Toast.fire({ icon: 'success', title: 'Excel descargado exitosamente' });
+    sileo.success({ title: '¡Listo!', description: 'Excel descargado exitosamente' });
   };
 
   const exportarCSVSimple = () => {
-    if (inventarioFiltrado.length === 0) return Toast.fire({ icon: 'warning', title: 'No hay datos para exportar' });
+    if (inventarioFiltrado.length === 0) return sileo.warning({ title: 'Aviso', description: 'No hay datos para exportar' });
     let csvContent = "TIPO,ESTADO,NOMBRE,PROVEEDOR_MARCA,PRECIO_S/,STOCK\n";
     inventarioFiltrado.forEach(item => {
       const tipo = item.tipo_item;
@@ -174,7 +169,7 @@ const InventarioCompletoPage = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    Toast.fire({ icon: 'success', title: 'Archivo CSV descargado' });
+    sileo.success({ title: '¡Listo!', description: 'Archivo CSV descargado' });
   };
 
   const totalItems = inventarioGlobal.length;
@@ -231,7 +226,7 @@ const InventarioCompletoPage = () => {
                 <option value="PRODUCTO">Solo Productos</option>
                 <option value="VACUNA">Solo Vacunas</option>
                 <option value="MEDICINA">Solo Medicinas</option>
-                <option value="ANTIPARASITARIO">Solo Antiparasitarios</option> {/* NUEVO */}
+                <option value="ANTIPARASITARIO">Solo Antiparasitarios</option>
               </select>
               <select value={filtroStock} onChange={(e) => setFiltroStock(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
                 <option value="TODOS">Cualquier Stock</option><option value="NORMAL">Stock Normal (&gt; 5)</option><option value="BAJO">Stock Bajo (1 a 5)</option><option value="CERO">Agotados (0)</option>
@@ -306,7 +301,6 @@ const InventarioCompletoPage = () => {
                   <div className="flex justify-between text-sm font-bold mb-2"><span className="text-emerald-600 flex items-center gap-2"><Pill size={16}/> Medicamentos Clínicos</span><span className="text-slate-600">{totalMedicinas} ítems ({((totalMedicinas/totalItems)*100 || 0).toFixed(1)}%)</span></div>
                   <div className="w-full bg-slate-100 rounded-full h-4 overflow-hidden"><div className="bg-emerald-400 h-4 rounded-full transition-all duration-1000" style={{ width: `${(totalMedicinas/totalItems)*100}%` }}></div></div>
                 </div>
-                {/* NUEVA BARRA DE ANTIPARASITARIOS */}
                 <div>
                   <div className="flex justify-between text-sm font-bold mb-2"><span className="text-orange-600 flex items-center gap-2"><Bug size={16}/> Antiparasitarios</span><span className="text-slate-600">{totalAntiparasitarios} ítems ({((totalAntiparasitarios/totalItems)*100 || 0).toFixed(1)}%)</span></div>
                   <div className="w-full bg-slate-100 rounded-full h-4 overflow-hidden"><div className="bg-orange-400 h-4 rounded-full transition-all duration-1000" style={{ width: `${(totalAntiparasitarios/totalItems)*100}%` }}></div></div>

@@ -2,11 +2,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { obtenerListaDuenos, crearNuevoDueno, actualizarDuenoExistente } from "../../../services/duenoService";
 import { UserPlus, Search, MapPin, Phone, Mail, User, X, Edit2, Lock } from 'lucide-react';
-import Swal from 'sweetalert2';
-
-const Toast = Swal.mixin({
-  toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true
-});
+import { sileo } from 'sileo';
 
 const DuenosPage = () => {
   const [duenos, setDuenos] = useState([]);
@@ -54,20 +50,26 @@ const DuenosPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setProcesando(true);
+    
     try {
-      if (editandoId) {
-        await actualizarDuenoExistente(editandoId, { nombreCompleto: form.nombreCompleto, telefono: form.telefono, direccion: form.direccion });
-        Toast.fire({ icon: 'success', title: 'Ficha actualizada' });
-      } else {
-        await crearNuevoDueno(form);
-        Toast.fire({ icon: 'success', title: 'Cliente registrado' });
-      }
+      const peticion = editandoId 
+        ? actualizarDuenoExistente(editandoId, { nombreCompleto: form.nombreCompleto, telefono: form.telefono, direccion: form.direccion }) 
+        : crearNuevoDueno(form);
+
+      sileo.promise(peticion, {
+        loading: { title: editandoId ? 'Actualizando ficha...' : 'Registrando cliente...' },
+        success: { title: '¡Éxito!', description: editandoId ? 'Ficha actualizada' : 'Cliente registrado en el sistema' },
+        error: (err) => ({ 
+          title: 'Atención', 
+          description: typeof err.response?.data === 'string' ? err.response.data : "Hubo un problema en el servidor" 
+        })
+      });
+
+      await peticion;
       setModalOpen(false);
       setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error(error);
-      const msg = typeof error.response?.data === 'string' ? error.response.data : "Hubo un problema en el servidor";
-      Toast.fire({ icon: 'error', title: msg });
     } finally {
       setProcesando(false);
     }

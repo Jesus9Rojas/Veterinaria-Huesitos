@@ -4,6 +4,7 @@ import {
   Store, ShoppingCart, Search, PackageOpen, Plus, Minus, 
   Trash2, Banknote, CreditCard, Smartphone, CheckCircle2, X, Activity, ShoppingBag, QrCode, ChevronDown, User
 } from 'lucide-react';
+import { sileo } from 'sileo';
 import { listarProductosPOS, listarPedidos, actualizarEstadoPedido, procesarVentaPOS } from '../../../services/posService';
 import { obtenerListaDuenos } from '../../../services/duenoService'; 
 
@@ -66,7 +67,7 @@ const PuntoVentaPage = () => {
 
     const existe = carrito.find(item => item.productoId === producto.id);
     if (existe) {
-      if (existe.cantidad >= stockReal) return alert(`Solo hay ${stockReal} unidades en stock.`);
+      if (existe.cantidad >= stockReal) return sileo.warning({ title: 'Stock Límite', description: `Solo hay ${stockReal} unidades en stock.` });
       setCarrito(carrito.map(item => 
         item.productoId === producto.id ? { ...item, cantidad: item.cantidad + 1 } : item
       ));
@@ -122,7 +123,18 @@ const PuntoVentaPage = () => {
         items: carrito.map(c => ({ productoId: c.productoId, cantidad: c.cantidad }))
       };
       
-      const respuesta = await procesarVentaPOS(payload);
+      const peticion = procesarVentaPOS(payload);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Procesando venta...' },
+        success: { title: '¡Venta Registrada!', description: 'El ticket ha sido generado en caja' },
+        error: (err) => ({
+          title: 'Error de Venta',
+          description: err.response?.data || "No se pudo procesar la venta."
+        })
+      });
+
+      await peticion;
       
       setCarrito([]);
       setClienteSeleccionado('');
@@ -130,11 +142,8 @@ const PuntoVentaPage = () => {
       setModalPagoOpen(false);
       setTriggerRecarga(prev => prev + 1); 
 
-      alert(`¡Venta completada con éxito! Pedido #${respuesta.id} registrado.`);
-      
     } catch (error) {
       console.error("Error en venta:", error);
-      alert(error.response?.data || "No se pudo procesar la venta.");
     } finally {
       setProcesando(false);
     }
@@ -142,11 +151,18 @@ const PuntoVentaPage = () => {
 
   const handleCambiarEstadoPedido = async (id, nuevoEstado) => {
     try {
-      await actualizarEstadoPedido(id, nuevoEstado);
+      const peticion = actualizarEstadoPedido(id, nuevoEstado);
+      
+      sileo.promise(peticion, {
+        loading: { title: 'Actualizando estado...' },
+        success: { title: 'Actualizado', description: 'El estado del pedido fue modificado' },
+        error: { title: 'Error', description: 'No se pudo actualizar el estado.' }
+      });
+
+      await peticion;
       setTriggerRecarga(prev => prev + 1);
     } catch (error) {
       console.error("Error al actualizar pedido:", error);
-      alert("No se pudo actualizar el estado.");
     }
   };
 
@@ -271,7 +287,6 @@ const PuntoVentaPage = () => {
                   className="w-full border border-slate-200 p-2.5 rounded-xl text-sm font-bold text-slate-700 outline-none hover:border-emerald-300 focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm flex justify-between items-center transition-all"
                 >
                   <span className="truncate flex items-center gap-2">
-                    {/* AHORA SÍ MOSTRARÁ EL NOMBRE PORQUE BUSCAMOS EN DUEÑOS */}
                     {clienteActualInfo ? (
                       <><User size={16} className="text-slate-400"/> {clienteActualInfo.nombreCompleto}</>
                     ) : (
@@ -412,7 +427,6 @@ const PuntoVentaPage = () => {
                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black mt-1 uppercase border ${getEstadoColor(ped.estadoPedido)}`}>{ped.estadoPedido}</span>
                          </td>
                          <td className="px-6 py-4">
-                           {/* AHORA MUESTRA EL NOMBRE REAL DEL DUEÑO EN LA TABLA */}
                            <div className="font-bold text-slate-700">{nombreMostrar}</div>
                            <div className="text-xs text-slate-500 mt-0.5">{fechaFormat}</div>
                          </td>
@@ -571,9 +585,10 @@ const PuntoVentaPage = () => {
                 <button 
                   type="submit" 
                   disabled={!botonHabilitado} 
-                  className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-500/30 flex items-center gap-2 transition-all"
+                  className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-black rounded-xl shadow-lg shadow-emerald-500/30 flex items-center gap-2 transition-all"
                 >
-                  {procesando ? 'Procesando...' : <><CheckCircle2 size={18}/> Completar Venta</>}
+                  {procesando ? <Activity size={18} className="animate-spin"/> : <CheckCircle2 size={18}/>}
+                  {procesando ? 'Verificando...' : 'Confirmar e Imprimir'}
                 </button>
               </div>
             </form>

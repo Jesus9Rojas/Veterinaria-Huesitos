@@ -6,10 +6,7 @@ import { crearServicio, cambiarEstadoServicio, actualizarServicio } from "../../
 import { useServicios } from "../../../hooks/useServicios";
 import { X, Stethoscope, Tag, Clock, FileText } from 'lucide-react';
 import Swal from 'sweetalert2';
-
-const Toast = Swal.mixin({
-  toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true
-});
+import { sileo } from 'sileo';
 
 const ServiciosPage = () => {
   const { servicios, loading, obtenerServicios } = useServicios();
@@ -19,12 +16,17 @@ const ServiciosPage = () => {
 
   const guardar = async (data) => {
     try {
-      await crearServicio(data);
+      const peticion = crearServicio(data);
+      sileo.promise(peticion, {
+        loading: { title: 'Creando servicio...', description: 'Sincronizando con la clínica' },
+        success: { title: '¡Completado!', description: 'Servicio creado con éxito' },
+        error: { title: 'Error', description: 'No se pudo crear el servicio' }
+      });
+
+      await peticion;
       obtenerServicios();
-      Toast.fire({ icon: 'success', title: 'Servicio creado con éxito' });
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al crear el servicio' });
     }
   };
 
@@ -42,12 +44,17 @@ const ServiciosPage = () => {
     if (!result.isConfirmed) return;
 
     try {
-      await cambiarEstadoServicio(id, activo);
+      const peticion = cambiarEstadoServicio(id, activo);
+      sileo.promise(peticion, {
+        loading: { title: 'Actualizando estado...' },
+        success: { title: '¡Listo!', description: `Servicio ${activo ? 'habilitado' : 'suspendido'}` },
+        error: { title: 'Error', description: 'Error al cambiar el estado' }
+      });
+
+      await peticion;
       obtenerServicios();
-      Toast.fire({ icon: 'success', title: `Servicio ${activo ? 'habilitado' : 'suspendido'}` });
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al cambiar el estado' });
     }
   };
 
@@ -72,13 +79,19 @@ const ServiciosPage = () => {
         precio: parseFloat(formEdit.precio),
         duracionMinutos: parseInt(formEdit.duracionMinutos)
       };
-      await actualizarServicio(servicioAEditar.id, datosFormateados);
+
+      const peticion = actualizarServicio(servicioAEditar.id, datosFormateados);
+      sileo.promise(peticion, {
+        loading: { title: 'Actualizando servicio...' },
+        success: { title: '¡Actualizado!', description: 'Servicio modificado con éxito' },
+        error: { title: 'Error', description: 'No se pudo actualizar el servicio' }
+      });
+
+      await peticion;
       setModalOpen(false);
       obtenerServicios();
-      Toast.fire({ icon: 'success', title: 'Servicio actualizado con éxito' });
     } catch (error) {
       console.error(error);
-      Toast.fire({ icon: 'error', title: 'Error al actualizar el servicio' });
     }
   };
 
