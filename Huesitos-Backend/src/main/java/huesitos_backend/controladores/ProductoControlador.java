@@ -19,10 +19,10 @@ import java.util.Map;
 public class ProductoControlador {
 
     private final ProductoServicio productoServicio;
-    private final StorageService storageService; // Inyectamos el servicio para guardar la foto
+    private final StorageService storageService; 
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('AUXILIAR_VETERINARIO')")
     public ResponseEntity<?> registrarProducto(@RequestBody Producto producto) {
         try {
             return ResponseEntity.ok(productoServicio.guardarProducto(producto));
@@ -32,7 +32,7 @@ public class ProductoControlador {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('AUXILIAR_VETERINARIO')")
     public ResponseEntity<?> actualizarProducto(@PathVariable Long id, @RequestBody Producto producto) {
         try {
             producto.setId(id);
@@ -43,32 +43,31 @@ public class ProductoControlador {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'AUXILIAR_VETERINARIO')")
     public ResponseEntity<List<Producto>> listarActivos() {
         return ResponseEntity.ok(productoServicio.listarActivos());
     }
 
-    // --- NUEVO ENDPOINT: Listar todos (incluye inactivos) ---
     @GetMapping("/todos")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'AUXILIAR_VETERINARIO')")
     public ResponseEntity<List<Producto>> listarTodos() {
         return ResponseEntity.ok(productoServicio.listarTodos());
     }
 
     @GetMapping("/categoria/{categoriaId}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'AUXILIAR_VETERINARIO')")
     public ResponseEntity<List<Producto>> listarPorCategoria(@PathVariable Long categoriaId) {
         return ResponseEntity.ok(productoServicio.listarPorCategoria(categoriaId));
     }
 
     @GetMapping("/buscar")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'AUXILIAR_VETERINARIO')")
     public ResponseEntity<List<Producto>> buscarProductos(@RequestParam(required = false) String nombre) {
         return ResponseEntity.ok(productoServicio.buscarProductos(nombre));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'AUXILIAR_VETERINARIO')")
     public ResponseEntity<?> buscarPorId(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(productoServicio.buscarPorId(id));
@@ -78,32 +77,27 @@ public class ProductoControlador {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('AUXILIAR_VETERINARIO')")
     public ResponseEntity<?> desactivarProducto(@PathVariable Long id) {
         productoServicio.desactivarProducto(id);
         return ResponseEntity.ok("Producto desactivado con éxito");
     }
 
-    // --- NUEVO ENDPOINT: Reactivar Producto ---
     @PutMapping("/{id}/activar")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('AUXILIAR_VETERINARIO')")
     public ResponseEntity<?> reactivarProducto(@PathVariable Long id) {
         productoServicio.activarProducto(id);
         return ResponseEntity.ok("Producto reactivado con éxito");
     }
 
-    // --- EL ENDPOINT PARA SUBIR LA FOTO ---
     @PostMapping("/{id}/foto")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('AUXILIAR_VETERINARIO')")
     public ResponseEntity<?> subirFotoProducto(
             @PathVariable Long id,
             @RequestParam("archivo") MultipartFile archivo) {
         try {
-            // 1. Buscamos el producto en BD
             Producto producto = productoServicio.buscarPorId(id);
-            // 2. Comprimimos y guardamos la foto (el prefijo será 'producto')
             String urlFoto = storageService.comprimirYGuardarFoto(archivo, "producto");
-            // 3. Le asignamos la URL generada al producto y actualizamos
             producto.setFotoUrl(urlFoto);
             productoServicio.guardarProducto(producto);
             

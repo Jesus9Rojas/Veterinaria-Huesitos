@@ -3,12 +3,20 @@ import Landing from './pages/Landing';
 import VetLogin from './pages/Login';
 import ServiciosPage from './Modules/admin/pages/ServicioPage';
 import AdminDashboard from './pages/AdminDashboard';
+import RegistroClientePage from './pages/RegistroClientePage';
+
+import ClienteDashboard from './Modules/clientes/pages/ClienteDashboard';
+import MisMascotasCliente from './Modules/clientes/pages/MisMascotasCliente';
+import MisCitasCliente from './Modules/clientes/pages/MisCitasCliente';
+
 import RecepcionDashboard from './Modules/recepcion/pages/RecepcionDashboard';
 import InicioRecepcion from './Modules/recepcion/pages/InicioRecepcion';
 import CitasPage from './Modules/recepcion/pages/CitasPage';
 import ClientesPage from './Modules/recepcion/pages/ClientesPage';
 import CajaPage from './Modules/recepcion/pages/CajaPage';
 import PuntoVentaPage from './Modules/recepcion/pages/PuntoVentaPage';
+import RecepcionPerfilPage from './Modules/recepcion/pages/RecepcionPerfilPage'; 
+
 import VeterinarioDashboard from './Modules/veterinario/pages/VeterinarioDashboard';
 import InicioVeterinario from './Modules/veterinario/pages/InicioVeterinario';
 import MiAgendaPage from './Modules/veterinario/pages/MiAgendaPage';
@@ -16,31 +24,47 @@ import MisPacientesPage from './Modules/veterinario/pages/MisPacientesPage';
 import HistorialClinicoPage from './Modules/veterinario/pages/HistorialClinicoPage';
 import MisHorariosPage from './Modules/veterinario/pages/MisHorariosPage';
 import MiPerfilPage from './Modules/veterinario/pages/MiPerfilPage';
+import ConsultasVeterinarioPage from './Modules/veterinario/pages/ConsultasVeterinarioPage';
 
+import AuxiliarDashboard from './pages/AuxiliarDashboard';
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/servicios" element={<ServiciosPage/>} />
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<VetLogin />} />
+        <Route path="/registro" element={<RegistroClientePage />} />
+        <Route path="/servicios" element={<ServiciosPage/>} />
+        
+        <Route path="/cliente" element={<ClienteDashboard />}>
+          <Route index element={<MisMascotasCliente />} />
+          <Route path="mascotas" element={<MisMascotasCliente />} />
+          <Route path="citas" element={<MisCitasCliente />} />
+        </Route>
+
         <Route path="/admin" element={<AdminDashboard />} />
+        
         <Route path="/recepcion" element={<RecepcionDashboard />}>
           <Route index element={<InicioRecepcion />} /> 
           <Route path="citas" element={<CitasPage />} />
           <Route path="clientes" element={<ClientesPage />} />
           <Route path="caja" element={<CajaPage />} />
-        <Route path="tienda" element={<PuntoVentaPage />} /> 
+          <Route path="tienda" element={<PuntoVentaPage />} /> 
+          <Route path="perfil" element={<RecepcionPerfilPage />} />
         </Route>
+        
         <Route path="/veterinario" element={<VeterinarioDashboard />}>
           <Route index element={<InicioVeterinario />} />
           <Route path="agenda" element={<MiAgendaPage />} />
           <Route path="pacientes" element={<MisPacientesPage />} />
           <Route path="pacientes/:id/historial" element={<HistorialClinicoPage />} />
           <Route path="horarios" element={<MisHorariosPage />} />
+          <Route path="consultas" element={<ConsultasVeterinarioPage />} />
           <Route path="perfil" element={<MiPerfilPage />} />
-        </Route>  
+        </Route>
+
+        <Route path="/auxiliar/*" element={<AuxiliarDashboard />} />  
       </Routes>
     </Router>
   );

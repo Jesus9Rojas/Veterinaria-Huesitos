@@ -1,246 +1,215 @@
-import { useState, useEffect, useRef } from 'react';
-import { User, Lock, Camera, Save, Activity, CheckCircle2, AlertCircle } from 'lucide-react';
-import { obtenerPerfilUsuario, cambiarContrasena, subirFotoPerfil } from '../../../services/perfilService';
+import { useState, useEffect, useRef } from "react";
+import { User, Mail, Lock, Phone, CreditCard, Camera, Save, Activity } from 'lucide-react';
+import axios from 'axios';
+import { obtenerDetallesPersonal, actualizarPersonal } from "../../../services/usuarioService";
 
 const MiPerfilPage = () => {
-  const [perfil, setPerfil] = useState(null);
   const [loading, setLoading] = useState(true);
-  
-  // Estado del formulario de contraseñas
-  const [formPass, setFormPass] = useState({ nueva: '', confirmar: '' });
-  const [loadingPass, setLoadingPass] = useState(false);
-  const [msgPass, setMsgPass] = useState({ tipo: '', texto: '' }); // tipo: 'exito' | 'error'
-  
-  // Estado para la foto
+  const [procesando, setProcesando] = useState(false);
+  const [subiendoFoto, setSubiendoFoto] = useState(false);
   const fileInputRef = useRef(null);
-  const [loadingFoto, setLoadingFoto] = useState(false);
 
-  const usuarioId = localStorage.getItem('usuarioId') || localStorage.getItem('id');
-  const usuarioNombre = localStorage.getItem('usuarioNombre') || 'Doctor(a)';
+  const usuarioId = localStorage.getItem("usuarioId");
+  const usuarioRol = localStorage.getItem("usuarioRol");
+  const correoActual = localStorage.getItem("usuarioCorreo");
+  
+  const [fotoUrl, setFotoUrl] = useState(localStorage.getItem("usuarioFoto") || "/uploads/defecto-usuario.png");
+
+  const [form, setForm] = useState({
+    nombreCompleto: "",
+    dni: "",
+    telefono: "",
+    correo: correoActual,
+    contrasena: ""
+  });
 
   useEffect(() => {
-    let isMounted = true;
-    const fetchPerfil = async () => {
+    const fetchDatosPerfil = async () => {
       try {
-        if (usuarioId) {
-          const data = await obtenerPerfilUsuario(usuarioId);
-          if (isMounted) {
-            setPerfil(data);
-            // Actualizamos la foto en localStorage por si la usas en la barra de navegación lateral
-            localStorage.setItem('usuarioFoto', data.fotoPerfilUrl);
-          }
-        }
+        const data = await obtenerDetallesPersonal(usuarioId);
+        setForm({
+          ...form,
+          nombreCompleto: data.nombreCompleto || "",
+          dni: data.dni || "",
+          telefono: data.telefono || ""
+        });
       } catch (error) {
-        console.error("Error al cargar el perfil:", error);
+        console.error("Error al cargar los datos del perfil", error);
       } finally {
-        if (isMounted) setLoading(false);
+        setLoading(false);
       }
     };
-    fetchPerfil();
-    return () => { isMounted = false; };
+    fetchDatosPerfil();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuarioId]);
 
-  // --- MANEJADOR DE CAMBIO DE FOTO ---
-  const handleCambiarFoto = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    try {
-      setLoadingFoto(true);
-      const res = await subirFotoPerfil(usuarioId, file);
-
-      const nuevaUrlConTimestamp = `${res.fotoPerfilUrl}?t=${new Date().getTime()}`;
-
-      setPerfil(prev => ({ ...prev, fotoPerfilUrl: nuevaUrlConTimestamp }));
-      
-      localStorage.setItem('usuarioFoto', nuevaUrlConTimestamp);
-      
-      // Pequeño feedback visual
-      alert("¡Foto de perfil actualizada con éxito!");
-      
-    } catch (error) {
-      console.error("Error al subir foto:", error);
-      alert("No se pudo actualizar la foto de perfil. Verifique el servidor.");
-    } finally {
-      setLoadingFoto(false);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "telefono") {
+      setForm({ ...form, [name]: value.replace(/\D/g, '').slice(0, 9) });
+    } else if (name === "dni") {
+      setForm({ ...form, [name]: value.replace(/\D/g, '').slice(0, 8) });
+    } else {
+      setForm({ ...form, [name]: value });
     }
   };
 
-  // --- MANEJADOR DE CAMBIO DE CONTRASEÑA ---
-  const handleActualizarContrasena = async (e) => {
-    e.preventDefault();
-    setMsgPass({ tipo: '', texto: '' });
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    if (formPass.nueva.length < 6) {
-      setMsgPass({ tipo: 'error', texto: 'La contraseña debe tener al menos 6 caracteres.' });
-      return;
-    }
-    if (formPass.nueva !== formPass.confirmar) {
-      setMsgPass({ tipo: 'error', texto: 'Las contraseñas no coinciden.' });
-      return;
-    }
+    const formData = new FormData();
+    formData.append("archivo", file);
 
+    setSubiendoFoto(true);
     try {
-      setLoadingPass(true);
-      await cambiarContrasena(usuarioId, formPass.nueva);
-      setMsgPass({ tipo: 'exito', texto: '¡Su contraseña ha sido actualizada con éxito!' });
-      setFormPass({ nueva: '', confirmar: '' }); // Limpiar campos
+      const token = localStorage.getItem("token");
+      const response = await axios.post(`http://localhost:8080/api/perfiles/usuario/${usuarioId}/foto`, formData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      const nuevaFotoUrl = response.data.fotoPerfilUrl;
+      setFotoUrl(nuevaFotoUrl);
+      localStorage.setItem("usuarioFoto", nuevaFotoUrl);
+      window.location.reload(); 
     } catch (error) {
-      console.error("Error de seguridad:", error);
-      setMsgPass({ tipo: 'error', texto: error.response?.data || 'Hubo un problema al actualizar la contraseña.' });
+      console.error(error);
+      alert("Error al subir la imagen. Verifica que sea un formato válido (JPG, PNG).");
     } finally {
-      setLoadingPass(false);
+      setSubiendoFoto(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (form.dni && form.dni.length > 0 && form.dni.length < 8) {
+      return alert("El DNI debe tener exactamente 8 dígitos.");
+    }
+    setProcesando(true);
+    try {
+      await actualizarPersonal(usuarioId, form);
+      localStorage.setItem("usuarioNombre", form.nombreCompleto);
+      localStorage.setItem("usuarioCorreo", form.correo);
+      alert("Tu perfil médico ha sido actualizado exitosamente.");
+      window.location.reload(); 
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data || "Ocurrió un error al intentar actualizar el perfil.");
+    } finally {
+      setProcesando(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="flex flex-col justify-center items-center h-64 text-indigo-500 font-semibold animate-pulse gap-3">
+      <div className="flex flex-col justify-center items-center h-64 text-sky-500 font-semibold animate-pulse gap-3">
         <Activity className="animate-spin" size={36} />
-        <p>Cargando información del perfil...</p>
+        <p>Cargando información de tu perfil médico...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-10">
       
       {/* CABECERA */}
-      <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-200/60 relative overflow-hidden flex flex-col md:flex-row justify-between items-center gap-6">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-        
-        <div className="relative z-10 text-center md:text-left">
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center justify-center md:justify-start gap-3">
-            <User className="text-indigo-500" size={32} /> Mi Perfil
-          </h1>
-          <p className="text-slate-500 text-sm mt-2 max-w-lg">
-            Gestione su identidad visual dentro del sistema y mantenga actualizadas sus credenciales de seguridad.
-          </p>
-        </div>
-      </div>
-
-      {/* CONTENIDO PRINCIPAL: 2 COLUMNAS */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* COLUMNA IZQUIERDA: TARJETA DE IDENTIDAD */}
-        <div className="lg:col-span-5 space-y-6">
-          <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-200/60 flex flex-col items-center text-center relative overflow-hidden">
-            
-            {/* Decoración de fondo de la tarjeta */}
-            <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-indigo-500 to-sky-400"></div>
-
-            {/* FOTO DE PERFIL */}
-            <div className="relative z-10 mt-10 mb-5 group">
-              <div className="w-36 h-36 rounded-full bg-white p-1.5 shadow-xl mx-auto relative">
-                <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 flex items-center justify-center">
-                  {perfil?.fotoPerfilUrl ? (
-                    <img 
-                      src={`http://localhost:8080${perfil.fotoPerfilUrl}`} 
-                      alt="" 
-                      className={`w-full h-full object-cover ${loadingFoto ? 'opacity-50 blur-sm' : ''}`}
-                      onError={(e) => { e.target.onerror = null; e.target.src = "/uploads/defecto-usuario.png"; }}
-                    />
-                  ) : (
-                    <User size={48} className="text-slate-300" />
-                  )}
-                </div>
-                
-                {/* Botón flotante para subir foto */}
-                <button 
-                  onClick={() => fileInputRef.current.click()}
-                  disabled={loadingFoto}
-                  className="absolute bottom-1 right-1 w-10 h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 disabled:opacity-50"
-                  title="Cambiar Foto"
-                >
-                  {loadingFoto ? <Activity size={18} className="animate-spin" /> : <Camera size={18} />}
-                </button>
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  onChange={handleCambiarFoto} 
-                  accept="image/png, image/jpeg, image/jpg" 
-                  className="hidden" 
-                />
-              </div>
-            </div>
-
-            {/* DATOS DEL USUARIO */}
-            <div className="space-y-1 relative z-10 w-full">
-              <h2 className="text-2xl font-black text-slate-800 tracking-tight">{usuarioNombre}</h2>
-              <p className="text-indigo-600 font-bold text-sm uppercase tracking-widest">{perfil?.rol}</p>
-              
-              <div className="mt-6 bg-slate-50 p-4 rounded-2xl border border-slate-100 text-left w-full">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Correo Electrónico Registrado</p>
-                <p className="text-sm font-semibold text-slate-700">{perfil?.correo || 'No disponible'}</p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        {/* COLUMNA DERECHA: TARJETA DE SEGURIDAD */}
-        <div className="lg:col-span-7">
-          <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-200/60 h-full">
-            
-            <div className="flex items-center gap-3 mb-8 border-b border-slate-100 pb-5">
-              <div className="p-3 bg-amber-100 text-amber-600 rounded-xl">
-                <Lock size={24} />
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-slate-800">Seguridad de la Cuenta</h2>
-                <p className="text-sm font-medium text-slate-500">Actualice su contraseña de acceso al sistema.</p>
-              </div>
-            </div>
-
-            {/* ALERTAS DE ESTADO */}
-            {msgPass.texto && (
-              <div className={`p-4 rounded-2xl mb-6 flex items-start gap-3 border ${msgPass.tipo === 'exito' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700'}`}>
-                {msgPass.tipo === 'exito' ? <CheckCircle2 className="shrink-0 mt-0.5" size={20}/> : <AlertCircle className="shrink-0 mt-0.5" size={20}/>}
-                <p className="text-sm font-bold">{msgPass.texto}</p>
+      <div className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col md:flex-row items-center gap-6">
+        <div className="relative group shrink-0">
+          <div className="w-28 h-28 rounded-full border-4 border-white shadow-lg overflow-hidden bg-slate-100 relative">
+            <img 
+              src={`http://localhost:8080${fotoUrl}`} 
+              alt="Mi Perfil" 
+              className={`w-full h-full object-cover transition-opacity duration-300 ${subiendoFoto ? 'opacity-50' : 'group-hover:opacity-70'}`}
+              onError={(e) => { e.target.onerror = null; e.target.src='/uploads/defecto-usuario.png'; }}
+            />
+            {subiendoFoto && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Activity className="text-sky-600 animate-spin" size={28} />
               </div>
             )}
+          </div>
+          
+          <button 
+            type="button"
+            onClick={() => fileInputRef.current.click()}
+            disabled={subiendoFoto}
+            className="absolute bottom-0 right-0 p-2.5 bg-gradient-to-tr from-sky-500 to-cyan-400 text-white rounded-full shadow-lg border-2 border-white hover:scale-110 transition-transform disabled:opacity-50"
+            title="Cambiar foto de perfil"
+          >
+            <Camera size={16} />
+          </button>
+          
+          <input type="file" ref={fileInputRef} onChange={handlePhotoUpload} accept="image/png, image/jpeg, image/webp" className="hidden" />
+        </div>
 
-            <form onSubmit={handleActualizarContrasena} className="space-y-6 max-w-md">
-              <div className="space-y-2">
-                <label className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">Nueva Contraseña</label>
-                <input 
-                  type="password" 
-                  required
-                  placeholder="Escriba su nueva contraseña"
-                  value={formPass.nueva}
-                  onChange={(e) => setFormPass({...formPass, nueva: e.target.value})}
-                  className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 focus:border-indigo-300 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
-                />
-              </div>
+        <div>
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight">{form.nombreCompleto || "Médico Veterinario"}</h1>
+          <p className="text-sky-600 font-bold uppercase tracking-widest text-xs mt-1">{usuarioRol}</p>
+          <p className="text-slate-500 text-sm mt-1">Gestiona tu información personal y credenciales de acceso al área Médica.</p>
+        </div>
+      </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">Confirmar Contraseña</label>
-                <input 
-                  type="password" 
-                  required
-                  placeholder="Repita la nueva contraseña"
-                  value={formPass.confirmar}
-                  onChange={(e) => setFormPass({...formPass, confirmar: e.target.value})}
-                  className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-100 focus:border-indigo-300 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
-                />
-              </div>
+      {/* FORMULARIO DE EDICIÓN */}
+      <form onSubmit={handleSubmit} className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200/60 space-y-6">
+        
+        <h3 className="text-sm font-black text-slate-800 tracking-widest uppercase border-b border-slate-100 pb-2">Datos Personales</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="md:col-span-2">
+            <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Nombre Completo</label>
+            <div className="relative">
+              <User className="absolute left-3 top-3 text-slate-400" size={18} />
+              <input type="text" name="nombreCompleto" value={form.nombreCompleto} onChange={handleChange} required className="w-full pl-10 border border-slate-300 p-3 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 outline-none transition-all bg-slate-50 focus:bg-white" />
+            </div>
+          </div>
 
-              <div className="pt-2 border-t border-slate-100">
-                <button 
-                  type="submit" 
-                  disabled={loadingPass}
-                  className="w-full py-4 bg-slate-800 hover:bg-slate-900 text-white font-black text-sm rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-70"
-                >
-                  {loadingPass ? <Activity size={18} className="animate-spin" /> : <Save size={18} />}
-                  {loadingPass ? 'ACTUALIZANDO...' : 'GUARDAR NUEVA CONTRASEÑA'}
-                </button>
-              </div>
-            </form>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Teléfono / Celular</label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-3 text-slate-400" size={18} />
+              <input type="text" name="telefono" value={form.telefono} onChange={handleChange} maxLength={9} className="w-full pl-10 border border-slate-300 p-3 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 outline-none transition-all bg-slate-50 focus:bg-white" />
+            </div>
+          </div>
 
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">DNI / Documento</label>
+            <div className="relative">
+              <CreditCard className="absolute left-3 top-3 text-slate-400" size={18} />
+              <input type="text" name="dni" value={form.dni} onChange={handleChange} maxLength={8} minLength={8} className="w-full pl-10 border border-slate-300 p-3 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 outline-none transition-all bg-slate-50 focus:bg-white" />
+            </div>
           </div>
         </div>
 
-      </div>
+        <h3 className="text-sm font-black text-slate-800 tracking-widest uppercase border-b border-slate-100 pb-2 pt-4">Credenciales de Acceso</h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Correo Electrónico (Login)</label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-3 text-slate-400" size={18} />
+              <input type="email" name="correo" value={form.correo} onChange={handleChange} required className="w-full pl-10 border border-slate-300 p-3 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 outline-none transition-all bg-slate-50 focus:bg-white" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Nueva Contraseña</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 text-slate-400" size={18} />
+              <input type="password" name="contrasena" value={form.contrasena} onChange={handleChange} placeholder="Dejar en blanco para conservar actual" className="w-full pl-10 border border-slate-300 p-3 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 outline-none transition-all bg-slate-50 focus:bg-white" />
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-6 border-t border-slate-100 flex justify-end">
+          <button type="submit" disabled={procesando} className="bg-gradient-to-r from-sky-500 to-cyan-400 hover:from-sky-600 hover:to-cyan-500 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-sky-500/30 transition-all flex items-center gap-2 disabled:opacity-50">
+            {procesando ? <Activity className="animate-spin" size={18} /> : <Save size={18} />}
+            {procesando ? "Guardando Cambios..." : "Guardar Perfil"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

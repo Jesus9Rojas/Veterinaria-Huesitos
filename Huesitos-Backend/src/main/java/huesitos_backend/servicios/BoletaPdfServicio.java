@@ -7,7 +7,7 @@ import com.lowagie.text.pdf.PdfWriter;
 import huesitos_backend.entidades.*;
 import huesitos_backend.repositorios.TransaccionRepositorio;
 import huesitos_backend.repositorios.DetallePedidoRepositorio;
-import huesitos_backend.repositorios.DueñoRepositorio; // NECESARIO PARA BUSCAR EL NOMBRE DEL DUEÑO
+import huesitos_backend.repositorios.DueñoRepositorio;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,16 +24,8 @@ public class BoletaPdfServicio {
 
     private final TransaccionRepositorio transaccionRepositorio;
     private final DetallePedidoRepositorio detallePedidoRepositorio;
-    private final DueñoRepositorio dueñoRepositorio; // Inyectado para buscar el nombre real a partir del UsuarioId
+    private final DueñoRepositorio dueñoRepositorio;
 
-    /**
-     * Genera un archivo PDF para el comprobante de una transacción.
-     * Soporta Citas Médicas y Pedidos de Tienda.
-     *
-     * @param transaccionId El ID de la transacción.
-     * @param tipoComprobante Puede ser "BOLETA" o "FACTURA".
-     * @return El PDF en arreglo de bytes.
-     */
     @Transactional(readOnly = true)
     public byte[] generarPdfComprobante(Long transaccionId, String tipoComprobante) {
         Transaccion transaccion = transaccionRepositorio.findById(transaccionId)
@@ -82,9 +74,7 @@ public class BoletaPdfServicio {
             String infoExtra = "";
             
             if (transaccion.getCita() != null) {
-                // Es una atención médica
                 Cita cita = transaccion.getCita();
-                // Corrección: Usamos getDueño() (con la 'ñ' como está en tu entidad Mascota)
                 if (cita.getMascota().getDueño() != null) {
                     nombreCliente = cita.getMascota().getDueño().getNombreCompleto();
                 } else {
@@ -92,13 +82,9 @@ public class BoletaPdfServicio {
                 }
                 infoExtra = "Mascota: " + cita.getMascota().getNombre() + " (" + cita.getMascota().getEspecie() + ")";
             } else if (transaccion.getPedido() != null) {
-                // Es una venta de mostrador
                 Pedido pedido = transaccion.getPedido();
                 if (pedido.getCliente() != null) {
-                    // Corrección: El Usuario solo tiene correo.
-                    // Para buscar el Nombre, buscamos en la tabla dueños por usuario_id
                     Dueño dueño = dueñoRepositorio.findByUsuarioId(pedido.getCliente().getId()).orElse(null);
-                    
                     if (dueño != null && dueño.getNombreCompleto() != null) {
                         nombreCliente = dueño.getNombreCompleto();
                     } else {
@@ -123,7 +109,6 @@ public class BoletaPdfServicio {
             tableDetalles.addCell(crearCeldaSinBorde("Fecha Emisión: " + fechaStr, labelFont, valueFont));
             tableDetalles.addCell(crearCeldaSinBorde("Cliente: " + nombreCliente, labelFont, valueFont));
             
-            // Verificamos si medio pago no es nulo antes de hacer toString()
             String medioPagoStr = transaccion.getMedioPago() != null ? transaccion.getMedioPago().toString() : "No especificado";
             tableDetalles.addCell(crearCeldaSinBorde("Medio de Pago: " + medioPagoStr, labelFont, valueFont));
             
@@ -135,7 +120,7 @@ public class BoletaPdfServicio {
             document.add(tableDetalles);
             document.add(separator);
 
-            // 5. Tabla de Items (Servicios o Productos)
+            // 5. Tabla de Items (Servicios, Fármacos, Productos)
             PdfPTable tableItems = new PdfPTable(3);
             tableItems.setWidthPercentage(100);
             tableItems.setWidths(new float[]{60, 20, 20});
@@ -161,8 +146,10 @@ public class BoletaPdfServicio {
             tableItems.addCell(cellHeader3);
 
             if (transaccion.getCita() != null) {
-                // Agregar fila de Cita Médica
-                PdfPCell cellItem = new PdfPCell(new Phrase(transaccion.getCita().getServicio().getNombre(), valueFont));
+                Cita cita = transaccion.getCita();
+                
+                // Imprimir el servicio médico base de la cita
+                PdfPCell cellItem = new PdfPCell(new Phrase("Consulta: " + cita.getServicio().getNombre(), valueFont));
                 cellItem.setPadding(6);
                 tableItems.addCell(cellItem);
 
@@ -171,13 +158,32 @@ public class BoletaPdfServicio {
                 cellCant.setHorizontalAlignment(Element.ALIGN_CENTER);
                 tableItems.addCell(cellCant);
 
-                PdfPCell cellTotal = new PdfPCell(new Phrase("S/. " + transaccion.getMonto().toString(), valueFont));
+                PdfPCell cellTotal = new PdfPCell(new Phrase("S/. " + String.format("%.2f", cita.getServicio().getPrecio()), valueFont));
                 cellTotal.setPadding(6);
                 cellTotal.setHorizontalAlignment(Element.ALIGN_RIGHT);
                 tableItems.addCell(cellTotal);
 
+                // IMPRESIÓN DINÁMICA DE ITEMS ADICIONALES (Medicina, Vacuna, Antiparasitarios)
+                if (cita.getItemsCobro() != null && !cita.getItemsCobro().isEmpty()) {
+                    for (ItemCobroCita item : cita.getItemsCobro()) {
+                        PdfPCell cellExtraItem = new PdfPCell(new Phrase(item.getTipoItem() + ": " + item.getNombreItem(), valueFont));
+                        cellExtraItem.setPadding(6);
+                        tableItems.addCell(cellExtraItem);
+
+                        PdfPCell cellExtraCant = new PdfPCell(new Phrase(String.valueOf(item.getCantidad()), valueFont));
+                        cellExtraCant.setPadding(6);
+                        cellExtraCant.setHorizontalAlignment(Element.ALIGN_CENTER);
+                        tableItems.addCell(cellExtraCant);
+
+                        PdfPCell cellExtraTotal = new PdfPCell(new Phrase("S/. " + String.format("%.2f", item.getSubtotal()), valueFont));
+                        cellExtraTotal.setPadding(6);
+                        cellExtraTotal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                        tableItems.addCell(cellExtraTotal);
+                    }
+                }
+
             } else if (transaccion.getPedido() != null) {
-                // Agregar múltiples filas de Productos del Pedido
+                // Venta de tienda normal
                 List<DetallePedido> detalles = detallePedidoRepositorio.findByPedidoId(transaccion.getPedido().getId());
                 for(DetallePedido det : detalles) {
                     PdfPCell cellItem = new PdfPCell(new Phrase(det.getProducto().getNombre(), valueFont));
@@ -199,9 +205,9 @@ public class BoletaPdfServicio {
 
             document.add(tableItems);
 
-            // 6. Total a pagar destacado
+            // 6. Total a pagar destacado (Sumatoria final en Caja)
             Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, new Color(44, 62, 80));
-            Paragraph totalParagraph = new Paragraph("TOTAL PAGADO: S/. " + transaccion.getMonto().toString(), totalFont);
+            Paragraph totalParagraph = new Paragraph("TOTAL PAGADO: S/. " + String.format("%.2f", transaccion.getMonto()), totalFont);
             totalParagraph.setAlignment(Element.ALIGN_RIGHT);
             totalParagraph.setSpacingAfter(30);
             document.add(totalParagraph);

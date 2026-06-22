@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import logo from '../assets/Logo Huesitos.png';
 
 const BG_IMAGE_URL = null; 
@@ -31,25 +31,24 @@ const VetLogin = () => {
       if (response.ok) {
         const data = await response.json(); 
         
-        // Guardamos TODA la información que manda nuestro nuevo backend
         localStorage.setItem('token', data.token);
         localStorage.setItem('usuarioCorreo', data.correo);
         localStorage.setItem('usuarioRol', data.rol);
         localStorage.setItem('usuarioId', data.id || data.usuarioId);
-        
-        // ACTUALIZADO: Guardamos el nombre real y la foto de perfil
         localStorage.setItem('usuarioNombre', data.nombreCompleto || data.nombre || 'Usuario');
         localStorage.setItem('usuarioFoto', data.fotoPerfilUrl || '/uploads/defecto-usuario.png');
 
-        // Redirección dinámica según el rol
         if (data.rol === 'ADMINISTRADOR') {
           navigate('/admin');
         } else if (data.rol === 'CLIENTE') {
-          navigate('/cliente');
+          // El cliente vuelve a la página principal pero con sesión iniciada
+          navigate('/');
         } else if (data.rol === 'VETERINARIO') {
           navigate('/veterinario');
         } else if (data.rol === 'RECEPCIONISTA') {
           navigate('/recepcion');
+        } else if (data.rol === 'AUXILIAR_VETERINARIO') {
+          navigate('/auxiliar');
         } else {
           navigate('/');  
         }
@@ -97,7 +96,7 @@ const VetLogin = () => {
         position: 'relative', 
       }}>
 
-        {/* ======================== PANEL IZQUIERDO ======================== */}
+        {/* PANEL IZQUIERDO */}
         <div style={{
           width: '52%',
           position: 'relative',
@@ -114,11 +113,8 @@ const VetLogin = () => {
           <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(160deg, rgba(4,44,83,0.55) 0%, rgba(4,44,83,0.82) 50%, rgba(4,44,83,0.97) 100%)`, zIndex: 1 }} />
 
           <div style={{ position: 'relative', zIndex: 2, padding: '2.5rem 2rem 0' }}>
-            <div className="w-14 h-14 bg-gradient-to-tr from-sky-500 to-cyan-300 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-sky-400/30 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300">
-             <img 
-                src={logo} 
-                alt="Logo de la clínica" 
-              />
+            <div className="w-14 h-14 bg-gradient-to-tr from-sky-500 to-cyan-300 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-sky-400/30">
+             <img src={logo} alt="Logo de la clínica" />
             </div>
           </div>
 
@@ -155,13 +151,12 @@ const VetLogin = () => {
           </div>
         </div>
 
-        {/* ======================== PANEL DERECHO ======================== */}
+        {/* PANEL DERECHO */}
         <div style={{
           width: '48%', background: '#fff', padding: '2.5rem 2rem', display: 'flex',
           flexDirection: 'column', justifyContent: 'center', position: 'relative'
         }}>
           
-          {/* BOTÓN VOLVER */}
           <button 
             onClick={() => navigate('/')} 
             style={{
@@ -173,11 +168,8 @@ const VetLogin = () => {
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem' }}>
-            <div className="w-14 h-14 bg-gradient-to-tr from-sky-500 to-cyan-300 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-sky-400/30 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300">
-             <img 
-                src={logo} 
-                alt="Logo de la clínica" 
-              />
+            <div className="w-14 h-14 bg-gradient-to-tr from-sky-500 to-cyan-300 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-sky-400/30">
+             <img src={logo} alt="Logo de la clínica" />
             </div>
             <div>
               <div style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>Huesitos</div>
@@ -248,8 +240,9 @@ const VetLogin = () => {
             <hr style={{ flex: 1, border: 'none', borderTop: '1px solid #e2e8f0' }} />
           </div>
 
+          {/* AQUÍ ESTÁ EL ENLACE CORREGIDO PARA IR AL REGISTRO */}
           <p style={{ textAlign: 'center', fontSize: '12px', color: '#64748b', marginTop: '1rem' }}>
-            ¿Nuevo aquí? <a href="#" style={{ color: colors.blue600, textDecoration: 'none', fontWeight: 600 }}>Crea una cuenta</a>
+            ¿Nuevo aquí? <Link to="/registro" style={{ color: colors.blue600, textDecoration: 'none', fontWeight: 600 }}>Crea una cuenta</Link>
           </p>
 
         </div>

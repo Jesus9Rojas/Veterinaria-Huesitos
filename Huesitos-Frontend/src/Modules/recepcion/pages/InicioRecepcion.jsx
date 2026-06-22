@@ -102,8 +102,7 @@ const InicioRecepcion = () => {
       {/* Saludo y Refresco */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-800 tracking-tight">¡Hola, Recepcionista! 👋</h1>
-          <p className="text-slate-500 text-sm mt-1">Este es el resumen de operaciones para hoy.</p>
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight">Bienvenido al Sistema de Recepcion</h1>
         </div>
         <button 
           onClick={actualizarTurnoManualmente}

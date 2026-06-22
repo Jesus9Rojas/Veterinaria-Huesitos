@@ -1,5 +1,6 @@
 package huesitos_backend.controladores;
 
+import huesitos_backend.dto.ItemCobroRequest;
 import huesitos_backend.dto.SolicitudReprogramacion;
 import huesitos_backend.entidades.Cita;
 import huesitos_backend.entidades.EstadoCita;
@@ -20,7 +21,6 @@ public class CitaControlador {
 
     private final CitaServicio citaServicio;
 
-    // 1. OBTENER CITAS POR DÍA (¡CORREGIDO! Vuelve a ser /calendario)
     @GetMapping("/calendario")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'VETERINARIO')")
     public ResponseEntity<List<Cita>> listarPorDia(
@@ -29,9 +29,15 @@ public class CitaControlador {
         return ResponseEntity.ok(citas);
     }
 
-    // 2. AGENDAR CITA
+    @GetMapping("/hoy")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'VETERINARIO', 'AUXILIAR_VETERINARIO')")
+    public ResponseEntity<List<Cita>> obtenerCitasHoy() {
+        List<Cita> citas = citaServicio.listarCitasPorDia(LocalDate.now());
+        return ResponseEntity.ok(citas);
+    }
+
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'CLIENTE')")
     public ResponseEntity<?> agendarCita(@RequestBody Cita cita) {
         try {
             Cita resultado = citaServicio.agendarCita(cita);
@@ -41,7 +47,6 @@ public class CitaControlador {
         }
     }
 
-    // 3. CAMBIAR ESTADO
     @PatchMapping("/{id}/estado")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'VETERINARIO')")
     public ResponseEntity<?> cambiarEstado(
@@ -55,7 +60,19 @@ public class CitaControlador {
         }
     }
 
-    // 4. CANCELAR CITA
+    @PatchMapping("/{id}/asignar-veterinario")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
+    public ResponseEntity<?> asignarVeterinario(
+            @PathVariable Long id, 
+            @RequestParam Long veterinarioId) {
+        try {
+            Cita resultado = citaServicio.asignarVeterinario(id, veterinarioId);
+            return ResponseEntity.ok(resultado);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PutMapping("/{id}/cancelar")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
     public ResponseEntity<?> cancelarCita(@PathVariable Long id) {
@@ -67,7 +84,6 @@ public class CitaControlador {
         }
     }
 
-    // 5. CHECK-IN
     @PutMapping("/{id}/check-in")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
     public ResponseEntity<?> checkInCita(@PathVariable Long id) {
@@ -79,7 +95,6 @@ public class CitaControlador {
         }
     }
 
-    // 6. REPROGRAMAR
     @PutMapping("/{id}/reprogramar")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
     public ResponseEntity<?> reprogramarCita(@PathVariable Long id, @RequestBody SolicitudReprogramacion solicitud) {
@@ -92,5 +107,21 @@ public class CitaControlador {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @PostMapping("/{citaId}/recetar-items")
+    @PreAuthorize("hasAnyRole('VETERINARIO', 'ADMINISTRADOR')")
+    public ResponseEntity<?> recetarYCobrarItems(@PathVariable Long citaId, @RequestBody List<ItemCobroRequest> items) {
+        try {
+            return ResponseEntity.ok(citaServicio.registrarItemsRecetadosYCobrar(citaId, items));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/dueno/{duenoId}")
+    @PreAuthorize("hasAnyRole('CLIENTE', 'ADMINISTRADOR', 'RECEPCIONISTA')")
+    public ResponseEntity<List<Cita>> obtenerCitasPorDueno(@PathVariable Long duenoId) {
+        return ResponseEntity.ok(citaServicio.obtenerCitasPorDueño(duenoId));
     }
 }

@@ -1,19 +1,23 @@
 import { useState } from 'react';
-import { Stethoscope, Plus, ClipboardList, Heart, Thermometer, Weight } from 'lucide-react';
+import { Stethoscope, Plus, ClipboardList } from 'lucide-react';
 
 const TabConsultas = ({ consultas, onGuardar }) => {
   const [formOpen, setFormOpen] = useState(false);
-  const [form, setForm] = useState({ motivo: '', anamnesis: '', diagnostico: '', tratamiento: '', peso: '', temperatura: '', frecuenciaCardiaca: '' });
+  const [form, setForm] = useState({ 
+    motivoConsulta: '', sintomas: '', diagnostico: '', tratamiento: '', observaciones: '' 
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Enviamos exactamente los campos que tiene ConsultaMedica.java
     onGuardar({
-      ...form,
-      peso: parseFloat(form.peso),
-      temperatura: parseFloat(form.temperatura),
-      frecuenciaCardiaca: parseInt(form.frecuenciaCardiaca)
+      motivoConsulta: form.motivoConsulta,
+      sintomas: form.sintomas,
+      diagnostico: form.diagnostico,
+      tratamiento: form.tratamiento,
+      observaciones: form.observaciones
     });
-    setForm({ motivo: '', anamnesis: '', diagnostico: '', tratamiento: '', peso: '', temperatura: '', frecuenciaCardiaca: '' });
+    setForm({ motivoConsulta: '', sintomas: '', diagnostico: '', tratamiento: '', observaciones: '' });
     setFormOpen(false);
   };
 
@@ -32,37 +36,29 @@ const TabConsultas = ({ consultas, onGuardar }) => {
 
       {formOpen && (
         <form onSubmit={handleSubmit} className="bg-slate-50 border border-slate-200 p-5 rounded-2xl space-y-4 animate-in slide-in-from-top-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1 flex items-center gap-1"><Weight size={12}/> Peso (Kg)</label>
-              <input required type="number" step="0.1" value={form.peso} onChange={e => setForm({...form, peso: e.target.value})} className="w-full border border-slate-300 p-2.5 rounded-xl text-sm outline-none bg-white focus:ring-2 focus:ring-indigo-500" />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1 flex items-center gap-1"><Thermometer size={12}/> Temp (°C)</label>
-              <input required type="number" step="0.1" value={form.temperatura} onChange={e => setForm({...form, temperatura: e.target.value})} className="w-full border border-slate-300 p-2.5 rounded-xl text-sm outline-none bg-white focus:ring-2 focus:ring-indigo-500" />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1 flex items-center gap-1"><Heart size={12}/> Frec. Cardíaca (LPM)</label>
-              <input required type="number" value={form.frecuenciaCardiaca} onChange={e => setForm({...form, frecuenciaCardiaca: e.target.value})} className="w-full border border-slate-300 p-2.5 rounded-xl text-sm outline-none bg-white focus:ring-2 focus:ring-indigo-500" />
-            </div>
-          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Motivo de Consulta</label>
-              <input required type="text" value={form.motivo} onChange={e => setForm({...form, motivo: e.target.value})} className="w-full border border-slate-300 p-2.5 rounded-xl text-sm outline-none bg-white focus:ring-2 focus:ring-indigo-500" />
+              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Motivo de Consulta (Máx 250 carac.)</label>
+              <input required type="text" maxLength={250} value={form.motivoConsulta} onChange={e => setForm({...form, motivoConsulta: e.target.value})} className="w-full border border-slate-300 p-2.5 rounded-xl text-sm outline-none bg-white focus:ring-2 focus:ring-indigo-500" />
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Anamnesis / Exploración Física</label>
-              <input required type="text" value={form.anamnesis} onChange={e => setForm({...form, anamnesis: e.target.value})} className="w-full border border-slate-300 p-2.5 rounded-xl text-sm outline-none bg-white focus:ring-2 focus:ring-indigo-500" />
+              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Observaciones / Notas Extra</label>
+              <input type="text" maxLength={500} value={form.observaciones} onChange={e => setForm({...form, observaciones: e.target.value})} className="w-full border border-slate-300 p-2.5 rounded-xl text-sm outline-none bg-white focus:ring-2 focus:ring-indigo-500" placeholder="Opcional..." />
             </div>
           </div>
+          
+          <div>
+            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Síntomas / Exploración</label>
+            <textarea required rows="2" value={form.sintomas} onChange={e => setForm({...form, sintomas: e.target.value})} className="w-full border border-slate-300 p-2.5 rounded-xl text-sm outline-none bg-white focus:ring-2 focus:ring-indigo-500"></textarea>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Diagnóstico Clínico</label>
+              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Diagnóstico</label>
               <textarea required rows="2" value={form.diagnostico} onChange={e => setForm({...form, diagnostico: e.target.value})} className="w-full border border-slate-300 p-2.5 rounded-xl text-sm outline-none bg-white focus:ring-2 focus:ring-indigo-500"></textarea>
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Tratamiento / Recomendaciones</label>
+              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Tratamiento Clínico</label>
               <textarea required rows="2" value={form.tratamiento} onChange={e => setForm({...form, tratamiento: e.target.value})} className="w-full border border-slate-300 p-2.5 rounded-xl text-sm outline-none bg-white focus:ring-2 focus:ring-indigo-500"></textarea>
             </div>
           </div>
@@ -73,29 +69,30 @@ const TabConsultas = ({ consultas, onGuardar }) => {
         </form>
       )}
 
-      {/* Línea de tiempo */}
+      {/* Línea de tiempo de consultas */}
       <div className="space-y-4">
         {consultas.length === 0 ? (
           <p className="text-sm text-slate-400 italic py-6 text-center">No se registran consultas previas para este paciente.</p>
         ) : (
-          consultas.map((c) => (
-            <div key={c.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-              <div className="flex justify-between items-center border-b pb-2 border-slate-100">
-                <span className="text-sm font-black text-slate-800 flex items-center gap-1.5"><Stethoscope size={16} className="text-indigo-500"/> Motivo: {c.motivo}</span>
-                <span className="text-xs font-bold text-slate-400">{new Date(c.fechaCreacion || new Date()).toLocaleDateString('es-PE')}</span>
+          consultas.map((c) => {
+            const fechaDoc = c.fecha ? new Date(c.fecha).toLocaleDateString('es-PE') : 'Fecha no registrada';
+            return (
+              <div key={c.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                <div className="flex justify-between items-center border-b pb-2 border-slate-100">
+                  <span className="text-sm font-black text-slate-800 flex items-center gap-1.5">
+                    <Stethoscope size={16} className="text-indigo-500"/> {c.motivoConsulta}
+                  </span>
+                  <span className="text-xs font-bold text-slate-400">Cod: #{c.id} | {fechaDoc}</span>
+                </div>
+                <div className="text-xs space-y-1.5 bg-slate-50 p-3 rounded-xl border border-slate-100/50">
+                  <p><strong className="text-slate-700">Síntomas:</strong> {c.sintomas}</p>
+                  <p className="text-indigo-700"><strong className="text-slate-700">Diagnóstico:</strong> {c.diagnostico}</p>
+                  <p className="text-emerald-700"><strong className="text-slate-700">Tratamiento:</strong> {c.tratamiento}</p>
+                  {c.observaciones && <p className="text-slate-500"><strong className="text-slate-600">Observaciones:</strong> {c.observaciones}</p>}
+                </div>
               </div>
-              <div className="grid grid-cols-3 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100/50 text-xs font-bold text-slate-600">
-                <p>⚖️ Peso: {c.peso} Kg</p>
-                <p>🌡️ Temp: {c.temperatura} °C</p>
-                <p>💓 Frec: {c.frecuenciaCardiaca} LPM</p>
-              </div>
-              <div className="text-xs space-y-1.5">
-                <p><strong className="text-slate-700">Exploración:</strong> {c.anamnesis}</p>
-                <p className="text-indigo-700"><strong className="text-slate-700">Diagnóstico:</strong> {c.diagnostico}</p>
-                <p className="text-emerald-700"><strong className="text-slate-700">Tratamiento:</strong> {c.tratamiento}</p>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

@@ -18,7 +18,8 @@ const InicioVeterinario = () => {
     const cargarAgendaDelDia = async () => {
       try {
         setLoading(true);
-        const hoyStr = new Date().toISOString().split('T')[0];
+        // SOLUCIÓN ZONA HORARIA: Extraemos la fecha local (Perú) en formato YYYY-MM-DD
+        const hoyStr = new Date().toLocaleDateString('en-CA');
         const data = await obtenerCitasPorDia(hoyStr);
         
         if (isMounted) {
@@ -40,23 +41,40 @@ const InicioVeterinario = () => {
     }
   }, [correoVeterinario]);
 
-  // Cálculos dinámicos
   const totalPacientes = citasHoy.length;
   const enSalaDeEspera = citasHoy.filter(c => c.estado === 'EN_ESPERA').length;
   const completadas = citasHoy.filter(c => c.estado === 'COMPLETADA').length;
   const proximasCitas = citasHoy.filter(c => c.estado === 'PENDIENTE' || c.estado === 'CONFIRMADA');
 
-  // Lógica Dinámica para el Banner
   const horaActual = new Date().getHours();
   const saludo = horaActual < 12 ? 'Buenos días' : horaActual < 18 ? 'Buenas tardes' : 'Buenas noches';
-  const nombreDoctor = correoVeterinario.split('@')[0].split('.').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  
+  // Extraemos el nombre seguro
+  let nombreReal = localStorage.getItem('usuarioNombre');
+  if (!nombreReal || nombreReal === 'null') {
+    nombreReal = correoVeterinario.split('@')[0];
+  }
+  const nombreDoctor = nombreReal.split('.').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+  // ========================================================
+  // FORMATO DE HORA (A.M. / P.M. 100% SEGURO)
+  // ========================================================
+  const formatTimeParts = (isoString) => {
+    const date = new Date(isoString);
+    let hours = date.getHours();
+    let minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'P.M.' : 'A.M.';
+    hours = hours % 12;
+    hours = hours ? hours : 12; 
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+    return { time: `${hours}:${minutes}`, ampm };
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
       
       {/* BANNER PRINCIPAL INNOVADOR Y CLÍNICO */}
       <div className="relative bg-slate-900 text-white p-8 sm:p-10 rounded-[2rem] shadow-2xl overflow-hidden border border-slate-800">
-        {/* Efectos de luces y fondo de alta tecnología */}
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 animate-pulse"></div>
         <div className="absolute bottom-0 left-0 w-72 h-72 bg-sky-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4"></div>
         
@@ -86,7 +104,6 @@ const InicioVeterinario = () => {
             </p>
           </div>
 
-          {/* Monitor Lateral Integrado */}
           <div className="hidden lg:flex shrink-0">
             <div className="bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-md text-center min-w-[180px] shadow-inner relative overflow-hidden group">
               <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -95,7 +112,6 @@ const InicioVeterinario = () => {
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Pacientes Asignados</p>
             </div>
           </div>
-
         </div>
       </div>
 
@@ -161,7 +177,7 @@ const InicioVeterinario = () => {
       {/* BLOQUE INFERIOR DIVIDIDO EN DOS SECCIONES */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* COLUMNA IZQUIERDA Y CENTRAL: EN SALA DE ESPERA Y PRÓXIMOS (OCUPA 2/3) */}
+        {/* COLUMNA IZQUIERDA Y CENTRAL */}
         <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200/60 p-6 shadow-sm flex flex-col min-h-[350px]">
           <h2 className="text-lg font-black text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-4 shrink-0">
             <Activity className="text-indigo-500" size={20} /> Flujo de Pacientes para Hoy
@@ -177,14 +193,15 @@ const InicioVeterinario = () => {
               </div>
             ) : (
               <>
-                {/* 1. MUESTRA PRIMERO A LOS QUE YA LLEGARON Y ESTÁN ESPERANDO */}
                 {citasHoy.filter(c => c.estado === 'EN_ESPERA').map(cita => {
-                  const hora = new Date(cita.fechaHora).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+                  const { time, ampm } = formatTimeParts(cita.fechaHora);
                   return (
                     <div key={cita.id} className="flex justify-between items-center bg-amber-50/60 border border-amber-200/70 p-4 rounded-2xl shadow-sm animate-in fade-in zoom-in-95">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 bg-amber-500 text-white rounded-xl flex items-center justify-center font-black text-sm shrink-0">
-                          {hora}
+                        {/* HORA NO SE ROMPE */}
+                        <div className="min-w-[90px] h-14 bg-amber-500 text-white rounded-xl flex flex-col items-center justify-center shrink-0 shadow-inner">
+                          <span className="text-sm font-black tracking-tight leading-none">{time}</span>
+                          <span className="text-[10px] font-bold uppercase mt-0.5">{ampm}</span>
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-black text-slate-800 truncate">
@@ -194,8 +211,8 @@ const InicioVeterinario = () => {
                         </div>
                       </div>
                       <button 
-                        onClick={() => navigate('/veterinario/agenda')}
-                        className="bg-amber-500 hover:bg-amber-600 text-white font-black text-xs px-4 py-2 rounded-xl shadow-md shadow-amber-500/20 transition-all shrink-0"
+                        onClick={() => navigate('/veterinario/consultas')}
+                        className="bg-amber-500 hover:bg-amber-600 text-white font-black text-xs px-4 py-2 rounded-xl shadow-md shadow-amber-500/20 transition-all shrink-0 ml-2"
                       >
                         Atender Ahora
                       </button>
@@ -203,14 +220,15 @@ const InicioVeterinario = () => {
                   );
                 })}
 
-                {/* 2. MUESTRA LUEGO LOS PROGRAMADOS QUE AÚN NO LLEGAN */}
                 {proximasCitas.map(cita => {
-                  const hora = new Date(cita.fechaHora).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+                  const { time, ampm } = formatTimeParts(cita.fechaHora);
                   return (
                     <div key={cita.id} className="flex justify-between items-center bg-slate-50 border border-slate-100 p-4 rounded-2xl">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 bg-slate-200 text-slate-700 rounded-xl flex items-center justify-center font-black text-sm shrink-0">
-                          {hora}
+                        {/* HORA NO SE ROMPE */}
+                        <div className="min-w-[90px] h-14 bg-slate-200 text-slate-700 rounded-xl flex flex-col items-center justify-center shrink-0 shadow-inner">
+                          <span className="text-sm font-black tracking-tight leading-none">{time}</span>
+                          <span className="text-[10px] font-bold uppercase mt-0.5">{ampm}</span>
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-black text-slate-700 truncate">
@@ -219,8 +237,8 @@ const InicioVeterinario = () => {
                           <p className="text-xs font-semibold text-slate-400 truncate mt-0.5">{cita.servicio?.nombre}</p>
                         </div>
                       </div>
-                      <span className="text-[10px] font-black text-slate-400 bg-white border border-slate-200 px-2 py-1 rounded-lg uppercase tracking-wide shrink-0">
-                        {cita.estado}
+                      <span className="text-[10px] font-black text-slate-400 bg-white border border-slate-200 px-2 py-1 rounded-lg uppercase tracking-wide shrink-0 ml-2">
+                        {cita.estado.replace('_', ' ')}
                       </span>
                     </div>
                   );
@@ -230,7 +248,7 @@ const InicioVeterinario = () => {
           </div>
         </div>
 
-        {/* COLUMNA DERECHA: RECOMENDACIONES Y RECORDATORIOS CLÍNICOS (OCUPA 1/3) */}
+        {/* COLUMNA DERECHA: RECOMENDACIONES */}
         <div className="bg-white rounded-3xl border border-slate-200/60 p-6 shadow-sm flex flex-col justify-between space-y-4">
           <div>
             <h3 className="text-base font-black text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-4">

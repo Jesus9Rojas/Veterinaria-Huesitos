@@ -52,7 +52,9 @@ public class HorarioPersonalServicio {
             horario = horarioExistente.get();
             horario.setHoraEntrada(nuevoHorario.getHoraEntrada());
             horario.setHoraSalida(nuevoHorario.getHoraSalida());
-            horario.setActivo(nuevoHorario.getActivo());
+            if (nuevoHorario.getActivo() != null) {
+                horario.setActivo(nuevoHorario.getActivo());
+            }
         } else {
             horario = new HorarioPersonal();
             horario.setUsuario(usuario);
@@ -63,6 +65,17 @@ public class HorarioPersonalServicio {
         }
 
         return horarioPersonalRepositorio.save(horario);
+    }
+
+    /**
+     * Elimina un turno específico de la base de datos.
+     */
+    @Transactional
+    public void eliminarHorario(Long id) {
+        if (!horarioPersonalRepositorio.existsById(id)) {
+            throw new RuntimeException("El turno especificado no existe");
+        }
+        horarioPersonalRepositorio.deleteById(id);
     }
 
     /**

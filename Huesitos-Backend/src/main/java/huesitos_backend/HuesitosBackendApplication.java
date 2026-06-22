@@ -1,16 +1,20 @@
 package huesitos_backend;
 
-import huesitos_backend.entidades.Dueño;
-import huesitos_backend.entidades.Rol;
-import huesitos_backend.entidades.Usuario;
-import huesitos_backend.repositorios.DueñoRepositorio;
-import huesitos_backend.repositorios.UsuarioRepositorio;
-import org.springframework.boot.CommandLineRunner;
+import java.util.TimeZone;
+
+// import huesitos_backend.entidades.Dueño;
+// import huesitos_backend.entidades.Rol;
+// import huesitos_backend.entidades.Usuario;
+// import huesitos_backend.repositorios.DueñoRepositorio;
+// import huesitos_backend.repositorios.UsuarioRepositorio;
+// import org.springframework.boot.CommandLineRunner;
+// import org.springframework.context.annotation.Bean;
+// import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.crypto.password.PasswordEncoder;
+
+import jakarta.annotation.PostConstruct;
 
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -19,7 +23,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableMethodSecurity
 public class HuesitosBackendApplication {
 
-    public static void main(String[] args) {
+    @PostConstruct
+    public void init() {
+        TimeZone.setDefault(TimeZone.getTimeZone("America/Lima"));
+    }
+    
+    public static void main(String[] args) { 
         SpringApplication.run(HuesitosBackendApplication.class, args);
     }
 

@@ -11,7 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map; // Importación necesaria para el Map
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -20,9 +20,6 @@ public class UsuarioControlador {
 
     private final UsuarioServicio usuarioServicio;
 
-    // ==============================================================================
-    // MÉTODO CORREGIDO: Ahora busca y envía el nombre real de cada usuario Y SU FOTO
-    // ==============================================================================
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
     public ResponseEntity<List<Map<String, Object>>> listarUsuarios() {
@@ -35,11 +32,8 @@ public class UsuarioControlador {
             map.put("correo", u.getCorreo());
             map.put("rol", u.getRol().name());
             map.put("activo", u.getActivo());
-            
-            // ¡LÍNEA AÑADIDA PARA QUE EL FRONTEND PUEDA MOSTRAR LAS FOTOS!
             map.put("fotoPerfilUrl", u.getFotoPerfilUrl()); 
             
-            // LÓGICA MÁGICA: Buscar el nombre real según su rol
             String nombreVisible = "Usuario del Sistema";
             if (u.getRol() == Rol.CLIENTE) {
                 huesitos_backend.entidades.Dueño d = usuarioServicio.obtenerDatosDueño(u.getId()).orElse(null);
@@ -60,19 +54,21 @@ public class UsuarioControlador {
     }
 
     // ==============================================================================
-    // TODO EL RESTO DEL CÓDIGO SE MANTIENE EXACTAMENTE IGUAL AL TUYO
+    // CORRECCIÓN MAESTRA: Se añade 'CLIENTE' para que el modal no dé error 403
     // ==============================================================================
-
     @GetMapping("/{id}/dueño")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'CLIENTE')")
     public ResponseEntity<?> obtenerDatosDueño(@PathVariable Long id) {
         return usuarioServicio.obtenerDatosDueño(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // ==============================================================================
+    // PERMISO ACTUALIZADO: Se añade 'AUXILIAR_VETERINARIO' para ver su propio perfil
+    // ==============================================================================
     @GetMapping("/{id}/personal")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'VETERINARIO', 'AUXILIAR_VETERINARIO')")
     public ResponseEntity<?> obtenerDetallesPersonal(@PathVariable Long id) {
         return ResponseEntity.ok(usuarioServicio.obtenerDetallesPersonal(id));
     }
@@ -91,8 +87,11 @@ public class UsuarioControlador {
         }
     }
 
+    // ==============================================================================
+    // PERMISO ACTUALIZADO: Se añade 'AUXILIAR_VETERINARIO' para editar su propio perfil
+    // ==============================================================================
     @PutMapping("/{id}/personal")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'VETERINARIO', 'AUXILIAR_VETERINARIO')")
     public ResponseEntity<?> actualizarPersonal(@PathVariable Long id, @RequestBody SolicitudEdicionPersonal dto) {
         try {
             usuarioServicio.actualizarPersonal(
@@ -144,5 +143,28 @@ public class UsuarioControlador {
         private String nombreCompleto;
         private String telefono;
         private String dni;
+    }
+
+    @GetMapping("/veterinarios")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'CLIENTE')")
+    public ResponseEntity<List<Map<String, Object>>> listarVeterinariosParaCitas() {
+        List<Usuario> usuarios = usuarioServicio.listarTodos();
+        List<Map<String, Object>> respuesta = new java.util.ArrayList<>();
+        
+        for (Usuario u : usuarios) {
+            // Filtramos estricta y únicamente a los veterinarios activos
+            if (u.getRol() == Rol.VETERINARIO && u.getActivo()) {
+                Map<String, Object> map = new java.util.HashMap<>();
+                map.put("id", u.getId());
+                
+                Map<String, String> p = usuarioServicio.obtenerDetallesPersonal(u.getId());
+                String nombreVisible = p.get("nombreCompleto") != null ? p.get("nombreCompleto") : "Veterinario";
+                
+                map.put("nombreVisible", nombreVisible);
+                respuesta.add(map);
+            }
+        }
+        
+        return ResponseEntity.ok(respuesta);
     }
 }

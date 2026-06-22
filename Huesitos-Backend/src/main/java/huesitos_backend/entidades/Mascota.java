@@ -40,8 +40,8 @@ public class Mascota {
     @Column(name = "alertas_medicas", length = 500)
     private String alertasMedicas;
 
-    @Column(name = "foto_url", nullable = false, length = 255)
-    private String fotoUrl = "/uploads/defecto-mascota.png";
+    @Column(name = "foto_url", length = 255)
+    private String fotoUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dueño_id", nullable = false)

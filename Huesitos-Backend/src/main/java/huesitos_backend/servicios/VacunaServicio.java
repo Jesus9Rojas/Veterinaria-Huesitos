@@ -21,17 +21,11 @@ public class VacunaServicio {
     private final HistorialVacunacionRepositorio historialVacunacionRepositorio;
     private final MascotaRepositorio mascotaRepositorio;
 
-    /**
-     * Obtiene todas las vacunas del catálogo.
-     */
     @Transactional(readOnly = true)
     public List<Vacuna> obtenerCatalogoVacunas() {
         return vacunaRepositorio.findAll();
     }
 
-    /**
-     * Registra una nueva vacuna en el catálogo de la clínica.
-     */
     @Transactional
     public Vacuna registrarVacunaCatalogo(Vacuna vacuna) {
         if (vacuna.getNombre() == null || vacuna.getNombre().trim().isEmpty()) {
@@ -40,13 +34,53 @@ public class VacunaServicio {
         if (vacuna.getEspecieDestino() == null || vacuna.getEspecieDestino().trim().isEmpty()) {
             throw new RuntimeException("La especie de destino es obligatoria");
         }
+        if (vacuna.getPrecio() == null) vacuna.setPrecio(0.0);
+        if (vacuna.getStock() == null) vacuna.setStock(0);
+        if (vacuna.getActivo() == null) vacuna.setActivo(true);
+        
         return vacunaRepositorio.save(vacuna);
     }
 
-    /**
-     * Obtiene el historial de vacunas aplicadas a una mascota.
-     */
-@Transactional(readOnly = true)
+    @Transactional
+    public Vacuna actualizarVacunaCatalogo(Long id, Vacuna datosNuevos) {
+        Vacuna vacuna = vacunaRepositorio.findById(id)
+                .orElseThrow(() -> new RuntimeException("Vacuna no encontrada en el catálogo"));
+
+        vacuna.setNombre(datosNuevos.getNombre());
+        vacuna.setDescripcion(datosNuevos.getDescripcion());
+        vacuna.setEspecieDestino(datosNuevos.getEspecieDestino());
+        vacuna.setProveedor(datosNuevos.getProveedor());
+        
+        // Evitamos NullPointerExceptions asignando valores por defecto si vienen vacíos
+        vacuna.setPrecio(datosNuevos.getPrecio() != null ? datosNuevos.getPrecio() : 0.0);
+        vacuna.setStock(datosNuevos.getStock() != null ? datosNuevos.getStock() : 0);
+        
+        if (datosNuevos.getActivo() != null) {
+            vacuna.setActivo(datosNuevos.getActivo());
+        } else if (vacuna.getActivo() == null) {
+            vacuna.setActivo(true);
+        }
+
+        return vacunaRepositorio.save(vacuna);
+    }
+
+    @Transactional
+    public void desactivarVacuna(Long id) {
+        Vacuna vacuna = vacunaRepositorio.findById(id)
+                .orElseThrow(() -> new RuntimeException("Vacuna no encontrada"));
+        vacuna.setActivo(false);
+        vacunaRepositorio.save(vacuna);
+    }
+
+    @Transactional
+    public void reactivarVacuna(Long id) {
+        Vacuna vacuna = vacunaRepositorio.findById(id)
+                .orElseThrow(() -> new RuntimeException("Vacuna no encontrada"));
+        vacuna.setActivo(true);
+        vacunaRepositorio.save(vacuna);
+    }
+
+    @Transactional(readOnly = true)
     public List<HistorialVacunacion> obtenerHistorialPorMascota(Long mascotaId) {
         if (!mascotaRepositorio.existsById(mascotaId)) {
             throw new RuntimeException("Mascota no encontrada");
@@ -54,19 +88,16 @@ public class VacunaServicio {
         return historialVacunacionRepositorio.findByMascotaIdOrderByFechaAplicacionDesc(mascotaId);
     }
 
-    /**
-     * Registra la aplicación de una vacuna a una mascota.
-     */
     @Transactional
     public HistorialVacunacion registrarAplicacion(HistorialVacunacion registro) {
         if (registro.getMascota() == null || registro.getMascota().getId() == null) {
-            throw new RuntimeException("La mascota es obligatoria para registrar la aplicación de una vacuna");
+            throw new RuntimeException("La mascota es obligatoria");
         }
         if (registro.getVacuna() == null || registro.getVacuna().getId() == null) {
             throw new RuntimeException("La vacuna es obligatoria");
         }
         if (registro.getDosis() == null || registro.getDosis().trim().isEmpty()) {
-            throw new RuntimeException("La dosis (ej: Primera, Refuerzo) es obligatoria");
+            throw new RuntimeException("La dosis es obligatoria");
         }
 
         Mascota mascota = mascotaRepositorio.findById(registro.getMascota().getId())

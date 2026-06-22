@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional; // ¡Importante para evitar otro error!
+import java.util.Optional; 
 
 @Repository
 public interface TransaccionRepositorio extends JpaRepository<Transaccion, Long> {

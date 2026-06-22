@@ -19,7 +19,7 @@ public class InventarioControlador {
     private final ProductoServicio productoServicio;
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('AUXILIAR_VETERINARIO')")
     public ResponseEntity<?> registrarLote(@RequestBody Inventario lote) {
         try {
             Inventario resultado = inventarioServicio.registrarIngresoStock(lote);
@@ -30,7 +30,7 @@ public class InventarioControlador {
     }
 
     @PutMapping("/{id}/ajuste")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('AUXILIAR_VETERINARIO')")
     public ResponseEntity<?> ajustarStock(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         try {
             if (!body.containsKey("stock") || body.get("stock") == null) {
@@ -45,19 +45,19 @@ public class InventarioControlador {
     }
 
     @GetMapping("/producto/{productoId}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'AUXILIAR_VETERINARIO')")
     public ResponseEntity<List<Inventario>> listarPorProducto(@PathVariable Long productoId) {
         return ResponseEntity.ok(inventarioServicio.listarLotesPorProducto(productoId));
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'AUXILIAR_VETERINARIO')")
     public ResponseEntity<List<Inventario>> listarLotes() {
         return ResponseEntity.ok(inventarioServicio.listarLotesActivos());
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasRole('AUXILIAR_VETERINARIO')")
     public ResponseEntity<?> desactivarLote(@PathVariable Long id) {
         try {
             inventarioServicio.desactivarLote(id);
@@ -68,13 +68,13 @@ public class InventarioControlador {
     }
 
     @GetMapping("/alertas/bajo-stock")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'AUXILIAR_VETERINARIO')")
     public ResponseEntity<List<huesitos_backend.entidades.Producto>> listarBajoStock() {
         return ResponseEntity.ok(productoServicio.obtenerProductosBajoStock());
     }
 
     @GetMapping("/alertas/vencimientos")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'AUXILIAR_VETERINARIO')")
     public ResponseEntity<List<Inventario>> listarVencimientos(
             @RequestParam(required = false, defaultValue = "30") Integer dias) {
         return ResponseEntity.ok(inventarioServicio.obtenerLotesProximosAVencer(dias));

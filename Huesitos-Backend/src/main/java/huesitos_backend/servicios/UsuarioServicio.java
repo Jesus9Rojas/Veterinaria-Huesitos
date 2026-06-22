@@ -62,6 +62,16 @@ public class UsuarioServicio {
             throw new RuntimeException("El correo electrónico ya se encuentra registrado en el sistema.");
         }
 
+        // ==========================================
+        // VALIDACIONES ESTRICTAS DE TELÉFONO Y DNI
+        // ==========================================
+        if (telefono != null && !telefono.trim().isEmpty() && !telefono.matches("\\d{1,9}")) {
+            throw new RuntimeException("El teléfono debe contener solo números y un máximo de 9 dígitos.");
+        }
+        if (dni != null && !dni.trim().isEmpty() && !dni.matches("\\d{8}")) {
+            throw new RuntimeException("El DNI debe contener exactamente 8 dígitos numéricos.");
+        }
+
         Usuario nuevoUsuario = new Usuario();
         nuevoUsuario.setCorreo(correo);
         nuevoUsuario.setContrasena(passwordEncoder.encode(contrasena));
@@ -96,6 +106,16 @@ public class UsuarioServicio {
                 throw new RuntimeException("El correo electrónico especificado ya se encuentra registrado por otro usuario.");
             }
             usuario.setCorreo(correo);
+        }
+
+        // ==========================================
+        // VALIDACIONES ESTRICTAS DE TELÉFONO Y DNI
+        // ==========================================
+        if (telefono != null && !telefono.trim().isEmpty() && !telefono.matches("\\d{1,9}")) {
+            throw new RuntimeException("El teléfono debe contener solo números y un máximo de 9 dígitos.");
+        }
+        if (dni != null && !dni.trim().isEmpty() && !dni.matches("\\d{8}")) {
+            throw new RuntimeException("El DNI debe contener exactamente 8 dígitos numéricos.");
         }
 
         if (contrasena != null && !contrasena.trim().isEmpty()) {
@@ -154,9 +174,6 @@ public class UsuarioServicio {
         return actualizado;
     }
 
-    // =========================================================================
-    // ¡MÉTODO RESTAURADO PARA QUE PERFILCONTROLADOR FUNCIONE PERFECTAMENTE!
-    // =========================================================================
     @Transactional
     public Usuario actualizarCredenciales(Long id, String nuevoCorreo, String nuevaContrasena) {
         Usuario usuario = usuarioRepositorio.findById(id)

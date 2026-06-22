@@ -1,35 +1,63 @@
 import axios from "axios";
 
-const api = axios.create({
-  baseURL: "http://localhost:8080/api/citas",
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+const API_URL = "http://localhost:8080/api/citas";
 
-// Interceptor para inyectar el token en todas las peticiones
-api.interceptors.request.use((config) => {
+const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-export const obtenerCitasPorDia = async (fecha) => {
-  // Petición exacta buscando /calendario
-  const res = await api.get(`/calendario?fecha=${fecha}`);
-  return res.data;
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  };
 };
+
+// ==============================================================
+// FUNCIONES CLÁSICAS (RECEPCIÓN Y AGENDA)
+// ==============================================================
 
 export const crearCita = async (citaData) => {
-  const res = await api.post("", citaData);
-  return res.data;
+  const response = await axios.post(API_URL, citaData, getAuthHeaders());
+  return response.data;
 };
 
-export const cambiarEstadoCita = async (id, nuevoEstado) => {
-  const res = await api.patch(`/${id}/estado`, null, {
-    params: { nuevoEstado },
-  });
-  return res.data;
+// ¡AQUÍ ESTÁ LA FUNCIÓN RESTAURADA QUE NECESITA TU RECEPCIÓN!
+export const obtenerCitasPorDia = async (fecha) => {
+  const response = await axios.get(`${API_URL}/calendario?fecha=${fecha}`, getAuthHeaders());
+  return response.data;
+};
+
+export const cambiarEstadoCita = async (id, estado) => {
+  // Nota: Asegurado que coincida con el @PatchMapping y el @RequestParam "nuevoEstado" de tu backend
+  const response = await axios.patch(`${API_URL}/${id}/estado?nuevoEstado=${estado}`, {}, getAuthHeaders());
+  return response.data;
+};
+
+export const cancelarCita = async (id) => {
+  const response = await axios.put(`${API_URL}/${id}/cancelar`, {}, getAuthHeaders());
+  return response.data;
+};
+
+export const checkInCita = async (id) => {
+  const response = await axios.put(`${API_URL}/${id}/check-in`, {}, getAuthHeaders());
+  return response.data;
+};
+
+export const reprogramarCita = async (id, data) => {
+  const response = await axios.put(`${API_URL}/${id}/reprogramar`, data, getAuthHeaders());
+  return response.data;
+};
+
+// ==============================================================
+// NUEVAS FUNCIONES MÉDICAS (VETERINARIO)
+// ==============================================================
+
+export const obtenerCitasHoy = async () => {
+  const response = await axios.get(`${API_URL}/hoy`, getAuthHeaders());
+  return response.data;
+};
+
+export const recetarItemsCita = async (citaId, itemsArray) => {
+  const response = await axios.post(`${API_URL}/${citaId}/recetar-items`, itemsArray, getAuthHeaders());
+  return response.data;
 };

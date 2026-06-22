@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { 
   Stethoscope, Syringe, Activity, Microscope, HeartPulse, 
   Phone, MapPin, Mail, CheckCircle2, ShieldPlus,
-  Home, Clock
+  Home, Clock, CalendarPlus, User, ChevronDown, LogOut, LayoutDashboard
 } from 'lucide-react';
 
-// === IMPORTACIONES DE TUS IMÁGENES LOCALES ===
 import imagenNosotros from '../assets/veterinario.jpg';
 import portada from '../assets/portada.jpg';
 import iconoFacebook from '../assets/facebook.png';
@@ -16,15 +16,15 @@ import iconoTwitter from '../assets/gorjeo.png';
 import iconoYoutube from '../assets/youtube.png';
 import logo from '../assets/Logo Huesitos.png';
 
-const App = () => {
-  
-  // Animación principal
+import ModalReservaCliente from '../components/ModalReservaCliente';
+
+const Landing = () => {
+  const navigate = useNavigate();
+
   const fadeUp = {
     hidden: { opacity: 0, y: 60 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
   };
-
-  // Animación para elementos hijos
   const staggerContainer = {
     hidden: {},
     visible: { transition: { staggerChildren: 0.2 } }
@@ -33,8 +33,22 @@ const App = () => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [categoriaActiva, setCategoriaActiva] = useState('consultas');
 
-  // === ESTADO DINÁMICO DE CONFIGURACIÓN ===
-  // Nombres de variables actualizados para coincidir con el nuevo Backend
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    const token = localStorage.getItem('token');
+    const rol = localStorage.getItem('usuarioRol');
+    return Boolean(token && rol === 'CLIENTE');
+  });
+
+  const [usuarioNombre, setUsuarioNombre] = useState(() => {
+    const token = localStorage.getItem('token');
+    const rol = localStorage.getItem('usuarioRol');
+    const nombre = localStorage.getItem('usuarioNombre');
+    return (token && rol === 'CLIENTE') ? (nombre || 'Cliente') : '';
+  });
+
+  const [perfilAbierto, setPerfilAbierto] = useState(false);
+  const [modalReservaAbierto, setModalReservaAbierto] = useState(false);
+
   const [config, setConfig] = useState({
     telefonoRegular: "(01) 628-2000",
     celularEmergencias: "+51 994 142 421",
@@ -44,25 +58,28 @@ const App = () => {
     horarioDomingo: "Domingos: 09:00 AM - 02:00 PM"
   });
 
-  // === EFECTO PARA TRAER DATOS REALES DEL BACKEND ===
   useEffect(() => {
-    // Uso de axios directo para leer datos públicos
     axios.get("http://localhost:8080/api/configuracion-negocio")
-      .then(res => {
-        if(res.data) setConfig(res.data);
-      })
-      .catch(err => console.error("No se pudo cargar la configuración", err));
+      .then(res => { if(res.data) setConfig(res.data); })
+      .catch(err => console.error("Error cargando la configuración: ", err));
   }, []);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    setIsLoggedIn(false);
+    setUsuarioNombre('');
+    setPerfilAbierto(false);
+    navigate('/');
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans scroll-smooth selection:bg-blue-600 selection:text-white">
       
-      {/* NAVEGACIÓN */}
+      {/* NAVEGACIÓN INTELIGENTE */}
       <header className="bg-white/80 backdrop-blur-xl sticky top-0 z-50 border-b border-slate-200/50 shadow-sm transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-24 flex items-center justify-between">
           
-          {/* Logo y Nombre */}
-          <div className="flex items-center gap-4 cursor-pointer group">
+          <div className="flex items-center gap-4 cursor-pointer group" onClick={() => window.scrollTo(0,0)}>
             <div className="w-14 h-14 bg-gradient-to-tr from-sky-500 to-cyan-300 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-sky-400/30 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300">
              <img src={logo} alt="Logo de la clínica" className="w-full h-full object-contain p-1" />
             </div>
@@ -72,7 +89,6 @@ const App = () => {
             </div>
           </div>
 
-          {/* Menú Desktop */}
           <nav className="hidden md:flex items-center gap-8 font-medium text-slate-600 text-sm tracking-wide">
             <a href="#inicio" className="hover:text-blue-600 transition-colors">Inicio</a>
             <a href="#nosotros" className="hover:text-blue-600 transition-colors">Nosotros</a>
@@ -81,17 +97,59 @@ const App = () => {
             <a href="#emergencias" className="text-red-500 font-bold hover:text-red-600 transition-colors">Emergencias 24/7</a>
           </nav>
 
-          {/* Botón Iniciar Sesión */}
-          <div className="hidden md:flex items-center">
-            <button 
-              onClick={() => window.location.href = '/login'}
-              className="flex items-center gap-2 bg-gradient-to-tr from-sky-500 to-cyan-300 hover:from-sky-700 hover:to-cyan-500 text-white px-7 py-3 rounded-xl font-semibold shadow-xl shadow-sky-400/30 hover:shadow-sky-600/40 transition-all duration-500 ease-in-out hover:-translate-y-0.5"
-            >
-              Iniciar Sesión
-            </button>
+          <div className="hidden md:flex items-center gap-4">
+            {isLoggedIn ? (
+              // MODO CLIENTE: BOTÓN DE AGENDAR Y PERFIL
+              <>
+                <button 
+                  onClick={() => setModalReservaAbierto(true)}
+                  className="flex items-center gap-2 bg-gradient-to-tr from-sky-500 to-cyan-300 hover:from-sky-600 hover:to-cyan-400 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-sky-400/30 transition-all hover:-translate-y-0.5"
+                >
+                  <CalendarPlus size={18} /> Agendar Cita
+                </button>
+
+                <div className="relative">
+                  <button 
+                    onClick={() => setPerfilAbierto(!perfilAbierto)}
+                    className="flex items-center gap-2 pl-3 pr-2 py-1.5 border border-slate-200 hover:border-slate-300 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors"
+                  >
+                    <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center text-slate-500"><User size={16} /></div>
+                    <span className="text-sm font-bold text-slate-700 max-w-[100px] truncate">{usuarioNombre}</span>
+                    <ChevronDown size={16} className={`text-slate-400 transition-transform ${perfilAbierto ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {perfilAbierto && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setPerfilAbierto(false)}></div>
+                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-50 animate-in slide-in-from-top-2">
+                        
+                        {/* BOTÓN: IR AL PANEL */}
+                        <button 
+                          onClick={() => { setPerfilAbierto(false); navigate('/cliente'); }} 
+                          className="w-full text-left px-4 py-3 text-sm font-bold text-blue-600 hover:bg-blue-50 flex items-center gap-2 transition-colors border-b border-slate-100"
+                        >
+                          <LayoutDashboard size={16} /> Ir a mi Panel
+                        </button>
+
+                        <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-sm font-bold text-rose-500 hover:bg-rose-50 flex items-center gap-2 transition-colors">
+                          <LogOut size={16} /> Cerrar Sesión
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
+            ) : (
+              // MODO VISITANTE: EL BOTÓN DE INICIAR SESIÓN ORIGINAL
+              <button 
+                onClick={() => window.location.href = '/login'}
+                className="flex items-center gap-2 bg-gradient-to-tr from-sky-500 to-cyan-300 hover:from-sky-700 hover:to-cyan-500 text-white px-7 py-3 rounded-xl font-semibold shadow-xl shadow-sky-400/30 hover:shadow-sky-600/40 transition-all duration-500 ease-in-out hover:-translate-y-0.5"
+              >
+                Iniciar Sesión
+              </button>
+            )}
           </div>
 
-          {/* Botón Menú Móvil */}
           <button className="md:hidden text-slate-600 p-2" onClick={() => setMenuAbierto(!menuAbierto)}>
             <div className="space-y-1.5">
               <span className={`block w-6 h-0.5 bg-current transition-all ${menuAbierto ? 'rotate-45 translate-y-2' : ''}`}></span>
@@ -100,17 +158,39 @@ const App = () => {
             </div>
           </button>
         </div>
+
+        {menuAbierto && (
+          <div className="md:hidden bg-white border-b border-slate-200 px-4 py-4 space-y-4 shadow-lg absolute w-full left-0 z-50">
+            <a href="#inicio" onClick={() => setMenuAbierto(false)} className="block text-sm font-bold text-slate-600">Inicio</a>
+            <a href="#servicios" onClick={() => setMenuAbierto(false)} className="block text-sm font-bold text-slate-600">Servicios</a>
+            <div className="h-px bg-slate-100"></div>
+            {isLoggedIn ? (
+              <div className="space-y-3 pt-2">
+                <button onClick={() => { setModalReservaAbierto(true); setMenuAbierto(false); }} className="w-full py-3 bg-gradient-to-r from-sky-500 to-cyan-400 text-white text-sm font-black rounded-xl flex items-center justify-center gap-2">
+                  <CalendarPlus size={18} /> Agendar Cita
+                </button>
+
+                {/* BOTÓN CELULAR: IR AL PANEL */}
+                <button onClick={() => { setMenuAbierto(false); navigate('/cliente'); }} className="w-full py-3 border border-blue-200 bg-blue-50 text-blue-600 text-sm font-bold rounded-xl flex items-center justify-center gap-2">
+                  <LayoutDashboard size={18} /> Ir a mi Panel
+                </button>
+
+                <button onClick={handleLogout} className="w-full py-3 bg-rose-50 text-rose-500 text-sm font-bold rounded-xl flex items-center justify-center gap-2">
+                  <LogOut size={18} /> Cerrar Sesión
+                </button>
+              </div>
+            ) : (
+              <button onClick={() => window.location.href = '/login'} className="w-full py-3 border border-slate-200 text-center text-sm font-bold text-slate-600 rounded-xl">
+                Iniciar Sesión
+              </button>
+            )}
+          </div>
+        )}
       </header>
 
       {/* HERO SECTION */}
-      <motion.section
-        id="inicio" 
-        className="relative pt-36 pb-48 flex items-center justify-center overflow-hidden bg-cover bg-center"
-        variants={fadeUp} 
-        style={{ backgroundImage: `url(${portada})` }}
-      >
+      <motion.section id="inicio" className="relative pt-36 pb-48 flex items-center justify-center overflow-hidden bg-cover bg-center" variants={fadeUp} style={{ backgroundImage: `url(${portada})` }}>
         <div className="absolute inset-0 bg-slate-950/70 z-0"></div>
-
         <div className="max-w-5xl mx-auto px-4 text-center space-y-10 relative z-10 text-white animate-in fade-in zoom-in-95 duration-700">
           <div className="inline-flex items-center gap-2 py-2 px-4 rounded-full bg-blue-500/20 text-blue-300 text-sm font-bold tracking-wide border border-blue-500/30 backdrop-blur-md shadow-sm">
             <ShieldPlus size={16} />
@@ -125,30 +205,16 @@ const App = () => {
           <p className="text-lg md:text-xl text-slate-200 max-w-3xl mx-auto leading-relaxed drop-shadow">
             Las consultas médicas nos ayudan a monitorear el estado de salud de tu mascota y detectar cualquier malestar. Contamos con tecnología de vanguardia y un equipo de especialistas dedicados a facilitar su pronta recuperación.
           </p>
-          <div className="pt-4 flex flex-col sm:flex-row justify-center gap-6">
-             <div className="flex items-center justify-center gap-3 text-white font-medium bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl shadow-sm border border-white/10">
-               <Activity className="text-sky-300" />
-               Laboratorio Propio 24h
-             </div>
-             <div className="flex items-center justify-center gap-3 text-white font-medium bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl shadow-sm border border-white/10">
-               <Stethoscope className="text-sky-300" />
-               Especialistas Certificados
-             </div>
-          </div>
         </div>
       </motion.section>
 
-      {/* SECCIÓN: NOSOTROS (Texto Fijo "Huesitos") */}
+      {/* SECCIÓN NOSOTROS */}
       <motion.section id="nosotros" className="py-32 bg-white relative" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-20 items-center">
             <div className="relative group">
               <div className="absolute -inset-4 bg-gradient-to-tr from-blue-100 to-sky-100 rounded-[3rem] transform -rotate-3 group-hover:rotate-0 transition-all duration-500 -z-10"></div>
-              <img 
-                src={imagenNosotros} 
-                alt="Equipo médico de la clínica" 
-                className="rounded-3xl shadow-2xl object-cover w-full h-[550px] transform group-hover:scale-[1.01] transition-all duration-500 grayscale-[15%] group-hover:grayscale-0"
-              />
+              <img src={imagenNosotros} alt="Equipo médico" className="rounded-3xl shadow-2xl object-cover w-full h-[550px] transform group-hover:scale-[1.01] transition-all duration-500 grayscale-[15%] group-hover:grayscale-0"/>
               <div className="absolute -bottom-8 -right-8 bg-blue-900 text-white p-8 rounded-3xl shadow-xl hidden md:block">
                 <p className="text-5xl font-black">10+</p>
                 <p className="text-blue-200 font-medium mt-1">Años de Trayectoria</p>
@@ -160,28 +226,18 @@ const App = () => {
                 <h2 className="text-sm font-bold text-blue-600 tracking-widest uppercase">Sobre Nosotros</h2>
                 <h3 className="text-4xl md:text-5xl font-black text-slate-900 leading-tight">Comprometidos con la salud y el bienestar animal.</h3>
               </div>
-              
               <div className="space-y-6 text-lg text-slate-600 leading-relaxed">
-                <p>
-                  En <strong>Clínica Veterinaria Huesitos</strong> nos dedicamos a elevar el estándar de la atención médica veterinaria. Combinamos un trato profundamente humano y empático con rigurosos protocolos médicos y quirúrgicos.
-                </p>
-                <p>
-                  Contamos con infraestructura diseñada para mitigar el estrés de los pacientes, salas de procedimientos equipadas con tecnología avanzada y sistemas estrictos de control de bioseguridad.
-                </p>
+                <p>En <strong>Clínica Veterinaria Huesitos</strong> nos dedicamos a elevar el estándar de la atención médica veterinaria. Combinamos un trato profundamente humano y empático con rigurosos protocolos médicos y quirúrgicos.</p>
+                <p>Contamos con infraestructura diseñada para mitigar el estrés de los pacientes, salas de procedimientos equipadas con tecnología avanzada y sistemas estrictos de control de bioseguridad.</p>
               </div>
-
               <div className="grid sm:grid-cols-2 gap-6 pt-6">
                 <div className="space-y-3">
-                  <div className="w-12 h-12 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center">
-                    <CheckCircle2 />
-                  </div>
+                  <div className="w-12 h-12 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center"><CheckCircle2 /></div>
                   <h4 className="font-bold text-slate-900 text-xl">Nuestra Misión</h4>
                   <p className="text-slate-600 text-sm">Ofrecer diagnósticos certeros y soluciones médicas oportunas que faciliten la recuperación de cada mascota en un entorno seguro.</p>
                 </div>
                 <div className="space-y-3">
-                  <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
-                    <ShieldPlus />
-                  </div>
+                  <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center"><ShieldPlus /></div>
                   <h4 className="font-bold text-slate-900 text-xl">Nuestra Visión</h4>
                   <p className="text-slate-600 text-sm">Consolidarnos como el centro hospitalario de referencia veterinaria, destacados por nuestra excelencia tecnológica y especialidades complejas.</p>
                 </div>
@@ -191,7 +247,7 @@ const App = () => {
         </div>
       </motion.section>
 
-      {/* SECCIÓN: SERVICIOS Y TARIFAS */}
+      {/* SECCIÓN SERVICIOS */}
       <motion.section id="servicios" className="py-32 bg-sky-100 border-y border-sky-200" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
           <div className="text-center space-y-6 max-w-3xl mx-auto">
@@ -199,7 +255,6 @@ const App = () => {
             <p className="text-lg text-slate-700">Catálogo de atenciones estructurado. Transparencia total en los costos.</p>
           </div>
 
-          {/* Selector de Categorías */}
           <div className="flex flex-wrap justify-center gap-4 border-b border-slate-200 pb-8">
             {[
               { id: 'consultas', nombre: 'Consultas Médicas', icono: <Stethoscope size={18}/> },
@@ -223,20 +278,10 @@ const App = () => {
             ))}
           </div>
 
-          {/* Tablas de Contenido */}
           <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden min-h-[400px]">
             <div className="p-8 md:p-12">
-              
-              {/* TAB: Consultas */}
               {categoriaActiva === 'consultas' && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="grid md:grid-cols-2 gap-8 items-center mb-6">
-                    <p className="text-slate-600 leading-relaxed">Las consultas médicas nos ayudan a monitorear el estado de salud de tu mascota y detectar cualquier malestar o enfermedad. Nuestro equipo veterinario le brindará la atención oportuna para facilitar su recuperación.</p>
-                    <div className="bg-slate-50 p-5 rounded-2xl text-xs text-slate-500 space-y-2 border border-slate-100">
-                      <p><strong>Urgencia:</strong> Atención no programada el mismo día por signos clínicos agudos que generan malestar.</p>
-                      <p><strong>Emergencia:</strong> Situación médica crítica e inmediata que representa un riesgo grave e inminente para la vida de la mascota.</p>
-                    </div>
-                  </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
@@ -257,10 +302,8 @@ const App = () => {
                 </div>
               )}
 
-              {/* TAB: Especialidades */}
               {categoriaActiva === 'especialidades' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <p className="text-slate-600">Contamos con los mejores especialistas en diversas ramas de la medicina veterinaria. La medicina especializada facilita encontrar el diagnóstico específico y efectivo para condiciones médicas complejas.</p>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
@@ -273,20 +316,14 @@ const App = () => {
                         {['Cardiología', 'Dermatología', 'Cirugía', 'Oncología', 'Endocrinología', 'Neurología'].map(e => (
                           <tr key={e} className="hover:bg-slate-50/50 transition-colors"><td className="py-3.5">Consulta de {e}</td><td className="py-3.5 text-right">S/ 250.00</td></tr>
                         ))}
-                        <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3.5">Consulta de Nutrición</td><td className="py-3.5 text-right">S/ 335.00</td></tr>
-                        <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3.5">Consulta de Medicina Física / Fisioterapia</td><td className="py-3.5 text-right">S/ 175.00</td></tr>
-                        <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3.5">Consulta de Traumatología y Ortopedia</td><td className="py-3.5 text-right">S/ 275.00</td></tr>
-                        <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3.5">Consulta de Oftalmología</td><td className="py-3.5 text-right">S/ 300.00</td></tr>
                       </tbody>
                     </table>
                   </div>
                 </div>
               )}
 
-              {/* TAB: Vacunas */}
               {categoriaActiva === 'vacunas' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <p className="text-slate-600">Las vacunas son fundamentales como parte de la atención preventiva integral. Nos ayudan a evitar complicaciones en las enfermedades más peligrosas. Diseñamos un plan personalizado según el entorno de tu engreído.</p>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
@@ -300,63 +337,35 @@ const App = () => {
                         <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3.5">Vacuna Quíntuple</td><td className="py-3.5 text-right">S/ 100.00</td></tr>
                         <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3.5">Vacuna Triple Felina</td><td className="py-3.5 text-right">S/ 90.00</td></tr>
                         <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3.5">Vacuna Leptospirosis</td><td className="py-3.5 text-right">S/ 45.00</td></tr>
-                        <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3.5">Vacuna Puppy DP</td><td className="py-3.5 text-right">S/ 60.00</td></tr>
-                        <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3.5">Vacuna Cuádruple</td><td className="py-3.5 text-right">S/ 70.00</td></tr>
-                        <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3.5">Vacuna Leucemia Felina</td><td className="py-3.5 text-right">S/ 90.00</td></tr>
                       </tbody>
                     </table>
                   </div>
                 </div>
               )}
 
-              {/* TAB: Laboratorio */}
               {categoriaActiva === 'laboratorio' && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="grid md:grid-cols-2 gap-12">
-                    <div className="space-y-4">
-                      <h4 className="text-xl font-bold text-slate-900">Análisis Clínicos</h4>
-                      <p className="text-slate-600 text-sm">Esenciales para detectar enfermedades y sus causas. Equipos propios automatizados para resultados veloces.</p>
-                      <table className="w-full text-left border-collapse text-sm">
-                        <thead>
-                          <tr className="border-b border-slate-200 text-slate-400 uppercase text-xs">
-                            <th className="py-2 font-bold">Tipo de Prueba</th>
-                            <th className="py-2 font-bold text-right">Precio Regular</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
-                          <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3 text-sky-700">Chequeo Preventivo Integral*</td><td className="py-3 text-right text-sky-700">S/ 425.00</td></tr>
-                          <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3">Hemograma Completo</td><td className="py-3 text-right">S/ 65.00</td></tr>
-                          <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3">Coprológico Completo</td><td className="py-3 text-right">S/ 90.00</td></tr>
-                          <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3">Examen Completo de Orina</td><td className="py-3 text-right">S/ 40.00</td></tr>
-                          <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3">Perfil Bioquímico Pre-Anestésico</td><td className="py-3 text-right">S/ 320.00</td></tr>
-                          <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3">Perfil Bioquímico Diagnóstico</td><td className="py-3 text-right">S/ 200.00</td></tr>
-                          <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3">Perfil Bioquímico Integral</td><td className="py-3 text-right">S/ 270.00</td></tr>
-                        </tbody>
-                      </table>
-                      <p className="text-xs text-slate-400">*Incluye: 1 hemograma completo, 1 toma de rayos X, 1 examen coprológico y 1 prueba de descarte de parásitos.</p>
-                    </div>
-                    
-                    <div className="bg-slate-900 text-white p-8 rounded-3xl self-start space-y-6 shadow-lg shadow-slate-900/10">
-                      <div>
-                        <h4 className="text-lg font-bold flex items-center gap-2"><Activity className="text-sky-400" size={20}/> Pruebas de Imagenología</h4>
-                        <p className="text-slate-400 text-sm mt-1">Tecnología digital de alta definición para diagnósticos eficaces y no invasivos.</p>
-                      </div>
-                      <ul className="space-y-3.5 text-sm text-slate-300 font-medium">
-                        <li className="flex items-center gap-3"><CheckCircle2 className="text-sky-400" size={16}/> Radiografía digital de alta definición</li>
-                        <li className="flex items-center gap-3"><CheckCircle2 className="text-sky-400" size={16}/> Ecografía abdominal</li>
-                        <li className="flex items-center gap-3"><CheckCircle2 className="text-sky-400" size={16}/> Ecocardiografía</li>
-                        <li className="flex items-center gap-3"><CheckCircle2 className="text-sky-400" size={16}/> Ecografía gestacional y torácica</li>
-                        <li className="flex items-center gap-3"><CheckCircle2 className="text-sky-400" size={16}/> Endoscopía y colonoscopía</li>
-                      </ul>
-                    </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-200 text-slate-400 uppercase text-xs">
+                          <th className="py-2 font-bold">Tipo de Prueba</th>
+                          <th className="py-2 font-bold text-right">Precio Regular</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                        <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3 text-sky-700">Chequeo Preventivo Integral*</td><td className="py-3 text-right text-sky-700">S/ 425.00</td></tr>
+                        <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3">Hemograma Completo</td><td className="py-3 text-right">S/ 65.00</td></tr>
+                        <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3">Coprológico Completo</td><td className="py-3 text-right">S/ 90.00</td></tr>
+                        <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-3">Examen Completo de Orina</td><td className="py-3 text-right">S/ 40.00</td></tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}
 
-              {/* TAB: Internamiento */}
               {categoriaActiva === 'internamiento' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <p className="text-slate-600">Ofrecemos hospitalización con un equipo médico disponible las 24 horas, en espacios separados para perros y gatos para reducir el estrés de tu mascota durante su estancia de recuperación o post-procedimiento.</p>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
@@ -366,27 +375,24 @@ const App = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
-                        <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-4">Internamiento de Día (incluye fluidoterapia)</td><td className="py-4 text-right">S/ 120.00</td></tr>
-                        <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-4">Internamiento Día Completo (incluye fluidoterapia)</td><td className="py-4 text-right">S/ 200.00</td></tr>
-                        <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-4 text-purple-700">Internamiento de Día (incluye fluidoterapia) - Paciente infeccioso*</td><td className="py-4 text-right text-purple-700">S/ 170.00</td></tr>
-                        <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-4 text-purple-700">Internamiento Día Completo (incluye fluidoterapia) - Paciente infeccioso*</td><td className="py-4 text-right text-purple-700">S/ 250.00</td></tr>
+                        <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-4">Internamiento de Día</td><td className="py-4 text-right">S/ 120.00</td></tr>
+                        <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-4">Internamiento Día Completo</td><td className="py-4 text-right">S/ 200.00</td></tr>
+                        <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-4 text-purple-700">Internamiento de Día - Paciente infeccioso*</td><td className="py-4 text-right text-purple-700">S/ 170.00</td></tr>
+                        <tr className="hover:bg-slate-50/50 transition-colors"><td className="py-4 text-purple-700">Internamiento Día Completo - Paciente infeccioso*</td><td className="py-4 text-right text-purple-700">S/ 250.00</td></tr>
                       </tbody>
                     </table>
                   </div>
-                  <p className="text-xs text-slate-400 max-w-3xl leading-relaxed">*Se considera paciente infeccioso a todo aquel con diagnóstico confirmado o signos compatibles con enfermedades contagiosas, requiriendo un aislamiento diferenciado y estrictas medidas de bioseguridad.</p>
                 </div>
               )}
-
             </div>
           </div>
         </div>
       </motion.section>
 
-      {/* SECCIÓN: UBICACIÓN Y CONTACTO (Datos Dinámicos) */}
+      {/* SECCIÓN UBICACIÓN */}
       <motion.section id="ubicacion" className="py-24 bg-white border-t border-slate-200" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
-            
             <div className="space-y-8">
               <div>
                 <h2 className="text-sm font-bold text-blue-600 tracking-widest uppercase mb-2">Visítanos</h2>
@@ -401,7 +407,6 @@ const App = () => {
                   <MapPin className="text-blue-600 mt-1" size={24} />
                   <div>
                     <h4 className="font-bold text-slate-900 text-lg">Dirección Principal</h4>
-                    {/* DIRECCIÓN DINÁMICA */}
                     <p className="text-slate-600 mt-1">{config.direccionFisica}</p>
                   </div>
                 </div>
@@ -410,7 +415,6 @@ const App = () => {
                   <Clock className="text-blue-600 mt-1" size={24} />
                   <div>
                     <h4 className="font-bold text-slate-900 text-lg">Horarios de Atención</h4>
-                    {/* HORARIOS DINÁMICOS */}
                     <p className="text-slate-600 mt-1">
                       {config.horarioSemana} <br/>
                       {config.horarioDomingo}
@@ -421,37 +425,22 @@ const App = () => {
               </div>
             </div>
 
-            {/* Mapa de Google Maps Integrado */}
             <div className="w-full h-[450px] rounded-3xl shadow-lg overflow-hidden relative border border-slate-200">
-              <iframe 
-                title="Ubicación Clínica Veterinaria"
-                src="https://maps.google.com/maps?q=Santo%20Domingo%20De%20Marcona%20C-22,%20Ica,%20Peru&t=&z=16&ie=UTF8&iwloc=&output=embed" 
-                width="100%" 
-                height="100%" 
-                style={{ border: 0 }} 
-                allowFullScreen="" 
-                loading="lazy" 
-                referrerPolicy="no-referrer-when-downgrade"
-                className="w-full h-full"
-              ></iframe>
+              <iframe title="Ubicación Clínica Veterinaria" src="https://maps.google.com/maps?q=Santo%20Domingo%20De%20Marcona%20C-22,%20Ica,%20Peru&t=&z=16&ie=UTF8&iwloc=&output=embed" width="100%" height="100%" style={{ border: 0 }} allowFullScreen="" loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="w-full h-full"></iframe>
             </div>
-
           </div>
         </div>
       </motion.section>
       
-      {/* SECCIÓN EMERGENCIAS (Teléfono Dinámico) */}
+      {/* SECCIÓN EMERGENCIAS */}
       <motion.section id="emergencias" className="py-24 bg-sky-100 border-t border-sky-200" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
         <div className="max-w-4xl mx-auto px-4 text-center space-y-8">
-          <div className="inline-block p-4 bg-sky-200 rounded-2xl border border-sky-300">
-            <ShieldPlus size={40} className="text-sky-700" />
-          </div>
+          <div className="inline-block p-4 bg-sky-200 rounded-2xl border border-sky-300"><ShieldPlus size={40} className="text-sky-700" /></div>
           <h2 className="text-4xl md:text-5xl font-black text-slate-900">¿Tienes una Emergencia?</h2>
           <p className="text-lg text-slate-700">
             Si tu mascota presenta signos críticos, no esperes. Contamos con atención de emergencia las 24 horas del día. 
             Comunícate inmediatamente para recibir asistencia prioritaria.
           </p>
-          
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
             <a href={`tel:${config.celularEmergencias}`} className="bg-sky-700 hover:bg-sky-800 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg transition-all">
               Llamar a Emergencias: {config.celularEmergencias}
@@ -460,87 +449,65 @@ const App = () => {
         </div>
       </motion.section>
 
-      {/* FOOTER (Datos Dinámicos) */}
+      {/* FOOTER */}
       <motion.footer className="bg-slate-950 text-slate-400 border-t border-slate-900 relative overflow-hidden" variants={fadeUp}>
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-900/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
-            
-            {/* 1. Info Principal de Marca */}
             <div className="space-y-6">
               <div className="flex items-center gap-3">
                 <HeartPulse size={32} className="text-blue-500" />
                 <span className="font-extrabold text-3xl text-white tracking-tight">Huesitos</span>
               </div>
-              <p className="text-slate-400 text-sm leading-relaxed pr-4">
-                Nuestra vocación es salvar vidas y procurar el mayor bienestar para tu familia. Laboratorio, sala de procedimientos e internamiento.
-              </p>
+              <p className="text-slate-400 text-sm leading-relaxed pr-4">Nuestra vocación es salvar vidas y procurar el mayor bienestar para tu familia. Laboratorio, sala de procedimientos e internamiento.</p>
               <div className="flex items-center gap-2 text-red-400 bg-red-400/10 p-3 rounded-xl border border-red-400/20 text-xs font-bold w-fit">
                 <Activity size={14} />
                 <span>Emergencias 24 Horas Activas</span>
               </div>
             </div>
 
-            {/* 2. Secciones de la Página */}
             <div className="space-y-4">
               <h4 className="text-white font-bold text-lg tracking-wide">Secciones</h4>
               <ul className="space-y-3 text-sm font-medium text-slate-300">
-                <li><a href="#inicio" className="hover:text-white hover:translate-x-1 inline-block transition-transform">Inicio</a></li>
-                <li><a href="#nosotros" className="hover:text-white hover:translate-x-1 inline-block transition-transform">Nosotros</a></li>
-                <li><a href="#servicios" className="hover:text-white hover:translate-x-1 inline-block transition-transform">Servicios Médicos</a></li>
-                <li><a href="#ubicacion" className="hover:text-white hover:translate-x-1 inline-block transition-transform">Ubicación</a></li>
+                <li><a href="#inicio" className="hover:text-white transition-transform">Inicio</a></li>
+                <li><a href="#nosotros" className="hover:text-white transition-transform">Nosotros</a></li>
+                <li><a href="#servicios" className="hover:text-white transition-transform">Servicios Médicos</a></li>
+                <li><a href="#ubicacion" className="hover:text-white transition-transform">Ubicación</a></li>
               </ul>
             </div>
 
-            {/* 3. Conversa con nosotros */}
             <div className="space-y-4">
               <h4 className="text-white font-bold text-lg tracking-wide">Contacto</h4>
               <div className="space-y-3 text-sm font-medium text-slate-300">
-                <p className="flex items-center gap-3 hover:text-white transition-colors cursor-pointer">
-                  <Phone size={16} className="text-blue-500" />
-                  <span>{config.telefonoRegular}</span>
-                </p>
-                <p className="flex items-center gap-3 hover:text-white transition-colors cursor-pointer">
-                  <span className="text-blue-500 font-bold text-base w-4 text-center">+</span>
-                  <span>{config.celularEmergencias}</span>
-                </p>
-                <p className="flex items-center gap-3 hover:text-white transition-colors cursor-pointer">
-                  <Mail size={16} className="text-blue-500" />
-                  <span>{config.correoElectronico}</span>
-                </p>
+                <p className="flex items-center gap-3"><Phone size={16} className="text-blue-500" />{config.telefonoRegular}</p>
+                <p className="flex items-center gap-3"><span className="text-blue-500 font-bold">+</span>{config.celularEmergencias}</p>
+                <p className="flex items-center gap-3"><Mail size={16} className="text-blue-500" />{config.correoElectronico}</p>
               </div>
             </div>
 
-            {/* 4. Síguenos (Redes Sociales) */}
             <div className="space-y-4">
               <h4 className="text-white font-bold text-lg tracking-wide">Síguenos</h4>
               <div className="flex flex-wrap gap-4 pt-2">
-                <a href="#" className="w-11 h-11 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center overflow-hidden hover:border-blue-500 transition-all duration-300 hover:-translate-y-1 shadow-lg">
-                  <img src={iconoFacebook} alt="Facebook" className="w-5 h-5 object-contain opacity-70 hover:opacity-100 transition-opacity" />
-                </a>
-                <a href="#" className="w-11 h-11 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center overflow-hidden hover:border-pink-500 transition-all duration-300 hover:-translate-y-1 shadow-lg">
-                  <img src={iconoInstagram} alt="Instagram" className="w-5 h-5 object-contain opacity-70 hover:opacity-100 transition-opacity" />
-                </a>
-                <a href="#" className="w-11 h-11 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center overflow-hidden hover:border-slate-400 transition-all duration-300 hover:-translate-y-1 shadow-lg">
-                  <img src={iconoTwitter} alt="Twitter" className="w-5 h-5 object-contain opacity-70 hover:opacity-100 transition-opacity" />
-                </a>
-                <a href="#" className="w-11 h-11 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center overflow-hidden hover:border-red-500 transition-all duration-300 hover:-translate-y-1 shadow-lg">
-                  <img src={iconoYoutube} alt="Youtube" className="w-5 h-5 object-contain opacity-70 hover:opacity-100 transition-opacity" />
-                </a>
+                <a href="#" className="w-11 h-11 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center hover:border-blue-500 transition-all shadow-lg"><img src={iconoFacebook} alt="Facebook" className="w-5 h-5 opacity-70 hover:opacity-100" /></a>
+                <a href="#" className="w-11 h-11 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center hover:border-pink-500 transition-all shadow-lg"><img src={iconoInstagram} alt="Instagram" className="w-5 h-5 opacity-70 hover:opacity-100" /></a>
+                <a href="#" className="w-11 h-11 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center hover:border-slate-400 transition-all shadow-lg"><img src={iconoTwitter} alt="Twitter" className="w-5 h-5 opacity-70 hover:opacity-100" /></a>
+                <a href="#" className="w-11 h-11 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center hover:border-red-500 transition-all shadow-lg"><img src={iconoYoutube} alt="Youtube" className="w-5 h-5 opacity-70 hover:opacity-100" /></a>
               </div>
             </div>
-
           </div>
         </div>
-        
-        {/* Copyright Dinámico */}
         <div className="border-t border-slate-900 py-6 text-center text-xs text-slate-500 relative z-10">
           <p>© {new Date().getFullYear()} Clínica Veterinaria Huesitos. Todos los derechos reservados.</p>
         </div>
       </motion.footer>
 
+      {/* RENDERIZADO CONDICIONAL DEL MODAL DE RESERVA */}
+      {modalReservaAbierto && (
+        <ModalReservaCliente cerrarModal={() => setModalReservaAbierto(false)} />
+      )}
+
     </div>
   );
 };
 
-export default App;
+export default Landing;

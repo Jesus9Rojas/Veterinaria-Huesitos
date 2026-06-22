@@ -6,6 +6,7 @@ package huesitos_backend.entidades;
 public enum Rol {
     ADMINISTRADOR,
     VETERINARIO,
+    AUXILIAR_VETERINARIO,
     RECEPCIONISTA,
     CLIENTE
 }

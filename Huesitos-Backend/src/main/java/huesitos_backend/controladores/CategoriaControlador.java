@@ -16,7 +16,8 @@ public class CategoriaControlador {
     private final CategoriaServicio categoriaServicio;
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    // El Auxiliar ahora es el encargado de registrar categorías
+    @PreAuthorize("hasRole('AUXILIAR_VETERINARIO')")
     public ResponseEntity<?> registrarCategoria(@RequestBody Categoria categoria) {
         try {
             Categoria resultado = categoriaServicio.guardarCategoria(categoria);
@@ -27,13 +28,14 @@ public class CategoriaControlador {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
+    // Se añade el Auxiliar para que pueda cargar la lista al entrar a Inventario
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'AUXILIAR_VETERINARIO')")
     public ResponseEntity<List<Categoria>> listarCategorias() {
         return ResponseEntity.ok(categoriaServicio.listarActivas());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'AUXILIAR_VETERINARIO')")
     public ResponseEntity<?> buscarPorId(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(categoriaServicio.buscarPorId(id));
@@ -43,7 +45,8 @@ public class CategoriaControlador {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    // El Auxiliar ahora es el encargado de desactivar categorías
+    @PreAuthorize("hasRole('AUXILIAR_VETERINARIO')")
     public ResponseEntity<?> desactivarCategoria(@PathVariable Long id) {
         try {
             categoriaServicio.desactivarCategoria(id);

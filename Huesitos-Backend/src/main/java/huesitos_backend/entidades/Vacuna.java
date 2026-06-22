@@ -26,4 +26,16 @@ public class Vacuna {
 
     @Column(name = "especie_destino", nullable = false, length = 50)
     private String especieDestino; // e.g. "PERRO", "GATO", "TODOS"
+
+    @Column(length = 150)
+    private String proveedor; // Preventista / Laboratorio
+
+    @Column
+    private Double precio; // Permite null para registros antiguos
+
+    @Column
+    private Integer stock; // Permite null para registros antiguos
+
+    @Column
+    private Boolean activo; // Permite null para registros antiguos
 }
