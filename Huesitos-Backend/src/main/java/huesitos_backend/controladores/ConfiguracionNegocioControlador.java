@@ -20,7 +20,7 @@ public class ConfiguracionNegocioControlador {
     }
 
     @PutMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')") // Solo la actualización requiere permisos
+    @PreAuthorize("hasRole('ADMINISTRADOR')") 
     public ResponseEntity<ConfiguracionNegocio> actualizarConfiguracion(@RequestBody ConfiguracionNegocio config) {
         return ResponseEntity.ok(configuracionServicio.actualizarConfiguracion(config));
     }

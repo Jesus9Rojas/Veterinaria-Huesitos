@@ -18,7 +18,6 @@ const InicioVeterinario = () => {
     const cargarAgendaDelDia = async () => {
       try {
         setLoading(true);
-        // SOLUCIÓN ZONA HORARIA: Extraemos la fecha local (Perú) en formato YYYY-MM-DD
         const hoyStr = new Date().toLocaleDateString('en-CA');
         const data = await obtenerCitasPorDia(hoyStr);
         
@@ -49,16 +48,12 @@ const InicioVeterinario = () => {
   const horaActual = new Date().getHours();
   const saludo = horaActual < 12 ? 'Buenos días' : horaActual < 18 ? 'Buenas tardes' : 'Buenas noches';
   
-  // Extraemos el nombre seguro
   let nombreReal = localStorage.getItem('usuarioNombre');
   if (!nombreReal || nombreReal === 'null') {
     nombreReal = correoVeterinario.split('@')[0];
   }
   const nombreDoctor = nombreReal.split('.').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
-  // ========================================================
-  // FORMATO DE HORA (A.M. / P.M. 100% SEGURO)
-  // ========================================================
   const formatTimeParts = (isoString) => {
     const date = new Date(isoString);
     let hours = date.getHours();

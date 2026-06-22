@@ -19,7 +19,7 @@ import java.util.List;
 public class PedidoControlador {
 
     private final PedidoServicio pedidoServicio;
-    private final DetallePedidoRepositorio detallePedidoRepositorio; // Inyectado para leer los items
+    private final DetallePedidoRepositorio detallePedidoRepositorio; 
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")

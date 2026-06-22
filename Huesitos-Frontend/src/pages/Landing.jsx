@@ -99,7 +99,6 @@ const Landing = () => {
 
           <div className="hidden md:flex items-center gap-4">
             {isLoggedIn ? (
-              // MODO CLIENTE: BOTÓN DE AGENDAR Y PERFIL
               <>
                 <button 
                   onClick={() => setModalReservaAbierto(true)}
@@ -140,7 +139,6 @@ const Landing = () => {
                 </div>
               </>
             ) : (
-              // MODO VISITANTE: EL BOTÓN DE INICIAR SESIÓN ORIGINAL
               <button 
                 onClick={() => window.location.href = '/login'}
                 className="flex items-center gap-2 bg-gradient-to-tr from-sky-500 to-cyan-300 hover:from-sky-700 hover:to-cyan-500 text-white px-7 py-3 rounded-xl font-semibold shadow-xl shadow-sky-400/30 hover:shadow-sky-600/40 transition-all duration-500 ease-in-out hover:-translate-y-0.5"

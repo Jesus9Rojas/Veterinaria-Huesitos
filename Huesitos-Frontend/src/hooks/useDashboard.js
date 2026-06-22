@@ -11,7 +11,6 @@ export const useDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  // Creamos una función auxiliar para el botón de refrescar manual (🔄)
   const cargarDatosDashboard = () => {
     setLoading(true);
     dashboardAPI.get("/resumen")
@@ -26,8 +25,6 @@ export const useDashboard = () => {
   };
 
   useEffect(() => {
-    // Al declarar la función de carga inicial aquí adentro,
-    // React ya no pide ninguna dependencia externa. ¡Cero advertencias!
     const fetchInicial = () => {
       setLoading(true);
       dashboardAPI.get("/resumen")
@@ -42,7 +39,7 @@ export const useDashboard = () => {
     };
 
     fetchInicial();
-  }, []); // El arreglo vacío está perfecto aquí porque solo se ejecuta al montar el componente
+  }, []); 
 
   return { 
     stats, 

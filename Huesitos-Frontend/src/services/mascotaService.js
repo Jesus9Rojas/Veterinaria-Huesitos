@@ -7,7 +7,6 @@ const mascotaAPI = axios.create({
   },
 });
 
-// Interceptor para inyectar automáticamente el Token en todas las peticiones
 mascotaAPI.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -24,7 +23,6 @@ export const crearMascota = async (mascotaData) => {
   return response.data;
 };
 
-// Se optimizó para usar la misma instancia de mascotaAPI
 export const listarTodasMascotas = async () => {
   const response = await mascotaAPI.get("");
   return response.data;

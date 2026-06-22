@@ -25,9 +25,7 @@ public class PerfilControlador {
     private final MascotaRepositorio mascotaRepositorio;
     private final UsuarioServicio usuarioServicio;
 
-    /**
-     * Sube y comprime la foto de perfil de un usuario.
-     */
+
     @PostMapping("/usuario/{id}/foto")
     public ResponseEntity<?> subirFotoUsuario(@PathVariable Long id, @RequestParam("archivo") MultipartFile archivo) {
         try {
@@ -82,9 +80,7 @@ public class PerfilControlador {
         }
     }
 
-    /**
-     * NUEVO: Permite al usuario cambiar su propia contraseña (y deja registro en Auditoría)
-     */
+
     @PatchMapping("/usuario/{id}/contrasena")
     public ResponseEntity<?> cambiarMiContrasena(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         try {
@@ -93,7 +89,6 @@ public class PerfilControlador {
                 throw new RuntimeException("La nueva contraseña no puede estar vacía");
             }
             
-            // Reutilizamos tu excelente servicio que encripta y guarda en la tabla de Actividades (Auditoría)
             usuarioServicio.actualizarCredenciales(id, null, nuevaContrasena);
             
             Map<String, String> respuesta = new HashMap<>();

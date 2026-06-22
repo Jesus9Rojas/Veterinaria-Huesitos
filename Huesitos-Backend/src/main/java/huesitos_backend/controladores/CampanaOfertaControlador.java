@@ -15,8 +15,6 @@ public class CampanaOfertaControlador {
 
     private final CampanaOfertaServicio campanaOfertaServicio;
 
-    // --- ENDPOINTS DE CAMPAÑAS ---
-
     @GetMapping("/campanas")
     public ResponseEntity<List<Campana>> listarCampanasActivas() {
         return ResponseEntity.ok(campanaOfertaServicio.listarCampanasActivas());
@@ -66,8 +64,6 @@ public class CampanaOfertaControlador {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-
-    // --- ENDPOINTS DE OFERTAS ---
 
     @GetMapping("/ofertas")
     public ResponseEntity<List<Oferta>> listarOfertasActivas() {

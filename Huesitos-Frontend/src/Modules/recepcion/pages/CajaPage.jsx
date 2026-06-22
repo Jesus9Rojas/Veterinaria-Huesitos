@@ -15,18 +15,15 @@ const CajaPage = () => {
   const [filtroEstado, setFiltroEstado] = useState('PENDIENTE'); 
   const [triggerRecarga, setTriggerRecarga] = useState(0);
 
-  // Estados de cobro básicos
   const [modalPagoOpen, setModalPagoOpen] = useState(false);
   const [transaccionSeleccionada, setTransaccionSeleccionada] = useState(null);
   const [medioPago, setMedioPago] = useState('EFECTIVO');
   const [procesando, setProcesando] = useState(false);
   
-  // NUEVOS ESTADOS DE LA PASARELA PREMIUM PROFESIONAL
   const [cuentaConPOS, setCuentaConPOS] = useState(true); 
   const [montoRecibido, setMontoRecibido] = useState('');
   const [nroReferencia, setNroReferencia] = useState('');
 
-  // Estados del Modal de Detalles
   const [modalDetallesOpen, setModalDetallesOpen] = useState(false);
   const [transaccionDetalle, setTransaccionDetalle] = useState(null);
   const [detallesPedido, setDetallesPedido] = useState([]);

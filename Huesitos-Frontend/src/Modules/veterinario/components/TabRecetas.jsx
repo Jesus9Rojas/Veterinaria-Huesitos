@@ -5,7 +5,6 @@ const TabRecetas = ({ recetas, consultas, onGuardar }) => {
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState({ consultaMedicaId: '', medicamentos: '', indicaciones: '' });
 
-  // Formateador seguro contra desajustes de zonas horarias
   const formatearFechaSegura = (fechaStr) => {
     if (!fechaStr) return '';
     const soloFecha = fechaStr.includes('T') ? fechaStr.split('T')[0] : fechaStr;

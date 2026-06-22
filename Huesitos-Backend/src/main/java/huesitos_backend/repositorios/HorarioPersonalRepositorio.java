@@ -9,14 +9,7 @@ import java.util.Optional;
 
 @Repository
 public interface HorarioPersonalRepositorio extends JpaRepository<HorarioPersonal, Long> {
-
-    /**
-     * Busca los horarios asignados a un usuario específico.
-     */
     List<HorarioPersonal> findByUsuarioId(Long usuarioId);
 
-    /**
-     * Busca el horario de un día específico para un usuario.
-     */
     Optional<HorarioPersonal> findByUsuarioIdAndDiaSemana(Long usuarioId, DayOfWeek diaSemana);
 }

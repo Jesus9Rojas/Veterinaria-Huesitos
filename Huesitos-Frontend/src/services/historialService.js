@@ -12,7 +12,6 @@ const getHeaders = () => {
   };
 };
 
-// --- ENDPOINTS DE CONSULTAS MÉDICAS ---
 export const listarConsultasPorMascota = async (mascotaId) => {
   const response = await axios.get(`${API_BASE}/consultas-medicas/mascota/${mascotaId}`, getHeaders());
   return response.data;
@@ -23,7 +22,6 @@ export const registrarConsultaMedica = async (consultaData) => {
   return response.data;
 };
 
-// --- ENDPOINTS DE RECETAS ---
 export const listarRecetasPorMascota = async (mascotaId) => {
   const response = await axios.get(`${API_BASE}/recetas/mascota/${mascotaId}`, getHeaders());
   return response.data;
@@ -34,14 +32,12 @@ export const registrarReceta = async (recetaData) => {
   return response.data;
 };
 
-// --- ENDPOINTS DE PROFILAXIS (VACUNAS Y DESPARASITACIONES) ---
 export const listarVacunasPorMascota = async (mascotaId) => {
   const response = await axios.get(`${API_BASE}/vacunas/mascota/${mascotaId}`, getHeaders());
   return response.data;
 };
 
 export const registrarVacuna = async (vacunaData) => {
-  // ¡CORRECCIÓN AQUÍ! Enviamos al endpoint '/aplicar' porque es un Historial de Vacunación
   const response = await axios.post(`${API_BASE}/vacunas/aplicar`, vacunaData, getHeaders());
   return response.data;
 };
@@ -56,7 +52,6 @@ export const registrarDesparasitacion = async (desparasitacionData) => {
   return response.data;
 };
 
-// --- ENDPOINTS DE ARCHIVOS CLÍNICOS ---
 export const listarArchivosPorMascota = async (mascotaId) => {
   const response = await axios.get(`${API_BASE}/archivos-clinicos/mascota/${mascotaId}`, getHeaders());
   return response.data;

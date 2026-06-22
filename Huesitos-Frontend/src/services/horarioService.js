@@ -17,7 +17,6 @@ export const listarHorariosPorUsuario = async (usuarioId) => {
   return response.data;
 };
 
-// Modificado para recibir el usuarioId en el path y el cuerpo de datos del formulario
 export const crearHorario = async (usuarioId, horarioData) => {
   const response = await axios.post(`${API_BASE}/usuario/${usuarioId}`, horarioData, getHeaders());
   return response.data;

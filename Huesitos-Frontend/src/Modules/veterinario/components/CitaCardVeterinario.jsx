@@ -4,7 +4,6 @@ const CitaCardVeterinario = ({ cita, onAtender, onFinalizar }) => {
   const horaFormat = new Date(cita.fechaHora).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
   const nombreDueño = cita.mascota?.dueño?.nombreCompleto || cita.mascota?.dueno?.nombreCompleto || 'Desconocido';
 
-  // Lógica de colores según estado
   const isEnEspera = cita.estado === 'EN_ESPERA';
   const isCompletada = cita.estado === 'COMPLETADA';
   const isPendiente = cita.estado === 'PENDIENTE' || cita.estado === 'CONFIRMADA';

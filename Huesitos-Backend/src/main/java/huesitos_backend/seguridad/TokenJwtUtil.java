@@ -26,8 +26,7 @@ public class TokenJwtUtil {
         Algorithm algoritmo = Algorithm.HMAC256(claveSecreta);
         
         Date ahora = new Date();
-        Date fechaExpiracion = new Date(ahora.getTime() + 24L * 60 * 60 * 1000); // 24 horas en el futuro
-
+        Date fechaExpiracion = new Date(ahora.getTime() + 24L * 60 * 60 * 1000); 
         return JWT.create()
                 .withIssuer(emisor)
                 .withSubject(usuario.getCorreo())
@@ -55,7 +54,6 @@ public class TokenJwtUtil {
             DecodedJWT jwtDecodificado = verifier.verify(token);
             return jwtDecodificado.getSubject();
         } catch (JWTVerificationException e) {
-            // Retorna null si el token es inválido, expiró o fue manipulado
             return null;
         }
     }

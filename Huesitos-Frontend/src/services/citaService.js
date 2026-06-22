@@ -12,23 +12,17 @@ const getAuthHeaders = () => {
   };
 };
 
-// ==============================================================
-// FUNCIONES CLÁSICAS (RECEPCIÓN Y AGENDA)
-// ==============================================================
-
 export const crearCita = async (citaData) => {
   const response = await axios.post(API_URL, citaData, getAuthHeaders());
   return response.data;
 };
 
-// ¡AQUÍ ESTÁ LA FUNCIÓN RESTAURADA QUE NECESITA TU RECEPCIÓN!
 export const obtenerCitasPorDia = async (fecha) => {
   const response = await axios.get(`${API_URL}/calendario?fecha=${fecha}`, getAuthHeaders());
   return response.data;
 };
 
 export const cambiarEstadoCita = async (id, estado) => {
-  // Nota: Asegurado que coincida con el @PatchMapping y el @RequestParam "nuevoEstado" de tu backend
   const response = await axios.patch(`${API_URL}/${id}/estado?nuevoEstado=${estado}`, {}, getAuthHeaders());
   return response.data;
 };
@@ -47,10 +41,6 @@ export const reprogramarCita = async (id, data) => {
   const response = await axios.put(`${API_URL}/${id}/reprogramar`, data, getAuthHeaders());
   return response.data;
 };
-
-// ==============================================================
-// NUEVAS FUNCIONES MÉDICAS (VETERINARIO)
-// ==============================================================
 
 export const obtenerCitasHoy = async () => {
   const response = await axios.get(`${API_URL}/hoy`, getAuthHeaders());

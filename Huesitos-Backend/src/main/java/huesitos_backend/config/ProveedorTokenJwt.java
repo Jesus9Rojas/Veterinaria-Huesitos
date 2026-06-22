@@ -13,10 +13,8 @@ import java.util.Date;
 @Component
 public class ProveedorTokenJwt {
 
-    // Clave secreta para firmar los tokens, definida en propiedades o por defecto
     private final SecretKey claveFirma;
     
-    // Tiempo de expiración del token en milisegundos (por defecto 24 horas)
     private final long tiempoExpiracionMs;
 
     public ProveedorTokenJwt(
@@ -26,9 +24,6 @@ public class ProveedorTokenJwt {
         this.tiempoExpiracionMs = tiempoExpiracionMs;
     }
 
-    /**
-     * Genera un token JWT a partir del nombre de usuario.
-     */
     public String generarToken(String nombreUsuario) {
         Date ahora = new Date();
         Date fechaExpiracion = new Date(ahora.getTime() + tiempoExpiracionMs);
@@ -41,9 +36,6 @@ public class ProveedorTokenJwt {
                 .compact();
     }
 
-    /**
-     * Obtiene el nombre de usuario a partir de un token JWT.
-     */
     public String obtenerUsuarioDeToken(String token) {
         Claims reclamos = Jwts.parser()
                 .verifyWith(claveFirma)
@@ -54,9 +46,6 @@ public class ProveedorTokenJwt {
         return reclamos.getSubject();
     }
 
-    /**
-     * Valida si un token JWT es correcto y no ha expirado.
-     */
     public boolean validarToken(String token) {
         try {
             Jwts.parser()
@@ -65,7 +54,6 @@ public class ProveedorTokenJwt {
                     .parseSignedClaims(token);
             return true;
         } catch (Exception e) {
-            // Token inválido, expirado o mal firmado
             return false;
         }
     }

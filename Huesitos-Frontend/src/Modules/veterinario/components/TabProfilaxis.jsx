@@ -3,12 +3,10 @@ import { Syringe, ShieldAlert, Plus, HelpCircle } from 'lucide-react';
 import axios from 'axios';
 
 const TabProfilaxis = ({ vacunas, desparasitaciones, onGuardarVacuna, onGuardarDesparasitacion }) => {
-  // Catálogo dinámico venido desde la base de datos
   const [catalogoVacunas, setCatalogoVacunas] = useState([]);
   const [formV, setFormV] = useState({ vacunaId: '', dosis: 'Primera', proximaDosis: '' }); 
   const [formD, setFormD] = useState({ tipo: 'INTERNA', producto: '', proximaFecha: '' });
 
-  // 1. Cargar catálogo de Vacunas desde MySQL
   useEffect(() => {
     const cargarCatalogo = async () => {
       try {
@@ -24,20 +22,18 @@ const TabProfilaxis = ({ vacunas, desparasitaciones, onGuardarVacuna, onGuardarD
     cargarCatalogo();
   }, []);
 
-  // 2. Formateador de Fechas (Soluciona el problema de que salga 1 día antes o "Invalid Date")
   const formatearFechaSegura = (fechaStr) => {
     if (!fechaStr) return 'Sin registro';
     const soloFecha = fechaStr.includes('T') ? fechaStr.split('T')[0] : fechaStr;
     const partes = soloFecha.split('-');
-    if (partes.length !== 3) return fechaStr; // Si no es YYYY-MM-DD, la devuelve tal cual
-    return `${partes[2]}/${partes[1]}/${partes[0]}`; // Formato: DD/MM/YYYY
+    if (partes.length !== 3) return fechaStr; 
+    return `${partes[2]}/${partes[1]}/${partes[0]}`; 
   };
 
   const handleVacunaSubmit = (e) => {
     e.preventDefault();
     if (!formV.vacunaId) return alert("Por favor, seleccione una vacuna de la lista.");
     
-    // Enviamos los datos con los nombres exactos que pide el backend (HistorialVacunacion.java)
     onGuardarVacuna({
       vacuna: { id: parseInt(formV.vacunaId) },
       dosis: formV.dosis,
@@ -48,7 +44,6 @@ const TabProfilaxis = ({ vacunas, desparasitaciones, onGuardarVacuna, onGuardarD
 
   const handleDesparasitacionSubmit = (e) => {
     e.preventDefault();
-    // Enviamos los datos con los nombres exactos que pide el backend (Desparasitacion.java)
     onGuardarDesparasitacion({
         tipo: formD.tipo,
         producto: formD.producto,

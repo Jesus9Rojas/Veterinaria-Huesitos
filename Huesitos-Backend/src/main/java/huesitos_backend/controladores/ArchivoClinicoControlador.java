@@ -18,18 +18,12 @@ public class ArchivoClinicoControlador {
 
     private final ArchivoClinicoServicio archivoClinicoServicio;
 
-    /**
-     * Endpoint para obtener todos los archivos clínicos de una mascota.
-     */
     @GetMapping("/mascota/{mascotaId}")
     public ResponseEntity<List<ArchivoClinico>> obtenerArchivosMascota(@PathVariable Long mascotaId) {
         List<ArchivoClinico> archivos = archivoClinicoServicio.obtenerArchivosPorMascota(mascotaId);
         return ResponseEntity.ok(archivos);
     }
 
-    /**
-     * Endpoint para subir un archivo clínico (PDF, imágenes, etc.) asociado a una mascota y consulta.
-     */
     @PostMapping(value = "/subir", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> subirArchivo(
             @RequestParam("mascotaId") Long mascotaId,

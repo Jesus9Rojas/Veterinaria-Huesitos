@@ -37,7 +37,6 @@ public class RecetaControlador {
         }
     }
 
-    // EL ENDPOINT DE REACT FUNCIONANDO AL 100%
     @GetMapping("/mascota/{mascotaId}")
     public ResponseEntity<List<Receta>> listarPorMascota(@PathVariable Long mascotaId) {
         return ResponseEntity.ok(recetaServicio.listarPorMascota(mascotaId));

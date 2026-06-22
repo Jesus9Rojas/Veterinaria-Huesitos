@@ -58,10 +58,8 @@ const MisCitasCliente = () => {
     return 'Médico Clínico';
   };
 
-  // Función anti-desfase de zona horaria para fechas de nacimiento
   const formatearFechaSimple = (fecha) => {
     if (!fecha) return 'No registrado';
-    // Aisla el YYYY-MM-DD cortando el string, así no resta las 5 horas de Perú
     const soloFecha = typeof fecha === 'string' ? fecha.split('T')[0] : new Date(fecha).toISOString().split('T')[0];
     const [year, month, day] = soloFecha.split('-');
     return `${day}/${month}/${year}`;

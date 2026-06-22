@@ -21,19 +21,16 @@ const CitasPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [guardando, setGuardando] = useState(false);
   
-  // ESTADOS PARA EL NUEVO MODAL DE ASIGNAR MÉDICO
   const [modalAsignarOpen, setModalAsignarOpen] = useState(false);
   const [citaActivaId, setCitaActivaId] = useState(null);
   const [vetAsignarId, setVetAsignarId] = useState("");
   const [asignando, setAsignando] = useState(false);
 
-  // Catálogos
   const [duenos, setDuenos] = useState([]);
   const [mascotas, setMascotas] = useState([]);
   const [servicios, setServicios] = useState([]);
   const [veterinarios, setVeterinarios] = useState([]); 
 
-  // --- ESTADOS PARA LOS BUSCADORES INTELIGENTES ---
   const [dropdownDuenoAbierto, setDropdownDuenoAbierto] = useState(false);
   const [busquedaDueno, setBusquedaDueno] = useState('');
 
@@ -48,7 +45,6 @@ const CitasPage = () => {
     return { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
   }, []);
 
-  // --- 1. CARGA DE CATÁLOGOS ---
   useEffect(() => {
     obtenerListaDuenos().then(res => setDuenos(res)).catch(console.error);
     listarServicios().then(res => setServicios(res.filter(s => s.activo))).catch(console.error);
@@ -57,7 +53,6 @@ const CitasPage = () => {
     }).catch(console.error);
   }, []);
 
-  // --- 2. CARGA DE AGENDA DEL DÍA ---
   useEffect(() => {
     let isMounted = true;
     const extraerAgenda = async () => {
@@ -135,7 +130,6 @@ const CitasPage = () => {
     return v.correo;
   };
 
-  // --- 3. LÓGICA DEL NUEVO MODAL DE ASIGNACIÓN ---
   const abrirModalAsignacion = (citaId) => {
     if (veterinarios.length === 0) {
       return Swal.fire('Sin doctores', 'No hay veterinarios activos registrados en el sistema.', 'info');
@@ -167,7 +161,6 @@ const CitasPage = () => {
     }
   };
 
-  // --- 4. LÓGICA DE AGENDAMIENTO NUEVO ---
   const handleGuardarCita = async (e) => {
     e.preventDefault();
     setGuardando(true);
@@ -215,7 +208,6 @@ const CitasPage = () => {
     }
   };
 
-  // --- FILTROS INTELIGENTES ---
   const duenosFiltrados = duenos.filter(d => 
     d.nombreCompleto?.toLowerCase().includes(busquedaDueno.toLowerCase()) ||
     d.correo?.toLowerCase().includes(busquedaDueno.toLowerCase()) ||

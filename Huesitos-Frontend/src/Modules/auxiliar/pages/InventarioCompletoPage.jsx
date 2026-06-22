@@ -9,7 +9,6 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import Swal from 'sweetalert2';
 
-// CONFIGURACIÓN DE NOTIFICACIONES TOAST (Sin clics)
 const Toast = Swal.mixin({
   toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true,
   didOpen: (toast) => { toast.onmouseenter = Swal.stopTimer; toast.onmouseleave = Swal.resumeTimer; }
@@ -35,7 +34,6 @@ const InventarioCompletoPage = () => {
         const token = localStorage.getItem('token');
         const headers = { Authorization: `Bearer ${token}` };
 
-        // AHORA LLAMAMOS A LOS 4 ENDPOINTS AL MISMO TIEMPO
         const [resProductos, resVacunas, resMedicinas, resAntiparasitarios] = await Promise.all([
           axios.get('http://localhost:8080/api/productos/todos', { headers }).catch(() => ({ data: [] })),
           axios.get('http://localhost:8080/api/vacunas', { headers }).catch(() => ({ data: [] })),
@@ -49,7 +47,6 @@ const InventarioCompletoPage = () => {
           const meds = resMedicinas.data.map(m => ({ ...m, tipo_item: 'MEDICINA' }));
           const antis = resAntiparasitarios.data.map(a => ({ ...a, tipo_item: 'ANTIPARASITARIO' }));
 
-          // Unificamos todo el almacén
           setInventarioGlobal([...prods, ...vacs, ...meds, ...antis]);
         }
       } catch (error) {
@@ -180,12 +177,11 @@ const InventarioCompletoPage = () => {
     Toast.fire({ icon: 'success', title: 'Archivo CSV descargado' });
   };
 
-  // Cálculos de métricas
   const totalItems = inventarioGlobal.length;
   const totalProductos = inventarioGlobal.filter(i => i.tipo_item === 'PRODUCTO').length;
   const totalVacunas = inventarioGlobal.filter(i => i.tipo_item === 'VACUNA').length;
   const totalMedicinas = inventarioGlobal.filter(i => i.tipo_item === 'MEDICINA').length;
-  const totalAntiparasitarios = inventarioGlobal.filter(i => i.tipo_item === 'ANTIPARASITARIO').length; // NUEVO
+  const totalAntiparasitarios = inventarioGlobal.filter(i => i.tipo_item === 'ANTIPARASITARIO').length;
 
   const itemsAgotados = inventarioGlobal.filter(i => getStockReal(i) === 0).length;
   const itemsBajoStock = inventarioGlobal.filter(i => getStockReal(i) > 0 && getStockReal(i) <= 5).length;
@@ -196,14 +192,14 @@ const InventarioCompletoPage = () => {
   const getIcon = (tipo) => {
     if (tipo === 'PRODUCTO') return <Package size={16} className="text-amber-500" />;
     if (tipo === 'VACUNA') return <Syringe size={16} className="text-sky-500" />;
-    if (tipo === 'ANTIPARASITARIO') return <Bug size={16} className="text-orange-500" />; // NUEVO
+    if (tipo === 'ANTIPARASITARIO') return <Bug size={16} className="text-orange-500" />; 
     return <Pill size={16} className="text-emerald-500" />;
   };
 
   const getBadgeColor = (tipo) => {
     if (tipo === 'PRODUCTO') return 'bg-amber-50 text-amber-700 border-amber-200';
     if (tipo === 'VACUNA') return 'bg-sky-50 text-sky-700 border-sky-200';
-    if (tipo === 'ANTIPARASITARIO') return 'bg-orange-50 text-orange-700 border-orange-200'; // NUEVO
+    if (tipo === 'ANTIPARASITARIO') return 'bg-orange-50 text-orange-700 border-orange-200';
     return 'bg-emerald-50 text-emerald-700 border-emerald-200';
   };
 

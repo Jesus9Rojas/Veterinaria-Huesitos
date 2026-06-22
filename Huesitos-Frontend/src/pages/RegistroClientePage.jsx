@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { } from 'lucide-react'; // Cambiamos el icono a uno de Dirección
+import { } from 'lucide-react'; 
 import logo from '../assets/Logo Huesitos.png';
 
 const Toast = Swal.mixin({ toast: true, position: "top-end", showConfirmButton: false, timer: 3000 });
@@ -15,7 +15,7 @@ const RegistroClientePage = () => {
   const [form, setForm] = useState({
     nombre: '',
     apellidos: '',
-    direccion: '', // <--- Cambiado de DNI a Dirección para hacer match con el Backend
+    direccion: '', 
     telefono: '',
     correo: '',
     password: ''
@@ -23,8 +23,7 @@ const RegistroClientePage = () => {
 
   const handleChange = (e) => {
     let { name, value } = e.target;
-    
-    // Solo validamos que el teléfono sean números
+
     if (name === 'telefono') {
       value = value.replace(/\D/g, ''); 
     }
@@ -35,7 +34,6 @@ const RegistroClientePage = () => {
   const handleRegistro = async (e) => {
     e.preventDefault();
 
-    // Validación del teléfono de 9 dígitos exactos
     if (form.telefono.length !== 9) {
       return Toast.fire({ icon: 'warning', title: 'El teléfono celular debe tener exactamente 9 dígitos.' });
     }
@@ -43,11 +41,10 @@ const RegistroClientePage = () => {
     setCargando(true);
 
     try {
-      // EMPAQUETADO EXACTO PARA LA ENTIDAD "DUEÑO" DEL BACKEND
       const payload = {
         nombreCompleto: `${form.nombre} ${form.apellidos}`,
         telefono: form.telefono,
-        direccion: form.direccion, // <--- Obligatorio según tu Dueño.java
+        direccion: form.direccion, 
         usuario: {
           correo: form.correo,
           contrasena: form.password,

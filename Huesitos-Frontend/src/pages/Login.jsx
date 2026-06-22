@@ -41,7 +41,6 @@ const VetLogin = () => {
         if (data.rol === 'ADMINISTRADOR') {
           navigate('/admin');
         } else if (data.rol === 'CLIENTE') {
-          // El cliente vuelve a la página principal pero con sesión iniciada
           navigate('/');
         } else if (data.rol === 'VETERINARIO') {
           navigate('/veterinario');

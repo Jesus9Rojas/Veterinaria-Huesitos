@@ -8,10 +8,7 @@ import java.util.List;
 
 @Repository
 public interface HistorialVacunacionRepositorio extends JpaRepository<HistorialVacunacion, Long> {
-    
-    // Spring Boot necesita este nombre exacto para navegar por la entidad Mascota
     List<HistorialVacunacion> findByMascotaIdOrderByFechaAplicacionDesc(Long mascotaId);
 
-    // Para la tarea programada
     List<HistorialVacunacion> findByFechaProximaDosisBetween(LocalDate inicio, LocalDate fin);
 }

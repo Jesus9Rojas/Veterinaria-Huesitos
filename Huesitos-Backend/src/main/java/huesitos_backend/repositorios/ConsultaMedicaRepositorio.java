@@ -7,6 +7,5 @@ import java.util.List;
 
 @Repository
 public interface ConsultaMedicaRepositorio extends JpaRepository<ConsultaMedica, Long> {
-    // Tu método original que ordena desde la más reciente
     List<ConsultaMedica> findByMascotaIdOrderByFechaDesc(Long mascotaId);
 }

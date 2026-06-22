@@ -27,10 +27,10 @@ public class Desparasitacion {
     private LocalDate fechaProximaAplicacion;
 
     @Column(nullable = false, length = 100)
-    private String producto; // e.g. "Bravecto", "Endogard"
+    private String producto; 
 
     @Column(nullable = false, length = 50)
-    private String tipo; // "INTERNA" o "EXTERNA"
+    private String tipo; 
 
     @Column(length = 500)
     private String observaciones;

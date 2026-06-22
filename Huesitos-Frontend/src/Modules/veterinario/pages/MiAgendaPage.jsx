@@ -56,14 +56,10 @@ const MiAgendaPage = () => {
     }
   };
 
-  // Función segura: Redirige directamente al Expediente vinculando el ID de la cita
   const handleAtender = (cita) => {
     navigate(`/veterinario/pacientes/${cita.mascota.id}/historial?citaId=${cita.id}`);
   };
 
-  // ========================================================
-  // CORRECCIÓN: Filtramos para que acepte ambos estados
-  // ========================================================
   const citasPendientes = citas.filter(c => c.estado === 'PENDIENTE' || c.estado === 'CONFIRMADA');
   const citasEnEspera = citas.filter(c => c.estado === 'EN_ESPERA');
   const citasCompletadas = citas.filter(c => c.estado === 'COMPLETADA');

@@ -4,7 +4,7 @@ public enum EstadoCita {
     PENDIENTE,
     CONFIRMADA,
     EN_ESPERA,
-    EN_PROGRESO, // <-- ¡Añadido para que el consultorio funcione!
+    EN_PROGRESO, 
     COMPLETADA,
     CANCELADA
 }

@@ -9,9 +9,5 @@ import java.util.Optional;
 
 @Repository
 public interface ConfiguracionRolRepositorio extends JpaRepository<ConfiguracionRol, Long> {
-
-    /**
-     * Busca la configuración asociada a un rol específico.
-     */
     Optional<ConfiguracionRol> findByRol(Rol rol);
 }

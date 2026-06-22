@@ -4,7 +4,6 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import { obtenerDetallesPersonal, actualizarPersonal } from "../../../services/usuarioService";
 
-// CONFIGURACIÓN DE NOTIFICACIONES TOAST (Sin clics)
 const Toast = Swal.mixin({
   toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true,
   didOpen: (toast) => { toast.onmouseenter = Swal.stopTimer; toast.onmouseleave = Swal.resumeTimer; }

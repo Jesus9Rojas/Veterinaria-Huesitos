@@ -6,7 +6,6 @@ const MisHorariosPage = () => {
   const [horarios, setHorarios] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Obtenemos el ID del usuario directamente desde el LocalStorage
   const [usuarioId] = useState(() => {
     let id = localStorage.getItem('usuarioId') || localStorage.getItem('id');
     
@@ -60,7 +59,6 @@ const MisHorariosPage = () => {
     return () => { isMounted = false; };
   }, [usuarioId]);
 
-  // Paleta unificada y profesional (eliminamos el arcoíris)
   const diasSemana = {
     'MONDAY': { nombre: 'Lunes', orden: 1 },
     'TUESDAY': { nombre: 'Martes', orden: 2 },

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { PlusCircle, Stethoscope, Tag, Clock, FileText, ChevronDown } from 'lucide-react';
 
-// Catálogo predefinido
 const CATALOGO_PREDEFINIDO = [
   {
     categoria: "Consultas Médicas",

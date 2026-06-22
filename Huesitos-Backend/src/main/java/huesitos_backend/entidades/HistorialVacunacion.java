@@ -34,7 +34,7 @@ public class HistorialVacunacion {
     private LocalDate fechaProximaDosis;
 
     @Column(nullable = false, length = 50)
-    private String dosis; // e.g. "Primera Dosis", "Refuerzo Anual"
+    private String dosis; 
 
     @Column(length = 500)
     private String observaciones;

@@ -13,8 +13,6 @@ const MisPacientesPage = () => {
   const [pacientes, setPacientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busqueda, setBusqueda] = useState('');
-
-  // Estados para el Modal de Perfil
   const [modalPerfilOpen, setModalPerfilOpen] = useState(false);
   const [pacienteActivo, setPacienteActivo] = useState(null);
 
@@ -38,7 +36,6 @@ const MisPacientesPage = () => {
     return () => { isMounted = false; };
   }, []);
 
-  // FILTRO INTELIGENTE
   const pacientesFiltrados = pacientes.filter(p => {
     const termino = busqueda.toLowerCase();
     const nombreMascota = p.nombre?.toLowerCase() || '';
@@ -57,7 +54,6 @@ const MisPacientesPage = () => {
     navigate(`/veterinario/pacientes/${pacienteActivo.id}/historial`);
   };
 
-  // Función para calcular edad aproximada
   const calcularEdad = (fechaNacimiento) => {
     if (!fechaNacimiento) return 'Edad desconocida';
     const hoy = new Date();
@@ -70,12 +66,10 @@ const MisPacientesPage = () => {
     return edad === 0 ? 'Menos de 1 año' : `${edad} año(s)`;
   };
 
-  // Variables calculadas para el modal
   const pesoMascota = pacienteActivo?.pesoActual || pacienteActivo?.peso;
   const nombreDueno = pacienteActivo?.dueño?.nombreCompleto || pacienteActivo?.dueno?.nombreCompleto || 'No registrado';
   const telefonoDueno = pacienteActivo?.dueño?.telefono || pacienteActivo?.dueno?.telefono || 'No registrado';
-  
-  // ¡CORRECCIÓN MAESTRA! Navegamos hasta la tabla Usuario para extraer el correo
+
   const correoDueno = pacienteActivo?.dueño?.usuario?.correo || 
                       pacienteActivo?.dueno?.usuario?.correo || 
                       pacienteActivo?.dueño?.correo || 

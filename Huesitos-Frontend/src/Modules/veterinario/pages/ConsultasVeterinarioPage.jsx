@@ -15,7 +15,6 @@ const ConsultasVeterinarioPage = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [busqueda, setBusqueda] = useState('');
 
-  // Estados para el Modal Médico (Restaurado)
   const [modalRecetaOpen, setModalRecetaOpen] = useState(false);
   const [citaActiva, setCitaActiva] = useState(null);
 
@@ -54,7 +53,6 @@ const ConsultasVeterinarioPage = () => {
     }
   };
 
-  // Función restaurada para abrir el modal rápido
   const abrirModalReceta = (cita) => {
     setCitaActiva(cita);
     setModalRecetaOpen(true);

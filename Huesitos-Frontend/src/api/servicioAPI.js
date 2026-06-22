@@ -7,7 +7,6 @@ const servicioAPI = axios.create({
   },
 });
 
-// Inyectar el Token JWT en cada petición automáticamente
 servicioAPI.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");

@@ -23,21 +23,17 @@ const HistorialClinicoPage = () => {
   const [loading, setLoading] = useState(true);
   const [refresh, setRefresh] = useState(0);
 
-  // DATA HISTÓRICA
   const [consultas, setConsultas] = useState([]);
   const [historialVacunas, setHistorialVacunas] = useState([]);
   const [historialAnti, setHistorialAnti] = useState([]);
   const [historialRecetas, setHistorialRecetas] = useState([]);
 
-  // CATÁLOGOS (Para los Selects)
   const [catalogos, setCatalogos] = useState({ vacunas: [], antiparasitarios: [], medicinas: [] });
 
-  // ESTADOS DE LOS FORMULARIOS COMPLETOS
   const [formConsulta, setFormConsulta] = useState({ motivoConsulta: '', sintomas: '', diagnostico: '', tratamiento: '', observaciones: '' });
   const [formVacuna, setFormVacuna] = useState({ itemId: '', dosisOTipo: '', fechaAplicacion: new Date().toISOString().slice(0,10), fechaProxima: '', observaciones: '' });
   const [formAnti, setFormAnti] = useState({ itemId: '', fechaAplicacion: new Date().toISOString().slice(0,10), fechaProxima: '', observaciones: '' });
   
-  // ESTADOS DE LA RECETA
   const [recetaConsultaId, setRecetaConsultaId] = useState('');
   const [medicinaSeleccionada, setMedicinaSeleccionada] = useState('');
   const [carritoMedicinas, setCarritoMedicinas] = useState([]); 

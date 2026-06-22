@@ -16,13 +16,11 @@ public class ConsultaMedicaControlador {
 
     @PostMapping
     public ResponseEntity<ConsultaMedica> registrar(@RequestBody ConsultaMedica consulta) {
-        // Llama a tu método registrarConsulta del servicio
         return ResponseEntity.ok(consultaMedicaServicio.registrarConsulta(consulta));
     }
 
     @GetMapping("/mascota/{mascotaId}")
     public ResponseEntity<List<ConsultaMedica>> listarPorMascota(@PathVariable Long mascotaId) {
-        // Llama a tu método obtenerHistorialMascota del servicio
         return ResponseEntity.ok(consultaMedicaServicio.obtenerHistorialMascota(mascotaId));
     }
 }

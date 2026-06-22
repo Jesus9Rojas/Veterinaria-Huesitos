@@ -26,8 +26,7 @@ public class AutenticacionControlador {
     private final AutenticacionServicio autenticacionServicio;
     private final AutenticacionAvanzadaServicio autenticacionAvanzadaServicio;
     private final UsuarioRepositorio usuarioRepositorio;
-    
-    // Inyectamos estos dos repositorios para poder buscar el nombre real del usuario al hacer login
+
     private final DueñoRepositorio dueñoRepositorio;
     private final PersonalRepositorio personalRepositorio;
 
@@ -48,8 +47,7 @@ public class AutenticacionControlador {
             
             Usuario usuario = usuarioRepositorio.findByCorreo(datosLogin.getCorreo())
                     .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-            
-            // Lógica para buscar el nombre real de la persona
+
             String nombreCompleto = "Usuario del Sistema";
             
             if (usuario.getRol() == huesitos_backend.entidades.Rol.CLIENTE) {
@@ -64,14 +62,13 @@ public class AutenticacionControlador {
                 }
             }
 
-            // Ahora sí, enviamos los 6 parámetros completos que exige la RespuestaLogin
             RespuestaLogin respuesta = new RespuestaLogin(
                 token, 
                 usuario.getCorreo(), 
                 usuario.getRol().name(),
                 usuario.getId(),
-                nombreCompleto,             // El nombre real que acabamos de buscar
-                usuario.getFotoPerfilUrl()  // La URL de su foto de perfil
+                nombreCompleto,         
+                usuario.getFotoPerfilUrl()  
             );
             return ResponseEntity.ok(respuesta);
         } catch (RuntimeException e) {

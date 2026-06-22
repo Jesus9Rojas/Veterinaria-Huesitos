@@ -27,13 +27,11 @@ public class FiltroAutenticacionJwt extends OncePerRequestFilter {
         String path = request.getRequestURI();
         String method = request.getMethod();
 
-        // 1. SALTO DE FILTRO: Usamos startsWith para evitar que un "/" extra nos bloquee
         if (path.startsWith("/api/configuracion-negocio") && "GET".equals(method)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 2. Lógica normal de autenticación para otras rutas
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {

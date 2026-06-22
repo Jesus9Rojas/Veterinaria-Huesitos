@@ -11,7 +11,6 @@ public class RecursosWebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Obtenemos la ruta absoluta de la carpeta "uploads"
         String uploadsPath = Paths.get("uploads").toAbsolutePath().toUri().toString();
 
         registry.addResourceHandler("/uploads/**")

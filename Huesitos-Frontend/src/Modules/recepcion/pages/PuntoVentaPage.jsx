@@ -5,7 +5,6 @@ import {
   Trash2, Banknote, CreditCard, Smartphone, CheckCircle2, X, Activity, ShoppingBag, QrCode, ChevronDown, User
 } from 'lucide-react';
 import { listarProductosPOS, listarPedidos, actualizarEstadoPedido, procesarVentaPOS } from '../../../services/posService';
-// ¡CORRECCIÓN! Importamos los Dueños (que tienen Nombre y Teléfono) en lugar de Usuarios
 import { obtenerListaDuenos } from '../../../services/duenoService'; 
 
 const PuntoVentaPage = () => {
@@ -13,23 +12,20 @@ const PuntoVentaPage = () => {
   
   const [productos, setProductos] = useState([]);
   const [pedidos, setPedidos] = useState([]);
-  const [clientes, setClientes] = useState([]); // Aquí guardaremos los dueños
+  const [clientes, setClientes] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [triggerRecarga, setTriggerRecarga] = useState(0);
 
-  // Estados del POS
   const [busqueda, setBusqueda] = useState('');
   const [carrito, setCarrito] = useState([]);
   const [modalPagoOpen, setModalPagoOpen] = useState(false);
   const [medioPago, setMedioPago] = useState('EFECTIVO');
   const [procesando, setProcesando] = useState(false);
 
-  // --- ESTADOS PARA EL CLIENTE Y EL NUEVO BUSCADOR ---
   const [clienteSeleccionado, setClienteSeleccionado] = useState(''); 
   const [busquedaCliente, setBusquedaCliente] = useState('');
   const [dropdownClienteAbierto, setDropdownClienteAbierto] = useState(false);
 
-  // Estados para Pasarelas de Pago
   const [montoRecibido, setMontoRecibido] = useState('');
   const [datosTarjeta, setDatosTarjeta] = useState({ numero: '', fecha: '', cvv: '' });
   const [referenciaYape, setReferenciaYape] = useState('');
@@ -42,12 +38,11 @@ const PuntoVentaPage = () => {
         const [prodData, pedData, clientesData] = await Promise.all([
           listarProductosPOS(),
           listarPedidos(),
-          obtenerListaDuenos() // Traemos los dueños con nombres y celulares
+          obtenerListaDuenos()
         ]);
         if (isMounted) {
           setProductos(prodData.filter(p => p.activo !== false)); 
           setPedidos(pedData);
-          // Guardamos solo los dueños que tienen una cuenta de usuario vinculada
           setClientes(clientesData.filter(c => c.usuarioId != null));
           setLoading(false);
         }
@@ -60,7 +55,6 @@ const PuntoVentaPage = () => {
     return () => { isMounted = false; };
   }, [triggerRecarga]);
 
-  // --- LÓGICA DEL CARRITO ---
   const productosFiltrados = productos.filter(p => 
     p.nombre?.toLowerCase().includes(busqueda.toLowerCase()) || 
     p.categoria?.nombre?.toLowerCase().includes(busqueda.toLowerCase())
@@ -121,7 +115,6 @@ const PuntoVentaPage = () => {
         referenciaFinal = `Operación: ${referenciaYape}`;
       }
 
-      // Enviamos el usuarioId que seleccionamos en el dropdown
       const payload = {
         medioPago,
         referencia: referenciaFinal,
@@ -168,17 +161,14 @@ const PuntoVentaPage = () => {
     }
   };
 
-  // --- FILTRO DEL BUSCADOR DE CLIENTES ---
   const clientesFiltrados = clientes.filter(c => 
     c.nombreCompleto?.toLowerCase().includes(busquedaCliente.toLowerCase()) ||
     c.correo?.toLowerCase().includes(busquedaCliente.toLowerCase()) ||
     c.telefono?.includes(busquedaCliente)
   );
 
-  // Buscamos la info del cliente seleccionado para mostrar su nombre en el botón
   const clienteActualInfo = clientes.find(c => c.usuarioId?.toString() === clienteSeleccionado.toString());
 
-  // Cálculo del Vuelto
   const vuelto = parseFloat(montoRecibido || 0) - totalCarrito;
   const vueltoValido = vuelto >= 0;
 
@@ -319,8 +309,7 @@ const PuntoVentaPage = () => {
 
                       {clientesFiltrados.map(c => (
                         <button
-                          key={c.id} // Aquí la 'id' pertenece al Dueño
-                          // Guardamos el usuarioId porque el Backend (Pedido) está ligado a Usuario, no al Dueño directamente.
+                          key={c.id} 
                           onClick={() => { setClienteSeleccionado(c.usuarioId.toString()); setDropdownClienteAbierto(false); setBusquedaCliente(''); }}
                           className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex flex-col gap-0.5 ${clienteSeleccionado === c.usuarioId.toString() ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'text-slate-600 hover:bg-slate-50 border border-transparent'}`}
                         >
@@ -413,8 +402,6 @@ const PuntoVentaPage = () => {
                  <tbody className="divide-y divide-slate-100 text-sm">
                    {pedidos.map((ped) => {
                      const fechaFormat = ped.fechaPedido ? new Date(ped.fechaPedido).toLocaleDateString('es-PE') : '-';
-                     
-                     // CRUZAMOS LOS DATOS PARA MOSTRAR EL NOMBRE REAL INCLUSO EN LA TABLA
                      const duenoDelPedido = clientes.find(c => c.usuarioId === ped.cliente?.id);
                      const nombreMostrar = duenoDelPedido ? duenoDelPedido.nombreCompleto : (ped.cliente?.correo || 'Venta Mostrador POS');
 

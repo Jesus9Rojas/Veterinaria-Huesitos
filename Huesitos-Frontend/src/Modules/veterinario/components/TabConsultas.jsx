@@ -9,7 +9,6 @@ const TabConsultas = ({ consultas, onGuardar }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Enviamos exactamente los campos que tiene ConsultaMedica.java
     onGuardar({
       motivoConsulta: form.motivoConsulta,
       sintomas: form.sintomas,

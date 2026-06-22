@@ -39,7 +39,6 @@ const VacunasPage = () => {
     return () => { isMounted = false; };
   }, [refreshTrigger]);
 
-  // SOLUCIÓN APLICADA: Filtro estricto (O solo activos, O solo suspendidos)
   const vacunasFiltradas = vacunas.filter(v => {
     const matchBusqueda = (v.nombre || '').toLowerCase().includes(busqueda.toLowerCase()) || 
                           (v.proveedor || '').toLowerCase().includes(busqueda.toLowerCase()) ||

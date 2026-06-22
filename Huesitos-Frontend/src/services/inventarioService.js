@@ -11,13 +11,11 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// --- PRODUCTOS ---
 export const listarProductos = async () => {
   const response = await api.get("/productos");
   return response.data;
 };
 
-// NUEVO: Listar absolutamente todos los productos (Para el Admin)
 export const listarTodosProductos = async () => {
   const response = await api.get("/productos/todos");
   return response.data;
@@ -38,13 +36,11 @@ export const desactivarProducto = async (id) => {
   return response.data;
 };
 
-// NUEVO: Reactivar Producto
 export const activarProducto = async (id) => {
   const response = await api.put(`/productos/${id}/activar`);
   return response.data;
 };
 
-// --- CATEGORÍAS ---
 export const listarCategorias = async () => {
   const response = await api.get("/categorias");
   return response.data;

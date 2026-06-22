@@ -14,7 +14,6 @@ const ClientesPage = () => {
   const [loading, setLoading] = useState(true);
   const [triggerRecarga, setTriggerRecarga] = useState(0); 
 
-  // Estados para Modal de Nuevo Dueño
   const [modalDuenoOpen, setModalDuenoOpen] = useState(false);
   const [guardandoDueno, setGuardandoDueno] = useState(false);
   
@@ -22,7 +21,6 @@ const ClientesPage = () => {
     nombreCompleto: '', telefono: '', correo: '', direccion: '', contrasena: ''
   });
 
-  // Estados para Modal de Mascotas
   const [modalMascotasOpen, setModalMascotasOpen] = useState(false);
   const [duenoSeleccionado, setDuenoSeleccionado] = useState(null);
   const [mascotas, setMascotas] = useState([]);
@@ -31,12 +29,10 @@ const ClientesPage = () => {
   const [mostrandoFormMascota, setMostrandoFormMascota] = useState(false);
   const [guardandoMascota, setGuardandoMascota] = useState(false);
   
-  // Estado adaptado exactamente a la BD
   const [formMascota, setFormMascota] = useState({
     nombre: '', especie: 'Perro', raza: '', sexo: 'Macho', fechaNacimiento: '', pesoActual: '', alertasMedicas: ''
   });
 
-  // --- CARGA INICIAL DE CLIENTES ---
   useEffect(() => {
     let isMounted = true;
     const extraerDuenos = async () => {
@@ -58,14 +54,12 @@ const ClientesPage = () => {
     return () => { isMounted = false; };
   }, [triggerRecarga]);
 
-  // --- FILTRO DE BÚSQUEDA RÁPIDA ---
   const duenosFiltrados = duenos.filter(d => 
     d.nombreCompleto?.toLowerCase().includes(busqueda.toLowerCase()) || 
     d.correo?.toLowerCase().includes(busqueda.toLowerCase()) ||
     d.telefono?.includes(busqueda)
   );
 
-  // --- FUNCIONES DUEÑO ---
   const handleGuardarDueno = async (e) => {
     e.preventDefault();
     setGuardandoDueno(true);
@@ -84,7 +78,6 @@ const ClientesPage = () => {
     }
   };
 
-  // --- FUNCIONES MASCOTA ---
   const abrirPanelMascotas = async (dueno) => {
     setDuenoSeleccionado(dueno);
     setMostrandoFormMascota(false);
@@ -104,7 +97,6 @@ const ClientesPage = () => {
     e.preventDefault();
     setGuardandoMascota(true);
     try {
-      // PAQUETE ANTIBOMBAS: Alineado al 100% con los requerimientos de tu Mascota.java
       const payload = {
         nombre: formMascota.nombre,
         especie: formMascota.especie,
@@ -113,8 +105,8 @@ const ClientesPage = () => {
         fechaNacimiento: formMascota.fechaNacimiento,
         pesoActual: parseFloat(formMascota.pesoActual),
         alertasMedicas: formMascota.alertasMedicas || "Ninguna",
-        fotoUrl: "/uploads/defecto-mascota.png", // Aseguramos que no se envíe null a la BD
-        dueño: { id: duenoSeleccionado.id } // Obligamos a usar el nombre exacto de la entidad
+        fotoUrl: "/uploads/defecto-mascota.png", 
+        dueño: { id: duenoSeleccionado.id } 
       };
 
       await crearMascota(payload);
@@ -127,7 +119,6 @@ const ClientesPage = () => {
     } catch (error) {
       console.error("Error guardando mascota completo:", error);
       
-      // EXTRACCIÓN DEL MENSAJE DE ERROR EXACTO DEL BACKEND DE JAVA
       const mensajeBackend = error.response?.data?.message || error.response?.data || error.message;
       alert(`Hubo un error al registrar el paciente.\n\nMotivo del servidor:\n${mensajeBackend}`);
       

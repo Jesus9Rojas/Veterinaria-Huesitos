@@ -7,11 +7,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-public interface DesparasitacionRepositorio extends JpaRepository<Desparasitacion, Long> {
-    
-    // CORRECCIÓN: La ruta es mascota.id
+public interface DesparasitacionRepositorio extends JpaRepository<Desparasitacion, Long> {   
     List<Desparasitacion> findByMascotaId(Long mascotaId);
 
-    // Para la Tarea Programada
     List<Desparasitacion> findByFechaProximaAplicacionBetween(LocalDate inicio, LocalDate fin);
 }

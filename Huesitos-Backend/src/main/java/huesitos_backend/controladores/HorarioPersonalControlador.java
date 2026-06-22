@@ -16,9 +16,6 @@ public class HorarioPersonalControlador {
 
     private final HorarioPersonalServicio horarioPersonalServicio;
 
-    /**
-     * Endpoint para obtener el horario semanal del personal.
-     */
     @GetMapping("/usuario/{usuarioId}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'VETERINARIO', 'RECEPCIONISTA')")
     public ResponseEntity<List<HorarioPersonal>> obtenerHorarioSemanal(@PathVariable Long usuarioId) {
@@ -30,9 +27,6 @@ public class HorarioPersonalControlador {
         }
     }
 
-    /**
-     * Endpoint para configurar/actualizar un día específico del horario del personal.
-     */
     @PostMapping("/usuario/{usuarioId}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> configurarHorario(@PathVariable Long usuarioId, @RequestBody HorarioPersonal nuevoHorario) {
@@ -44,9 +38,6 @@ public class HorarioPersonalControlador {
         }
     }
 
-    /**
-     * Endpoint para eliminar un bloque de horario por su ID.
-     */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<?> eliminarHorario(@PathVariable Long id) {

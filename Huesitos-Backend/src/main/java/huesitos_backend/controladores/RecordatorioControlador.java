@@ -49,10 +49,6 @@ public class RecordatorioControlador {
         }
     }
 
-    /**
-     * Endpoint para ejecutar manualmente la tarea de escaneo de vacunas y desparasitaciones pendientes.
-     * Facilita las pruebas de QA sin tener que esperar por la hora programada.
-     */
     @PostMapping("/procesar-manual")
     public ResponseEntity<?> procesarRecordatoriosManualmente() {
         try {
@@ -66,9 +62,6 @@ public class RecordatorioControlador {
         }
     }
 
-    /**
-     * Endpoint para ejecutar manualmente la inactivación de campañas y ofertas expiradas.
-     */
     @PostMapping("/inactivar-campanas-manual")
     public ResponseEntity<?> procesarInactivacionCampanasManualmente() {
         try {

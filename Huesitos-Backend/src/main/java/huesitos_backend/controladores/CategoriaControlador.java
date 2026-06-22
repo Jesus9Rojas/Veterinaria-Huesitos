@@ -16,7 +16,6 @@ public class CategoriaControlador {
     private final CategoriaServicio categoriaServicio;
 
     @PostMapping
-    // El Auxiliar ahora es el encargado de registrar categorías
     @PreAuthorize("hasRole('AUXILIAR_VETERINARIO')")
     public ResponseEntity<?> registrarCategoria(@RequestBody Categoria categoria) {
         try {
@@ -28,7 +27,6 @@ public class CategoriaControlador {
     }
 
     @GetMapping
-    // Se añade el Auxiliar para que pueda cargar la lista al entrar a Inventario
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'AUXILIAR_VETERINARIO')")
     public ResponseEntity<List<Categoria>> listarCategorias() {
         return ResponseEntity.ok(categoriaServicio.listarActivas());
@@ -45,7 +43,6 @@ public class CategoriaControlador {
     }
 
     @DeleteMapping("/{id}")
-    // El Auxiliar ahora es el encargado de desactivar categorías
     @PreAuthorize("hasRole('AUXILIAR_VETERINARIO')")
     public ResponseEntity<?> desactivarCategoria(@PathVariable Long id) {
         try {

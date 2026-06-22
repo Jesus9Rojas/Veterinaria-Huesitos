@@ -6,7 +6,6 @@ const getAuthHeaders = () => ({
   headers: { Authorization: `Bearer ${localStorage.getItem("token")}`, "Content-Type": "application/json" }
 });
 
-// 1. Consultas Médicas
 export const guardarConsultaMedica = async (data) => {
   const res = await axios.post(`${API_URL}/consultas-medicas`, data, getAuthHeaders());
   return res.data;
@@ -16,7 +15,6 @@ export const obtenerConsultasMascota = async (mascotaId) => {
   return res.data;
 };
 
-// 2. Vacunas y Desparasitaciones (Historial y Cobro)
 export const aplicarVacuna = async (mascotaId, citaId, data) => {
   const res = await axios.post(`${API_URL}/historial-clinico/mascota/${mascotaId}/cita/${citaId}/vacuna`, data, getAuthHeaders());
   return res.data;
@@ -34,7 +32,6 @@ export const obtenerHistorialAnti = async (mascotaId) => {
   return res.data;
 };
 
-// 3. Recetas y Cobro de Medicinas
 export const recetarMedicinasYCobrar = async (citaId, itemsArray) => {
   const res = await axios.post(`${API_URL}/citas/${citaId}/recetar-items`, itemsArray, getAuthHeaders());
   return res.data;

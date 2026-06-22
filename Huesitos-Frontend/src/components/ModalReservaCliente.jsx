@@ -111,7 +111,6 @@ const ModalReservaCliente = ({ cerrarModal }) => {
   const handleFinalizarCita = async () => {
     setCargando(true);
     try {
-      // EMPAQUETADO INTELIGENTE:
       const payload = {
         fechaHora: `${seleccion.fecha}T${seleccion.hora}:00`,
         motivo: seleccion.motivo || 'Consulta programada desde el panel del cliente',
@@ -120,8 +119,6 @@ const ModalReservaCliente = ({ cerrarModal }) => {
         servicio: { id: parseInt(seleccion.servicioId) }
       };
 
-      // Si el cliente eligió un doctor específico, lo agregamos. 
-      // Si eligió "Cualquiera" (string vacío), tu Java lo recibirá como null automáticamente.
       if (seleccion.veterinarioId) {
         payload.veterinario = { id: parseInt(seleccion.veterinarioId) };
       }

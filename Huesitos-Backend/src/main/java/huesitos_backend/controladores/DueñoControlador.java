@@ -41,9 +41,6 @@ public class DueñoControlador {
         }
     }
 
-    // ========================================================
-    // CLASES AUXILIARES (DTO) PARA COMBINAR USUARIO + DUEÑO
-    // ========================================================
     @Data
     public static class DueñoRequest {
         private String correo;

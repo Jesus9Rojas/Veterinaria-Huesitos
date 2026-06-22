@@ -8,10 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface RecetaRepositorio extends JpaRepository<Receta, Long> {
-    
-    // Tu método original para buscar receta de una consulta específica
     Optional<Receta> findByConsultaMedicaId(Long consultaId);
     
-    // ¡CORREGIDO! Busca navegando de Receta -> ConsultaMedica -> Mascota
     List<Receta> findByConsultaMedicaMascotaId(Long mascotaId);
 }

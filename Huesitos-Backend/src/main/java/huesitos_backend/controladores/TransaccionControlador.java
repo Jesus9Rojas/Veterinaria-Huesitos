@@ -24,14 +24,12 @@ public class TransaccionControlador {
     private final TransaccionServicio transaccionServicio;
     private final BoletaPdfServicio boletaPdfServicio;
 
-    // 1. LISTAR TRANSACCIONES (Para la Caja)
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
     public ResponseEntity<List<Transaccion>> listarTodas() {
         return ResponseEntity.ok(transaccionServicio.listarTodas());
     }
 
-    // 2. PROCESAR PAGO
     @PatchMapping("/{id}/pagar")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
     public ResponseEntity<Transaccion> procesarPago(
@@ -43,7 +41,6 @@ public class TransaccionControlador {
         return ResponseEntity.ok(transaccionPagada);
     }
 
-    // 3. DESCARGAR COMPROBANTE EN PDF (Ahora es dinámico: Boleta o Factura)
     @GetMapping("/{id}/comprobante")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'CLIENTE')")
     public ResponseEntity<byte[]> descargarComprobante(
@@ -57,13 +54,11 @@ public class TransaccionControlador {
         
         String filename = ("FACTURA".equalsIgnoreCase(tipo) ? "Factura" : "Boleta") + "-Huesitos-" + id + ".pdf";
         headers.setContentDispositionFormData("inline", filename);
-        // Evita que el navegador cachee el PDF viejo
         headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
         
         return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
-    // 4. REPORTE FINANCIERO
     @GetMapping("/reporte")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR')")
     public ResponseEntity<ReporteFinanciero> obtenerReporte(

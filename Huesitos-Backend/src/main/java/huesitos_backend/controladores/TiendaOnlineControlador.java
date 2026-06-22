@@ -17,8 +17,6 @@ public class TiendaOnlineControlador {
     private final TiendaOnlineServicio tiendaOnlineServicio;
     private final UsuarioRepositorio usuarioRepositorio;
 
-    // --- ENDPOINTS DEL CARRITO ---
-
     @GetMapping("/carrito")
     public ResponseEntity<?> obtenerCarrito(Principal principal) {
         try {
@@ -79,8 +77,6 @@ public class TiendaOnlineControlador {
         }
     }
 
-    // --- ENDPOINTS DE PEDIDOS ---
-
     @PostMapping("/pedidos/checkout")
     public ResponseEntity<?> realizarCheckout(Principal principal) {
         try {
@@ -122,8 +118,6 @@ public class TiendaOnlineControlador {
         }
     }
 
-    // --- MÉTODO HELPER ---
-
     private Usuario obtenerUsuarioAutenticado(Principal principal) {
         if (principal == null) {
             throw new RuntimeException("Usuario no autenticado");
@@ -131,8 +125,6 @@ public class TiendaOnlineControlador {
         return usuarioRepositorio.findByCorreo(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado en base de datos"));
     }
-
-    // --- DTO ESTÁTICO ---
 
     @Getter
     @Setter

@@ -29,7 +29,6 @@ const ClienteDashboard = () => {
     { path: '/cliente/citas', icon: <CalendarDays size={20} />, label: 'Mis Citas e Historial' }
   ];
 
-  // ESTILOS IDÉNTICOS AL ADMINISTRADOR Y VETERINARIO
   const baseBtnClass = "w-full text-left px-4 py-3.5 rounded-xl font-semibold transition-all duration-300 flex items-center gap-4 text-sm tracking-wide group";
   const activeBtnClass = `${baseBtnClass} bg-gradient-to-r from-sky-500 to-cyan-400 text-white shadow-lg shadow-sky-500/30 translate-x-1`;
   const inactiveBtnClass = `${baseBtnClass} text-slate-400 hover:bg-slate-800/50 hover:text-slate-100`;

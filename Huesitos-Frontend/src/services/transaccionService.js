@@ -25,7 +25,6 @@ export const procesarPagoTransaccion = async (id, medioPago) => {
   return response.data;
 };
 
-// NUEVA FUNCIÓN PARA DESCARGAR BOLETA O FACTURA
 export const descargarComprobanteSeguro = async (id, tipo = 'BOLETA') => {
   const response = await api.get(`/${id}/comprobante`, {
     params: { tipo },

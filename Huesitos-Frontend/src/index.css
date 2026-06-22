@@ -2,14 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Ocultar las barras de desplazamiento (scrollbars) pero mantener la funcionalidad */
 @layer utilities {
   .custom-scrollbar::-webkit-scrollbar {
-    display: none; /* Oculta en Chrome, Safari y Edge */
+    display: none;
   }
   
   .custom-scrollbar {
-    -ms-overflow-style: none;  /* Oculta en IE y Edge antiguo */
-    scrollbar-width: none;  /* Oculta en Firefox */
+    -ms-overflow-style: none;  
+    scrollbar-width: none; 
   }
 }

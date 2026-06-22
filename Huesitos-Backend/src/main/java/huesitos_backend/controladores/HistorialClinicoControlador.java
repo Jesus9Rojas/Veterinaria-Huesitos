@@ -37,7 +37,6 @@ public class HistorialClinicoControlador {
         }
     }
 
-    // ¡CORREGIDO! Atrapa el error y evita la recursión JSON infinita
     @PostMapping("/consulta/{consultaId}/receta")
     @PreAuthorize("hasRole('VETERINARIO')")
     public ResponseEntity<?> emitirReceta(@PathVariable Long consultaId, @RequestBody Receta receta) {

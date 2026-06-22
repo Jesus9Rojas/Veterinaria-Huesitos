@@ -33,10 +33,6 @@ public class ServicioControlador {
         return ResponseEntity.ok(servicios);
     }
 
-    /**
-     * Endpoint para actualizar los datos completos de un servicio (Nombre, Precio, Descripción, Duración).
-     * Vinculado al Modal de Edición del Frontend.
-     */
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
     public ResponseEntity<?> actualizarServicio(@PathVariable Long id, @RequestBody Servicio servicio) {

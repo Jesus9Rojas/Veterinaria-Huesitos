@@ -9,15 +9,14 @@ const InicioRecepcion = () => {
   const [proximasCitas, setProximasCitas] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Este es nuestro "Gatillo". Cada vez que cambie, el useEffect se volverá a ejecutar.
   const [triggerRecarga, setTriggerRecarga] = useState(0); 
 
   useEffect(() => {
-    let isMounted = true; // Previene actualizaciones de estado si el componente se cierra rápido
+    let isMounted = true; 
 
     const extraerDatosDelBackend = async () => {
       try {
-        const hoyStr = new Date().toLocaleDateString('en-CA'); // Formato YYYY-MM-DD
+        const hoyStr = new Date().toLocaleDateString('en-CA');
         
         const [citasData, transaccionesData] = await Promise.all([
           obtenerCitasPorDia(hoyStr),
@@ -47,7 +46,6 @@ const InicioRecepcion = () => {
             };
           });
 
-        // Solo actualizamos el estado si el componente sigue abierto en pantalla
         if (isMounted) {
           setMetricas({
             citasHoy: citasData.length,
@@ -66,14 +64,13 @@ const InicioRecepcion = () => {
     extraerDatosDelBackend();
 
     return () => {
-      isMounted = false; // Función de limpieza de React
+      isMounted = false; 
     };
-  }, [triggerRecarga]); // React vigila esta variable. Si cambia, ejecuta el efecto.
+  }, [triggerRecarga]); 
 
-  // Función para el botón manual
   const actualizarTurnoManualmente = () => {
     setLoading(true);
-    setTriggerRecarga(prev => prev + 1); // Dispara el useEffect de nuevo
+    setTriggerRecarga(prev => prev + 1); 
   };
 
   const getEstadoBadge = (estado) => {

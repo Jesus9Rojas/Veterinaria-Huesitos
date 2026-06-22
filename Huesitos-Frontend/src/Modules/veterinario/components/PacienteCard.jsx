@@ -1,11 +1,8 @@
 import { PawPrint, User, Smartphone, ChevronRight } from 'lucide-react';
 
 const PacienteCard = ({ paciente, onVerPerfil }) => {
-  // Manejo de nombres por si la base de datos usa "dueño" o "dueno"
   const nombreDueno = paciente.dueño?.nombreCompleto || paciente.dueno?.nombreCompleto || 'Sin dueño asignado';
   const telefonoDueno = paciente.dueño?.telefono || paciente.dueno?.telefono || 'No registrado';
-  
-  // Extraemos la primera letra del nombre para el Avatar si no hay foto
   const inicialMascota = paciente.nombre ? paciente.nombre.charAt(0).toUpperCase() : 'M';
 
   return (

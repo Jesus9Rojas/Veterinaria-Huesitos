@@ -7,7 +7,6 @@ const usuarioAPI = axios.create({
   },
 });
 
-// Interceptor inyector del Token de Seguridad JWT (RF-02)
 usuarioAPI.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");

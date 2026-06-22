@@ -8,8 +8,5 @@ import java.util.List;
 @Repository
 public interface ArchivoClinicoRepositorio extends JpaRepository<ArchivoClinico, Long> {
 
-    /**
-     * Busca los archivos clínicos asociados a una mascota ordenados por fecha de subida descendente.
-     */
     List<ArchivoClinico> findByMascotaIdOrderByFechaSubidaDesc(Long mascotaId);
 }

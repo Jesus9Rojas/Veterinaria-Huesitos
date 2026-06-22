@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// Instancia combinada
 const api = axios.create({
   baseURL: "http://localhost:8080/api",
   headers: { "Content-Type": "application/json" }
@@ -12,7 +11,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Obtener inventario para vender
 export const listarProductosPOS = async () => {
   const response = await api.get("/productos");
   return response.data;

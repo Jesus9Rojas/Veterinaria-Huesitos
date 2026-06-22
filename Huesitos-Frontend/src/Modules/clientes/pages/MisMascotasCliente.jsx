@@ -54,9 +54,6 @@ const MisMascotasCliente = () => {
     return () => { isMounted = false; };
   }, [idUsuario]);
 
-  // =========================================================================
-  // FUNCIÓN ANTI-DESFASE PARA LA FECHA (Evita que reste un día por la zona horaria)
-  // =========================================================================
   const formatearFechaSimple = (fecha) => {
     if (!fecha) return 'No registrado';
     const soloFecha = typeof fecha === 'string' ? fecha.split('T')[0] : new Date(fecha).toISOString().split('T')[0];
@@ -64,7 +61,6 @@ const MisMascotasCliente = () => {
     return `${day}/${month}/${year}`;
   };
 
-  // Cálculo de edad blindado contra zonas horarias
   const calcularEdad = (fecha) => {
     if(!fecha) return 'Desconocida';
     const soloFecha = typeof fecha === 'string' ? fecha.split('T')[0] : new Date(fecha).toISOString().split('T')[0];

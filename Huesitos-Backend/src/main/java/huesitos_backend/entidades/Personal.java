@@ -21,7 +21,7 @@ public class Personal {
     private String telefono;
 
     @Column(length = 8)
-    private String dni; // Útil para personal de veterinaria
+    private String dni; 
 
     @OneToOne
     @JoinColumn(name = "usuario_id", referencedColumnName = "id", nullable = false)
