@@ -20,17 +20,12 @@ import logo from '../assets/Logo Huesitos.png';
 
 import ModalReservaCliente from '../components/ModalReservaCliente';
 
-// Fuente de acento serif/itálica — autocontenida, no requiere tocar index.html.
-// Si más adelante quieres la tipografía exacta, agrega en tu index.html:
-// <link rel="preconnect" href="https://fonts.googleapis.com">
-// <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
 const accentFont = { fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" };
 
-// Patrón de animación reutilizable — entrada suave y escalonada al hacer scroll.
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 24 },
   whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: '-80px' },
+  viewport: { once: false, margin: '-80px' }, 
   transition: { duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] },
 });
 

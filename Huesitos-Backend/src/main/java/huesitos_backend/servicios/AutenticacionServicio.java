@@ -23,10 +23,6 @@ public class AutenticacionServicio {
     private final TokenJwtUtil tokenJwtUtil;
     private final HorarioPersonalServicio horarioPersonalServicio;
 
-    /**
-     * Registra un nuevo cliente en el sistema.
-     * Guarda el usuario asociado y luego el dueño.
-     */
     @Transactional
     public Dueño registrarCliente(Dueño dueño) {
         if (dueño.getUsuario() == null) {
@@ -35,26 +31,21 @@ public class AutenticacionServicio {
 
         Usuario usuario = dueño.getUsuario();
 
-        // 1. Verificar si el correo ya está registrado
         if (usuarioRepositorio.findByCorreo(usuario.getCorreo()).isPresent()) {
             throw new RuntimeException("El correo ya está registrado");
         }
 
-        // 2. Verificar si el teléfono ya está registrado
         if (dueñoRepositorio.existsByTelefono(dueño.getTelefono())) {
             throw new RuntimeException("El teléfono ya está registrado");
         }
 
-        // 3. Forzar rol CLIENTE, estado activo = true y encriptar contraseña
         usuario.setRol(Rol.CLIENTE);
         usuario.setActivo(true);
         usuario.setContrasena(passwordEncoder.encode(usuario.getContrasena()));
 
-        // 4. Guardar primero el Usuario en su repositorio
         Usuario usuarioGuardado = usuarioRepositorio.save(usuario);
         dueño.setUsuario(usuarioGuardado);
 
-        // 5. Guardar el Dueño en su repositorio
         return dueñoRepositorio.save(dueño);
     }
 
@@ -68,21 +59,17 @@ public class AutenticacionServicio {
      */
     @Transactional(readOnly = true)
     public String iniciarSesion(String correo, String contrasena) {
-        // 1. Buscar al usuario por correo
         Usuario usuario = usuarioRepositorio.findByCorreo(correo)
                 .orElseThrow(() -> new RuntimeException("Credenciales incorrectas"));
 
-        // 2. Verificar si está activo
         if (usuario.getActivo() == null || !usuario.getActivo()) {
             throw new RuntimeException("El usuario se encuentra inactivo");
         }
 
-        // 3. Verificar la contraseña encriptada
         if (!passwordEncoder.matches(contrasena, usuario.getContrasena())) {
             throw new RuntimeException("Credenciales incorrectas");
         }
 
-        // 4. Generar y retornar el token JWT
         return tokenJwtUtil.generarToken(usuario);
     }
 
@@ -102,9 +89,6 @@ public class AutenticacionServicio {
         return usuarioRepositorio.save(usuario);
     }
 
-    /**
-     * Activa o desactiva la cuenta de un usuario.
-     */
     @Transactional
     public Usuario cambiarEstadoUsuario(Long usuarioId, boolean activo) {
         Usuario usuario = usuarioRepositorio.findById(usuarioId)
@@ -113,9 +97,7 @@ public class AutenticacionServicio {
         return usuarioRepositorio.save(usuario);
     }
 
-    /**
-     * Registra un nuevo miembro del personal (Administrador, Veterinario o Recepcionista).
-     */
+
     @Transactional
     public Usuario registrarPersonal(Usuario usuario) {
         if (usuario.getRol() == null) {
@@ -125,12 +107,10 @@ public class AutenticacionServicio {
             throw new RuntimeException("No se puede registrar un cliente como personal desde este endpoint");
         }
 
-        // 1. Verificar si el correo ya está registrado
         if (usuarioRepositorio.findByCorreo(usuario.getCorreo()).isPresent()) {
             throw new RuntimeException("El correo ya está registrado");
         }
 
-        // 2. Encriptar contraseña, marcar activo y establecer foto por defecto si no tiene
         usuario.setContrasena(passwordEncoder.encode(usuario.getContrasena()));
         usuario.setActivo(true);
         if (usuario.getFotoPerfilUrl() == null) {
@@ -139,15 +119,11 @@ public class AutenticacionServicio {
 
         Usuario usuarioGuardado = usuarioRepositorio.save(usuario);
 
-        // 3. Inicializar el horario por defecto para el nuevo personal
         horarioPersonalServicio.inicializarHorarioDefecto(usuarioGuardado);
 
         return usuarioGuardado;
     }
 
-    /**
-     * Lista todos los usuarios. Permite filtrar opcionalmente por rol.
-     */
     @Transactional(readOnly = true)
     public List<Usuario> listarUsuarios(Rol rol) {
         if (rol != null) {

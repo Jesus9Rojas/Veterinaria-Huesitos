@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios'; 
 import { 
   LayoutDashboard, CalendarDays, Users, Clock, 
-  LogOut, Menu, X, Bell, User, ChevronDown, Stethoscope, CheckCircle2, UserCircle
+  LogOut, Menu, X, Bell, User, ChevronDown, Stethoscope, CheckCircle2, UserCircle 
 } from 'lucide-react';
 import logo from '../../../assets/Logo Huesitos.png';
 import { obtenerNotificaciones, marcarNotificacionLeida } from '../../../services/notificacionService';
@@ -13,9 +13,8 @@ const VeterinarioDashboard = () => {
   const [menuPerfilOpen, setMenuPerfilOpen] = useState(false);
   const [menuNotificacionesOpen, setMenuNotificacionesOpen] = useState(false);
   const [notificaciones, setNotificaciones] = useState([]);
-  
   const [imgError, setImgError] = useState(false);
-  
+
   const usuarioCorreo = localStorage.getItem('usuarioCorreo') || 'doctor@huesitos.com';
   let nombreReal = localStorage.getItem('usuarioNombre');
   const usuarioNombre = (!nombreReal || nombreReal === 'null') ? 'Veterinario' : nombreReal;
@@ -64,6 +63,7 @@ const VeterinarioDashboard = () => {
 
     fetchNotificaciones();
     const interval = setInterval(fetchNotificaciones, 15000); 
+    
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -115,7 +115,6 @@ const VeterinarioDashboard = () => {
   return (
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden selection:bg-sky-500 selection:text-white">
       
-      {/* SIDEBAR TIPO ADMINISTRADOR */}
       <aside className={`fixed md:static inset-y-0 left-0 z-50 w-72 bg-slate-950 flex flex-col border-r border-slate-800 shadow-2xl transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 shrink-0`}>
         
         <div className="h-24 flex items-center px-8 border-b border-slate-800/50 shrink-0">
@@ -152,7 +151,6 @@ const VeterinarioDashboard = () => {
           })}
         </nav>
 
-        {/* BOTÓN CERRAR SESIÓN ROJO COMO EL ADMIN */}
         <div className="p-4 border-t border-slate-800/50 bg-slate-950/50">
           <button onClick={handleLogout} className="w-full bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-4 py-3 rounded-xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-3 border border-red-500/20 hover:shadow-lg hover:shadow-red-500/20">
             <LogOut size={18} /> Cerrar Sesión
@@ -160,9 +158,9 @@ const VeterinarioDashboard = () => {
         </div>
       </aside>
 
-      {/* CONTENIDO PRINCIPAL Y HEADER */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        <header className="bg-white/80 backdrop-blur-md h-20 px-4 sm:px-8 flex justify-between items-center shadow-sm z-10 border-b border-slate-200/60 sticky top-0">
+        {/* AQUÍ ESTÁ EL CAMBIO A z-40 */}
+        <header className="bg-white/80 backdrop-blur-md h-20 px-4 sm:px-8 flex justify-between items-center shadow-sm z-40 border-b border-slate-200/60 sticky top-0">
           <div className="flex items-center gap-4">
             <button className="md:hidden text-slate-500 hover:text-slate-700 bg-white p-2 rounded-lg border border-slate-200 shadow-sm" onClick={() => setSidebarOpen(true)}>
               <Menu size={20} />
@@ -172,7 +170,6 @@ const VeterinarioDashboard = () => {
           
           <div className="flex items-center gap-6">
             
-            {/* CAMPANITA DE NOTIFICACIONES */}
             <div className="relative">
               <button 
                 onClick={() => { setMenuNotificacionesOpen(!menuNotificacionesOpen); setMenuPerfilOpen(false); }} 
@@ -236,21 +233,19 @@ const VeterinarioDashboard = () => {
               )}
             </div>
 
-            {/* PERFIL DROPDOWN */}
             <div className="relative">
               <button onClick={() => { setMenuPerfilOpen(!menuPerfilOpen); setMenuNotificacionesOpen(false); }} className="flex items-center gap-3 hover:bg-slate-100 p-2 rounded-2xl transition-colors cursor-pointer">
                 <div className="text-right hidden sm:block">
                   <p className="text-sm font-bold text-slate-800">{usuarioNombre}</p>
                   <p className="text-[10px] font-black uppercase text-sky-600 tracking-widest">{usuarioRol}</p>
                 </div>
-
-                {/* ESCUDO DE IMAGEN CABECERA */}
+                
                 {!imgError ? (
                   <img 
                     src={`http://localhost:8080${usuarioFoto}`} 
                     alt="Perfil" 
                     className="w-10 h-10 rounded-full border-2 border-slate-200 object-cover bg-white shadow-sm shrink-0" 
-                    onError={() => setImgError(true)}
+                    onError={() => setImgError(true)} 
                   />
                 ) : (
                   <div className="w-10 h-10 rounded-full border-2 border-slate-200 bg-slate-100 flex items-center justify-center text-slate-400 shadow-sm shrink-0">
@@ -267,20 +262,19 @@ const VeterinarioDashboard = () => {
                   <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-50 animate-in slide-in-from-top-2">
                     <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center gap-3">
                       
-                      {/* ESCUDO DE IMAGEN DROPDOWN */}
                       {!imgError ? (
                         <img 
                           src={`http://localhost:8080${usuarioFoto}`} 
                           alt="" 
                           className="w-12 h-12 rounded-full object-cover border border-slate-200 bg-white shrink-0" 
-                          onError={() => setImgError(true)}
+                          onError={() => setImgError(true)} 
                         />
                       ) : (
                         <div className="w-12 h-12 rounded-full border border-slate-200 bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
                           <UserCircle size={28} strokeWidth={1.5} />
                         </div>
                       )}
-
+                      
                       <div className="overflow-hidden">
                         <p className="font-bold text-slate-800 truncate">{usuarioNombre}</p>
                         <p className="text-xs text-slate-500 truncate">{usuarioCorreo}</p>
@@ -299,6 +293,7 @@ const VeterinarioDashboard = () => {
                 </>
               )}
             </div>
+
           </div>
         </header>
 

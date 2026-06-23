@@ -44,23 +44,18 @@ public class StorageService {
         }
 
         try {
-            // 1. Leer imagen en memoria
             BufferedImage imagenOriginal = ImageIO.read(archivo.getInputStream());
             if (imagenOriginal == null) {
                 throw new RuntimeException("El archivo no es una imagen válida");
             }
 
-            // 2. Redimensionar si supera los 800px de ancho
             BufferedImage imagenFinal = redimensionarSiEsNecesario(imagenOriginal, 800);
 
-            // 3. Nombre único del archivo
             String nombreArchivo = prefijo + "_" + UUID.randomUUID().toString() + ".jpg";
 
-            // 4. Configurar ImageWriter para compresión JPG (70% de calidad)
             File outputFile = new File(UPLOAD_DIR + nombreArchivo);
             guardarConCompresion(imagenFinal, outputFile);
 
-            // 5. Retornar la URL relativa
             return "/uploads/" + nombreArchivo;
 
         } catch (IOException e) {
@@ -99,7 +94,7 @@ public class StorageService {
         ImageWriter writer = writers.next();
         ImageWriteParam param = writer.getDefaultWriteParam();
         param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-        param.setCompressionQuality(0.7f); // 70% de calidad
+        param.setCompressionQuality(0.7f);
 
         try (FileImageOutputStream outputStream = new FileImageOutputStream(outputFile)) {
             writer.setOutput(outputStream);
@@ -109,31 +104,23 @@ public class StorageService {
         }
     }
 
-    /**
-     * Guarda un archivo clínico de forma genérica (PDF, imágenes, etc.) en uploads/clinicos/
-     * sin alterar ni comprimir su contenido.
-     */
     public String guardarArchivoClinico(MultipartFile archivo) {
         if (archivo == null || archivo.isEmpty()) {
             throw new RuntimeException("El archivo está vacío");
         }
 
         try {
-            // Nombre original y extensión
             String nombreOriginal = archivo.getOriginalFilename();
             String extension = "";
             if (nombreOriginal != null && nombreOriginal.contains(".")) {
                 extension = nombreOriginal.substring(nombreOriginal.lastIndexOf("."));
             }
 
-            // Nombre único con UUID
             String nombreArchivo = UUID.randomUUID().toString() + extension;
 
-            // Ruta de guardado
             File destino = new File(CLINICOS_DIR + nombreArchivo);
             archivo.transferTo(destino);
 
-            // URL relativa de acceso
             return "/uploads/clinicos/" + nombreArchivo;
         } catch (IOException e) {
             throw new RuntimeException("Error al guardar el archivo clínico", e);

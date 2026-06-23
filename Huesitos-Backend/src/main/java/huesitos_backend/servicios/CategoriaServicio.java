@@ -19,7 +19,6 @@ public class CategoriaServicio {
             throw new RuntimeException("El nombre de la categoría es obligatorio");
         }
         
-        // Verificar si ya existe una categoría activa con el mismo nombre
         categoriaRepositorio.findByNombreAndActivoTrue(categoria.getNombre().trim())
                 .ifPresent(c -> {
                     if (!c.getId().equals(categoria.getId())) {
@@ -28,7 +27,6 @@ public class CategoriaServicio {
                 });
 
         categoria.setNombre(categoria.getNombre().trim());
-        // Nos aseguramos que siempre nazca como activa
         if(categoria.getActivo() == null) {
             categoria.setActivo(true);
         }

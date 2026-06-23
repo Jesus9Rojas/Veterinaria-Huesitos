@@ -41,9 +41,6 @@ public class TareaProgramadaServicio {
         campanaOfertaServicio.inactivarExpiradas(LocalDate.now());
     }
 
-    /**
-     * Método público para ejecutar el escaneo de recordatorios manualmente.
-     */
     @Transactional
     public int procesarRecordatorios(LocalDate fechaReferencia) {
         LocalDate limite = fechaReferencia.plusDays(7);
@@ -51,7 +48,6 @@ public class TareaProgramadaServicio {
 
         log.info("Buscando vacunas y desparasitaciones pendientes entre {} y {}", fechaReferencia, limite);
 
-        // 1. Escanear vacunas
         List<HistorialVacunacion> vacunasProximas = historialVacunacionRepositorio.findByFechaProximaDosisBetween(fechaReferencia, limite);
         for (HistorialVacunacion hist : vacunasProximas) {
             Mascota mascota = hist.getMascota();
@@ -59,7 +55,6 @@ public class TareaProgramadaServicio {
             LocalDate fechaVenc = hist.getFechaProximaDosis();
             String titulo = "Próxima Vacuna: " + vacuna.getNombre();
 
-            // Evitar duplicados
             boolean existe = recordatorioRepositorio.existsByMascotaIdAndFechaRecordatorioAndTitulo(
                     mascota.getId(), 
                     fechaVenc, 
@@ -87,14 +82,12 @@ public class TareaProgramadaServicio {
             }
         }
 
-        // 2. Escanear desparasitaciones
         List<Desparasitacion> desparasitacionesProximas = desparasitacionRepositorio.findByFechaProximaAplicacionBetween(fechaReferencia, limite);
         for (Desparasitacion desp : desparasitacionesProximas) {
             Mascota mascota = desp.getMascota();
             LocalDate fechaVenc = desp.getFechaProximaAplicacion();
             String titulo = "Próxima Desparasitación: " + desp.getTipo();
 
-            // Evitar duplicados
             boolean existe = recordatorioRepositorio.existsByMascotaIdAndFechaRecordatorioAndTitulo(
                     mascota.getId(), 
                     fechaVenc, 

@@ -66,7 +66,7 @@ public class TransaccionServicio {
         t.setMedioPago(medio);
         t.setEstadoPago(EstadoPago.APROBADO);
         t.setReferenciaPago(referencia);
-        t.setFechaPago(LocalDateTime.now()); // <-- AÑADIDO: Vital para que la Boleta PDF muestre la fecha
+        t.setFechaPago(LocalDateTime.now()); 
         
         return transaccionRepositorio.save(t);
     }
@@ -78,7 +78,6 @@ public class TransaccionServicio {
         transaccion.setEstadoPago(EstadoPago.PENDIENTE);
         transaccion.setReferenciaPago("SISTEMA_CITA");
         
-        // Verifica si el servicio tiene un precio asignado, sino le pone 0
         if (cita.getServicio() != null && cita.getServicio().getPrecio() != null) {
             transaccion.setMonto(cita.getServicio().getPrecio());
         } else {

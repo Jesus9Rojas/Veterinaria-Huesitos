@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, LogOut, ChevronUp, CalendarPlus, Heart, CalendarDays, UserCircle } from 'lucide-react';
+import { Menu, X, LogOut, ChevronUp, CalendarPlus, Heart, CalendarDays, UserCircle, Home } from 'lucide-react';
 import logo from '../../../assets/Logo Huesitos.png';
 import ModalReservaCliente from '../../../components/ModalReservaCliente';
 
@@ -9,7 +9,6 @@ const ClienteDashboard = () => {
   const [menuPerfilOpen, setMenuPerfilOpen] = useState(false);
   const [modalReservaAbierto, setModalReservaAbierto] = useState(false);
   
-  // ESTADO DE DEFENSA: Evita el bucle infinito de imágenes rotas
   const [imgError, setImgError] = useState(false); 
   
   const usuarioNombre = localStorage.getItem('usuarioNombre') || 'Cliente';
@@ -84,6 +83,15 @@ const ClienteDashboard = () => {
               <div className="fixed inset-0 z-40" onClick={() => setMenuPerfilOpen(false)}></div>
               <div className="absolute bottom-full mb-2 left-4 right-4 bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden z-50 animate-in slide-in-from-bottom-2">
                 <div className="p-2">
+                  
+                  {/* NUEVO BOTÓN: VOLVER AL INICIO */}
+                  <button 
+                    onClick={() => navigate('/')} 
+                    className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-300 hover:bg-slate-700 hover:text-sky-400 rounded-xl transition-colors flex items-center gap-2 mb-1"
+                  >
+                    <Home size={16} /> Volver a la Web
+                  </button>
+
                   <button onClick={handleLogout} className="w-full text-left px-4 py-2.5 text-sm font-bold text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors flex items-center gap-2">
                     <LogOut size={16} /> Cerrar Sesión
                   </button>

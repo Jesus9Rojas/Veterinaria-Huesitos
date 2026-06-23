@@ -1,32 +1,42 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios'; 
 import { 
-  LayoutDashboard, CalendarDays, Users, Wallet, 
-  ShoppingBag, LogOut, Menu, X, Bell, User, ChevronUp, Trash2, CheckCircle2, UserCircle 
+  LayoutDashboard, CalendarDays, Users, ShoppingBag, 
+  LogOut, Menu, X, Bell, User, ChevronDown, CheckCircle2, UserCircle, Wallet, Clock
 } from 'lucide-react';
 import logo from '../../../assets/Logo Huesitos.png';
-import { 
-  obtenerNotificaciones, 
-  marcarNotificacionLeida, 
-  eliminarNotificacion, 
-  limpiarTodasNotificaciones 
-} from '../../../services/notificacionService';
+import { obtenerNotificaciones, marcarNotificacionLeida } from '../../../services/notificacionService';
 
 const RecepcionDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [menuPerfilOpen, setMenuPerfilOpen] = useState(false);
-  
-  const [notificacionesOpen, setNotificacionesOpen] = useState(false);
+  const [menuNotificacionesOpen, setMenuNotificacionesOpen] = useState(false);
   const [notificaciones, setNotificaciones] = useState([]);
   
-  // ESTADO DE DEFENSA: Evita bucle infinito si la imagen del usuario no carga
   const [imgError, setImgError] = useState(false);
   
-  const usuarioId = localStorage.getItem('usuarioId');
-  const usuarioCorreo = localStorage.getItem('usuarioCorreo') || 'usuario@huesitos.com';
-  const usuarioNombre = localStorage.getItem('usuarioNombre') || 'Recepcionista';
+  const usuarioCorreo = localStorage.getItem('usuarioCorreo') || 'recepcion@huesitos.com';
+  let nombreReal = localStorage.getItem('usuarioNombre');
+  const usuarioNombre = (!nombreReal || nombreReal === 'null') ? 'Recepción' : nombreReal;
   const usuarioRol = localStorage.getItem('usuarioRol') || 'RECEPCIONISTA';
-  const usuarioFoto = localStorage.getItem('usuarioFoto') || '/uploads/defecto-usuario.png';
+
+  const [usuarioId] = useState(() => {
+    let id = localStorage.getItem('usuarioId') || localStorage.getItem('id');
+    if (!id) {
+      try {
+        const userObj = JSON.parse(localStorage.getItem('usuario') || '{}');
+        if (userObj && userObj.id) id = userObj.id;
+      } catch (error) { console.debug(error); }
+    }
+    return id;
+  });
+
+  let fotoLocal = localStorage.getItem('usuarioFoto');
+  if (!fotoLocal || fotoLocal === 'null' || fotoLocal === 'undefined') {
+    fotoLocal = '/uploads/defecto-usuario.png';
+  }
+  const usuarioFoto = fotoLocal;
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -35,64 +45,68 @@ const RecepcionDashboard = () => {
     const rol = localStorage.getItem('usuarioRol');
     if (rol !== 'RECEPCIONISTA' && rol !== 'ADMINISTRADOR') {
       navigate('/');
-      return; 
     }
+  }, [navigate]);
 
-    const cargarNotificaciones = async () => {
+  useEffect(() => {
+    let isMounted = true;
+    const fetchNotificaciones = async () => {
+      if (!usuarioId) return;
       try {
         const data = await obtenerNotificaciones(usuarioId);
-        setNotificaciones(Array.isArray(data) ? data : []);
+        if (isMounted) {
+          setNotificaciones(data);
+        }
       } catch (error) {
-        console.warn("La bandeja de notificaciones está vacía o hubo un error de red.", error);
-        setNotificaciones([]);
+        console.error("Error cargando la campanita:", error);
       }
     };
 
-    if (usuarioId) {
-      cargarNotificaciones();
-    }
-  }, [navigate, usuarioId]); 
+    fetchNotificaciones();
+    const interval = setInterval(fetchNotificaciones, 15000); 
+    
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [usuarioId]);
 
-  const handleLeerNotificacion = async (id) => {
-    try {
-      if (typeof id === 'number') await marcarNotificacionLeida(id);
-      setNotificaciones(notificaciones.map(n => n.id === id ? { ...n, leida: true } : n));
-    } catch (error) {
-      console.error("Error al marcar como leída:", error);
-    }
-  };
+  const noLeidas = notificaciones.filter(n => !n.leida).length;
 
-  const handleEliminarNotificacion = async (id) => {
+  const handleLeerNotificacion = async (notificacion) => {
+    if (notificacion.leida) return;
     try {
-      if (typeof id === 'number') await eliminarNotificacion(id);
-      setNotificaciones(notificaciones.filter(n => n.id !== id));
+      await marcarNotificacionLeida(notificacion.id);
+      setNotificaciones(notificaciones.map(n => n.id === notificacion.id ? { ...n, leida: true } : n));
     } catch (error) {
-      console.error("Error al eliminar notificación:", error);
+      console.error("Error al marcar como leída", error);
     }
   };
 
   const handleLimpiarTodas = async () => {
+    if (!usuarioId) return;
     try {
-      if (usuarioId) await limpiarTodasNotificaciones(usuarioId);
+      await axios.delete(`http://localhost:8080/api/notificaciones/usuario/${usuarioId}/todas`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       setNotificaciones([]);
-      setNotificacionesOpen(false);
+      setMenuNotificacionesOpen(false);
     } catch (error) {
-      console.error("Error al limpiar notificaciones:", error);
+      console.error("Error al limpiar notificaciones", error);
     }
   };
 
-  const notificacionesNoLeidas = notificaciones.filter(n => !n.leida).length;
-
   const menuItems = [
-    { path: '/recepcion', icon: <LayoutDashboard size={20} />, label: 'Panel de Control' },
-    { path: '/recepcion/citas', icon: <CalendarDays size={20} />, label: 'Agenda y Citas' },
-    { path: '/recepcion/clientes', icon: <Users size={20} />, label: 'Admisión (Clientes)' },
-    { path: '/recepcion/caja', icon: <Wallet size={20} />, label: 'Caja y Pagos' },
-    { path: '/recepcion/tienda', icon: <ShoppingBag size={20} />, label: 'Ventas Tienda' },
+    { path: '/recepcion', Icon: LayoutDashboard, label: 'Panel de Control' },
+    { path: '/recepcion/citas', Icon: CalendarDays, label: 'Agenda y Citas' },
+    { path: '/recepcion/horarios', Icon: Clock, label: 'Horarios Médicos' },
+    { path: '/recepcion/clientes', Icon: Users, label: 'Admisión (Clientes)' },
+    { path: '/recepcion/caja', Icon: Wallet, label: 'Caja y Pagos' },
+    { path: '/recepcion/tienda', Icon: ShoppingBag, label: 'Ventas Tienda' }
   ];
 
   const handleLogout = () => {
-    localStorage.clear(); 
+    localStorage.clear();
     navigate('/login');
   };
 
@@ -101,9 +115,9 @@ const RecepcionDashboard = () => {
   const inactiveBtnClass = `${baseBtnClass} text-slate-400 hover:bg-slate-800/50 hover:text-slate-100`;
 
   return (
-    <div className="h-screen overflow-hidden bg-slate-50 flex font-sans selection:bg-sky-500 selection:text-white">
+    <div className="flex h-screen bg-slate-50 font-sans overflow-hidden selection:bg-sky-500 selection:text-white">
       
-      {/* SIDEBAR CON ESTILO ADMIN */}
+      {/* SIDEBAR TIPO ADMINISTRADOR */}
       <aside className={`fixed md:static inset-y-0 left-0 z-50 w-72 bg-slate-950 flex flex-col border-r border-slate-800 shadow-2xl transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 shrink-0`}>
         
         <div className="h-24 flex items-center px-8 border-b border-slate-800/50 shrink-0">
@@ -122,9 +136,10 @@ const RecepcionDashboard = () => {
         </div>
 
         <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto custom-scrollbar">
-          <p className="px-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-3">Gestión Diaria</p>
+          <div className="pt-2 pb-2"><p className="px-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Gestión Diaria</p></div>
           {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const isActive = location.pathname === item.path || (item.path !== '/recepcion' && location.pathname.startsWith(item.path));
+            const Icono = item.Icon;
             return (
               <Link 
                 key={item.path} 
@@ -132,16 +147,14 @@ const RecepcionDashboard = () => {
                 onClick={() => setSidebarOpen(false)} 
                 className={isActive ? activeBtnClass : inactiveBtnClass}
               >
-                <div className={isActive ? "text-white" : "text-slate-500 group-hover:text-sky-400 transition-colors"}>
-                  {item.icon}
-                </div>
+                <Icono size={20} className={isActive ? "text-white" : "text-slate-500 group-hover:text-sky-400 transition-colors"} />
                 {item.label}
               </Link>
             );
           })}
         </nav>
 
-        {/* ÁREA DE PERFIL INFERIOR */}
+        {/* ÁREA DE PERFIL INFERIOR / CERRAR SESIÓN */}
         <div className="p-4 border-t border-slate-800/50 bg-slate-950/50 shrink-0 relative">
           {menuPerfilOpen && (
             <>
@@ -157,7 +170,7 @@ const RecepcionDashboard = () => {
                     onClick={() => setMenuPerfilOpen(false)} 
                     className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-300 hover:bg-slate-700 hover:text-sky-400 rounded-xl transition-colors flex items-center gap-2"
                   >
-                    <User size={16} /> Mi Perfil
+                    <User size={16} /> Mi Perfil Profesional
                   </Link>
                   <button 
                     onClick={handleLogout} 
@@ -171,12 +184,11 @@ const RecepcionDashboard = () => {
           )}
 
           <button 
-            onClick={() => { setMenuPerfilOpen(!menuPerfilOpen); setNotificacionesOpen(false); }}
+            onClick={() => setMenuPerfilOpen(!menuPerfilOpen)}
             className="w-full flex items-center justify-between gap-3 hover:bg-slate-800/50 rounded-2xl p-3 transition-colors cursor-pointer group"
           >
             <div className="flex items-center gap-3 overflow-hidden">
-              
-              {/* LÓGICA DE ESCUDO ANTI-BUCLE APLICADA AQUÍ */}
+              {/* LÓGICA DE ESCUDO ANTI-BUCLE AQUÍ */}
               {!imgError ? (
                 <img 
                   src={`http://localhost:8080${usuarioFoto}`} 
@@ -195,106 +207,96 @@ const RecepcionDashboard = () => {
                 <p className="text-[10px] font-black uppercase text-sky-500 tracking-widest truncate">{usuarioRol}</p>
               </div>
             </div>
-            <ChevronUp size={16} className={`text-slate-500 shrink-0 transition-transform ${menuPerfilOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown size={16} className={`text-slate-500 shrink-0 transition-transform ${menuPerfilOpen ? 'rotate-180' : ''}`} />
           </button>
         </div>
       </aside>
 
-      {/* CONTENIDO PRINCIPAL */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200/60 flex items-center justify-between px-4 sm:px-8 shrink-0 z-40">
+      {/* CONTENIDO PRINCIPAL Y HEADER */}
+      <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <header className="bg-white/80 backdrop-blur-md h-20 px-4 sm:px-8 flex justify-between items-center shadow-sm z-10 border-b border-slate-200/60 sticky top-0">
           <div className="flex items-center gap-4">
             <button className="md:hidden text-slate-500 hover:text-slate-700 bg-white p-2 rounded-lg border border-slate-200 shadow-sm" onClick={() => setSidebarOpen(true)}>
               <Menu size={20} />
             </button>
-            <h2 className="text-xl font-black text-slate-800 hidden sm:block">Panel de Control General</h2>
+            <h1 className="text-xl font-black text-slate-800 tracking-tight hidden sm:block">Recepción y Caja</h1>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
+            
             {/* CAMPANITA DE NOTIFICACIONES */}
             <div className="relative">
               <button 
-                onClick={() => setNotificacionesOpen(!notificacionesOpen)}
-                className={`relative p-2.5 transition-colors rounded-full border ${notificacionesNoLeidas > 0 ? 'bg-sky-50 border-sky-100 text-sky-600' : 'bg-slate-50 border-slate-100 text-slate-400 hover:text-sky-500'}`}
+                onClick={() => { setMenuNotificacionesOpen(!menuNotificacionesOpen); setMenuPerfilOpen(false); }} 
+                className={`relative p-2.5 transition-colors rounded-full border ${noLeidas > 0 ? 'bg-sky-50 border-sky-100 text-sky-600' : 'bg-slate-50 border-slate-100 text-slate-400 hover:text-sky-500'}`}
               >
-                <Bell size={20} className={notificacionesNoLeidas > 0 ? 'animate-pulse' : ''} />
-                {notificacionesNoLeidas > 0 && (
+                <Bell size={20} className={noLeidas > 0 ? 'animate-pulse' : ''} />
+                {noLeidas > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-5 w-5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-5 w-5 bg-red-500 border-2 border-white text-[10px] font-black text-white items-center justify-center">
-                      {notificacionesNoLeidas}
+                      {noLeidas}
                     </span>
                   </span>
                 )}
               </button>
 
-              {notificacionesOpen && (
+              {menuNotificacionesOpen && (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={() => setNotificacionesOpen(false)}></div>
+                  <div className="fixed inset-0 z-40" onClick={() => setMenuNotificacionesOpen(false)}></div>
                   <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 animate-in slide-in-from-top-2">
-                    
                     <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
                       <div className="flex items-center gap-2">
                         <h3 className="font-bold text-slate-800 text-lg">Notificaciones</h3>
-                        {notificacionesNoLeidas > 0 && <span className="bg-sky-100 text-sky-600 text-xs font-black px-2 py-0.5 rounded-full">{notificacionesNoLeidas}</span>}
+                        {noLeidas > 0 && <span className="bg-sky-100 text-sky-600 text-xs font-black px-2 py-0.5 rounded-full">{noLeidas}</span>}
                       </div>
-                      
                       {notificaciones.length > 0 && (
-                        <button 
-                          onClick={handleLimpiarTodas}
-                          className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors bg-white hover:bg-rose-50 px-2 py-1.5 rounded-lg border border-slate-200 shadow-sm"
-                        >
+                        <button onClick={handleLimpiarTodas} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors bg-white hover:bg-rose-50 px-2 py-1.5 rounded-lg border border-slate-200 shadow-sm">
                           Limpiar todas
                         </button>
                       )}
                     </div>
-
-                    <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
+                    
+                    <div className="max-h-[60vh] overflow-y-auto custom-scrollbar flex flex-col bg-white">
                       {notificaciones.length === 0 ? (
-                        <div className="p-8 text-center text-slate-400 flex flex-col items-center gap-2">
-                          <Bell size={32} className="opacity-20" />
-                          <p className="text-sm">No tienes notificaciones nuevas</p>
+                        <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+                          <Bell size={40} className="text-slate-200 mb-3" strokeWidth={1.5} />
+                          <p className="text-sm text-slate-400 font-medium">No tienes notificaciones nuevas</p>
                         </div>
                       ) : (
-                        <div className="divide-y divide-slate-100">
-                          {notificaciones.map((notif) => (
-                            <div key={notif.id} className={`p-4 transition-colors hover:bg-slate-50 group flex gap-3 ${!notif.leida ? 'bg-sky-50/30' : ''}`}>
-                              <div className={`mt-0.5 shrink-0 ${!notif.leida ? 'text-sky-500' : 'text-slate-300'}`}>
-                                {!notif.leida ? <div className="w-2.5 h-2.5 mt-1 bg-sky-500 rounded-full shadow-sm shadow-sky-500/50"></div> : <CheckCircle2 size={16} />}
-                              </div>
-                              <div className="flex-1 min-w-0" onClick={() => handleLeerNotificacion(notif.id)}>
-                                <p className={`text-[13px] leading-snug cursor-pointer ${!notif.leida ? 'font-bold text-slate-800' : 'text-slate-600'}`}>
-                                  {notif.mensaje}
-                                </p>
-                                <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-widest">
-                                  {new Date(notif.fechaCreacion).toLocaleString('es-PE', { hour: '2-digit', minute:'2-digit', day: '2-digit', month: '2-digit' })}
-                                </p>
-                              </div>
-                              <div className="flex flex-col gap-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleEliminarNotificacion(notif.id)} className="text-slate-300 hover:text-red-500" title="Eliminar">
-                                  <Trash2 size={16} />
-                                </button>
-                              </div>
+                        notificaciones.map((notif) => (
+                          <div 
+                            key={notif.id} 
+                            onClick={() => handleLeerNotificacion(notif)}
+                            className={`p-4 border-b border-slate-50 cursor-pointer transition-colors flex gap-3 ${notif.leida ? 'bg-white opacity-60' : 'bg-sky-50/40 hover:bg-sky-50'}`}
+                          >
+                            <div className="mt-1 shrink-0">
+                              {notif.leida ? <CheckCircle2 size={16} className="text-slate-300"/> : <div className="w-2.5 h-2.5 mt-1 bg-sky-500 rounded-full shadow-sm shadow-sky-500/50"></div>}
                             </div>
-                          ))}
-                        </div>
+                            <div>
+                              <p className={`text-[13px] leading-snug ${notif.leida ? 'font-medium text-slate-500' : 'font-bold text-slate-700'}`}>{notif.mensaje}</p>
+                              <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-widest">
+                                {new Date(notif.fechaCreacion).toLocaleString('es-PE', { hour: '2-digit', minute:'2-digit', day: '2-digit', month: '2-digit' })}
+                              </p>
+                            </div>
+                          </div>
+                        ))
                       )}
                     </div>
                   </div>
                 </>
               )}
             </div>
-            
-            <div className="hidden sm:block text-right">
-              <p className="text-sm font-bold text-slate-800">Caja Activa</p>
-              <p className="text-xs font-semibold text-emerald-500 flex items-center justify-end gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Abierta
-              </p>
+
+            <div className="hidden md:flex flex-col text-right">
+              <span className="text-xs font-black uppercase text-emerald-600 flex items-center gap-1.5 justify-end">Caja Activa <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div></span>
+              <span className="text-[10px] font-bold text-slate-400">En Turno</span>
             </div>
+
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar">
+        <div className="flex-1 p-4 sm:p-8 overflow-y-auto bg-slate-50 custom-scrollbar">
           <Outlet /> 
         </div>
       </main>

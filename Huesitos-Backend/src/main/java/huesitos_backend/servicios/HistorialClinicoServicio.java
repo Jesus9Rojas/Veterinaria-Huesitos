@@ -14,7 +14,6 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class HistorialClinicoServicio {
 
-    // USAMOS TUS REPOSITORIOS ORIGINALES
     private final HistorialVacunacionRepositorio historialVacunacionRepo;
     private final DesparasitacionRepositorio desparasitacionRepo;
     private final RecetaRepositorio recetaRepo;
@@ -31,13 +30,11 @@ public class HistorialClinicoServicio {
         Mascota mascota = mascotaRepo.findById(mascotaId).orElseThrow();
         Vacuna vacuna = vacunaRepo.findById(req.getItemId()).orElseThrow();
 
-        // 1. Guardar en el Historial Clínico (Carnet) usando tu entidad original
         HistorialVacunacion hv = new HistorialVacunacion();
         hv.setMascota(mascota);
         hv.setVacuna(vacuna);
         hv.setDosis(req.getDosisOTipo());
         
-        // Manejo seguro de la fecha
         if (req.getFechaAplicacion() != null) {
             hv.setFechaAplicacion(req.getFechaAplicacion());
         } else {
@@ -48,12 +45,10 @@ public class HistorialClinicoServicio {
         hv.setObservaciones(req.getObservaciones());
         historialVacunacionRepo.save(hv);
 
-        // 2. Descontar Stock
         if(vacuna.getStock() < 1) throw new RuntimeException("Stock insuficiente para la vacuna");
         vacuna.setStock(vacuna.getStock() - 1);
         vacunaRepo.save(vacuna);
 
-        // 3. Registrar el Cobro en la Cita y Caja
         ItemCobroCita cobro = new ItemCobroCita();
         cobro.setCita(cita);
         cobro.setTipoItem("VACUNA");
@@ -78,7 +73,6 @@ public class HistorialClinicoServicio {
         Mascota mascota = mascotaRepo.findById(mascotaId).orElseThrow();
         Antiparasitario anti = antiparasitarioRepo.findById(req.getItemId()).orElseThrow();
 
-        // 1. Guardar en el Historial Clínico (Carnet)
         Desparasitacion d = new Desparasitacion();
         d.setMascota(mascota);
         d.setProducto(anti.getNombre());
@@ -88,12 +82,10 @@ public class HistorialClinicoServicio {
         d.setObservaciones(req.getObservaciones());
         desparasitacionRepo.save(d);
 
-        // 2. Descontar Stock
         if(anti.getStock() < 1) throw new RuntimeException("Stock insuficiente");
         anti.setStock(anti.getStock() - 1);
         antiparasitarioRepo.save(anti);
 
-        // 3. Registrar el Cobro
         ItemCobroCita cobro = new ItemCobroCita();
         cobro.setCita(cita);
         cobro.setTipoItem("ANTIPARASITARIO");

@@ -19,7 +19,6 @@ public class ConfiguracionNegocioServicio {
 
     @Transactional
     public ConfiguracionNegocio obtenerConfiguracion() {
-        // Buscamos el ID 1, si no existe lo creamos sin forzar el ID manualmente
         return configuracionRepositorio.findById(1L).orElseGet(() -> {
             ConfiguracionNegocio config = new ConfiguracionNegocio();
             config.setCorreoElectronico("contacto@huesitos.com");
@@ -49,7 +48,6 @@ public class ConfiguracionNegocioServicio {
 
         ConfiguracionNegocio guardado = configuracionRepositorio.save(configActual);
 
-        // Registro para el Dashboard
         Actividad actividad = new Actividad();
         actividad.setMensaje("El Administrador actualizó los parámetros globales del negocio.");
         actividad.setTipo("CONFIGURACION");

@@ -33,8 +33,6 @@ public Servicio crearServicio(Servicio servicio) {
 
     @Transactional(readOnly = true)
     public List<Servicio> listarServiciosActivos() {
-        // Modificado de findByActivoTrue() a findAll() para que el Administrador 
-        // pueda listar y gestionar todos los servicios de la base de datos
         return servicioRepositorio.findAll(); 
     }
 

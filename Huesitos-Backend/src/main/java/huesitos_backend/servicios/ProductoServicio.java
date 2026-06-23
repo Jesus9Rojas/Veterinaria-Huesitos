@@ -29,21 +29,18 @@ public class ProductoServicio {
             throw new RuntimeException("La categoría asociada es obligatoria");
         }
 
-        // Validar que la categoría exista y esté activa
         categoriaRepositorio.findById(producto.getCategoria().getId())
                 .filter(c -> c.getActivo())
                 .orElseThrow(() -> new RuntimeException("La categoría asociada no existe o no está activa"));
 
         producto.setNombre(producto.getNombre().trim());
         
-        // Nos aseguramos que al crear uno nuevo, nazca como activo
         if(producto.getActivo() == null) {
             producto.setActivo(true);
         }
 
         Producto nuevoProducto = productoRepositorio.save(producto);
         
-        // Cargar stock disponible
         nuevoProducto.setStockDisponible(inventarioRepositorio.obtenerStockDisponible(nuevoProducto.getId()));
         return nuevoProducto;
     }
@@ -55,7 +52,6 @@ public class ProductoServicio {
         return productos;
     }
 
-    // --- NUEVO: Trae absolutamente todos (activos e inactivos) ---
     @Transactional(readOnly = true)
     public List<Producto> listarTodos() {
         List<Producto> productos = productoRepositorio.findAll();

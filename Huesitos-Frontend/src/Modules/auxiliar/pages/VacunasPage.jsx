@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Syringe, Plus, Activity, X, Info, Edit, Trash2, ArchiveRestore, Search, Eye, EyeOff, Truck } from 'lucide-react';
+import { Syringe, Plus, Activity, X, Edit, Trash2, ArchiveRestore, Search, Eye, EyeOff, Truck, PackagePlus } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { sileo } from 'sileo';
 import { obtenerCatalogoVacunas, registrarVacunaCatalogo, actualizarVacunaCatalogo, desactivarVacuna, reactivarVacuna } from "../../../services/vacunaService";
@@ -16,6 +16,11 @@ const VacunasPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [procesando, setProcesando] = useState(false);
   
+  const [modalStockOpen, setModalStockOpen] = useState(false);
+  const [itemParaStock, setItemParaStock] = useState(null);
+  const [cantidadAdd, setCantidadAdd] = useState('');
+  const [procesandoStock, setProcesandoStock] = useState(false);
+
   const [form, setForm] = useState({ id: null, nombre: "", proveedor: "", descripcion: "", especieDestino: "TODOS", precio: "", stock: "" });
 
   useEffect(() => {
@@ -64,6 +69,12 @@ const VacunasPage = () => {
     setModalOpen(true);
   };
 
+  const abrirModalStock = (vacuna) => {
+    setItemParaStock(vacuna);
+    setCantidadAdd('');
+    setModalStockOpen(true);
+  };
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -100,13 +111,46 @@ const VacunasPage = () => {
     }
   };
 
+  const handleSumarStockSubmit = async (e) => {
+    e.preventDefault();
+    setProcesandoStock(true);
+    try {
+      const nuevoStock = (itemParaStock.stock || 0) + parseInt(cantidadAdd);
+      const payload = {
+        nombre: itemParaStock.nombre,
+        proveedor: itemParaStock.proveedor,
+        descripcion: itemParaStock.descripcion,
+        especieDestino: itemParaStock.especieDestino,
+        precio: itemParaStock.precio,
+        stock: nuevoStock,
+        activo: itemParaStock.activo
+      };
+
+      const peticion = actualizarVacunaCatalogo(itemParaStock.id, payload);
+
+      sileo.promise(peticion, {
+        loading: { title: 'Sumando stock...' },
+        success: { title: '¡Stock Actualizado!', description: `Nuevo stock: ${nuevoStock} unidades` },
+        error: { title: 'Error', description: 'No se pudo actualizar el stock.' }
+      });
+
+      await peticion;
+      setModalStockOpen(false);
+      setRefreshTrigger(prev => prev + 1);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setProcesandoStock(false);
+    }
+  };
+
   const handleDesactivar = async (id, nombre) => {
     const result = await Swal.fire({
       title: '¿Suspender biológico?', text: `"${nombre}" ya no aparecerá en las consultas.`,
       icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, suspender', cancelButtonText: 'Cancelar',
       buttonsStyling: false,
       customClass: {
-        popup: 'rounded-3xl shadow-2xl border border-slate-100',
+        container: 'z-[99999]', popup: 'rounded-3xl shadow-2xl border border-slate-100',
         title: 'text-xl font-black text-slate-800',
         confirmButton: 'bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl px-5 py-2.5 mx-2',
         cancelButton: 'bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl px-5 py-2.5 mx-2'
@@ -138,7 +182,7 @@ const VacunasPage = () => {
       icon: 'question', showCancelButton: true, confirmButtonText: 'Sí, habilitar', cancelButtonText: 'Cancelar',
       buttonsStyling: false,
       customClass: {
-        popup: 'rounded-3xl shadow-2xl border border-slate-100',
+        container: 'z-[99999]', popup: 'rounded-3xl shadow-2xl border border-slate-100',
         title: 'text-xl font-black text-slate-800',
         confirmButton: 'bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl px-5 py-2.5 mx-2',
         cancelButton: 'bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl px-5 py-2.5 mx-2'
@@ -264,6 +308,13 @@ const VacunasPage = () => {
                           </button>
                         ) : (
                           <div className="flex justify-end gap-2">
+                            {/* BOTON SUMAR STOCK */}
+                            <button 
+                              onClick={() => abrirModalStock(vacuna)} 
+                              className="inline-flex items-center justify-center w-10 h-10 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 font-bold rounded-xl transition-all" title="Sumar Stock"
+                            >
+                              <PackagePlus size={16} />
+                            </button>
                             <button 
                               onClick={() => abrirModalEditar(vacuna)} className="inline-flex items-center justify-center w-10 h-10 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition-all" title="Completar / Editar datos"
                             >
@@ -297,17 +348,11 @@ const VacunasPage = () => {
             </div>
 
             <form onSubmit={handleGuardarVacuna} className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
-              <p className="text-xs text-slate-500 flex items-start gap-2 bg-sky-50 p-3 rounded-xl border border-sky-100 font-medium">
-                <Info className="text-sky-500 shrink-0" size={16} />
-                Completa las casillas de precio de venta y existencias disponibles para que el software actualice los cobros en caja de forma automática.
-              </p>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Nombre comercial de la vacuna</label>
                   <input required type="text" name="nombre" value={form.nombre} onChange={handleChange} placeholder="Ej: Quíntuple Canina" className="w-full border border-slate-300 p-2.5 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 outline-none font-bold bg-slate-50 focus:bg-white transition-all" />
                 </div>
-
                 <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Laboratorio o Preventista de contacto</label>
                   <div className="relative">
@@ -315,7 +360,6 @@ const VacunasPage = () => {
                     <input required type="text" name="proveedor" value={form.proveedor} onChange={handleChange} placeholder="Ej: Zoetis, MSD Animal Health" className="w-full pl-9 pr-3 border border-slate-300 p-2.5 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 outline-none font-bold bg-slate-50 focus:bg-white transition-all" />
                   </div>
                 </div>
-
                 <div>
                   <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Especie destino</label>
                   <select required name="especieDestino" value={form.especieDestino} onChange={handleChange} className="w-full border border-slate-300 p-2.5 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 outline-none font-bold bg-slate-50 focus:bg-white cursor-pointer transition-all">
@@ -324,12 +368,10 @@ const VacunasPage = () => {
                     <option value="GATO">Solo GATOS</option>
                   </select>
                 </div>
-
                 <div>
                   <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Stock en almacén</label>
                   <input required type="number" min="0" name="stock" value={form.stock} onChange={handleChange} placeholder="0" className="w-full border border-slate-300 p-2.5 rounded-xl text-slate-800 focus:ring-2 focus:ring-sky-500 outline-none font-bold bg-slate-50 focus:bg-white transition-all" />
                 </div>
-
                 <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Precio al público (S/)</label>
                   <input required type="number" step="0.10" min="0" name="precio" value={form.precio} onChange={handleChange} placeholder="0.00" className="w-full border border-slate-300 p-2.5 rounded-xl text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none font-black text-emerald-600 bg-emerald-50 focus:bg-white transition-all" />
@@ -345,6 +387,38 @@ const VacunasPage = () => {
                 <button type="button" onClick={() => setModalOpen(false)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 transition-colors">Cancelar</button>
                 <button type="submit" disabled={procesando} className="px-6 py-2.5 bg-gradient-to-r from-sky-500 to-cyan-400 text-white text-sm font-bold rounded-xl shadow-lg shadow-sky-500/30 transition-all flex items-center gap-2">
                   {procesando ? 'Guardando...' : 'Guardar Información'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>, document.body
+      )}
+
+      {/* MODAL PARA SUMAR STOCK */}
+      {modalStockOpen && itemParaStock && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setModalStockOpen(false)}></div>
+          <div className="relative bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
+              <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                <PackagePlus className="text-emerald-500" size={20} /> Sumar Stock
+              </h3>
+              <button onClick={() => setModalStockOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors"><X size={20}/></button>
+            </div>
+            <form onSubmit={handleSumarStockSubmit} className="p-6 space-y-4">
+              <div className="text-center mb-4">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Producto Destino</p>
+                <p className="text-base font-black text-slate-800 line-clamp-2">{itemParaStock.nombre}</p>
+                <p className="text-sm font-semibold text-slate-500 mt-1">Stock actual: {itemParaStock.stock || 0}</p>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">Cantidad a ingresar</label>
+                <input required type="number" min="1" value={cantidadAdd} onChange={e => setCantidadAdd(e.target.value)} className="w-full border border-slate-300 p-3 rounded-xl text-center text-xl font-black text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50 focus:bg-white transition-all" placeholder="+ 0" />
+              </div>
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                <button type="button" onClick={() => setModalStockOpen(false)} className="px-4 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 transition-colors">Cancelar</button>
+                <button type="submit" disabled={procesandoStock} className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-500/30 transition-all flex items-center gap-2">
+                  {procesandoStock ? 'Sumando...' : 'Confirmar Ingreso'}
                 </button>
               </div>
             </form>

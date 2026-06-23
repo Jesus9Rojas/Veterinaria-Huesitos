@@ -62,9 +62,6 @@ public class UsuarioServicio {
             throw new RuntimeException("El correo electrónico ya se encuentra registrado en el sistema.");
         }
 
-        // ==========================================
-        // VALIDACIONES ESTRICTAS DE TELÉFONO Y DNI
-        // ==========================================
         if (telefono != null && !telefono.trim().isEmpty() && !telefono.matches("\\d{1,9}")) {
             throw new RuntimeException("El teléfono debe contener solo números y un máximo de 9 dígitos.");
         }
@@ -108,9 +105,6 @@ public class UsuarioServicio {
             usuario.setCorreo(correo);
         }
 
-        // ==========================================
-        // VALIDACIONES ESTRICTAS DE TELÉFONO Y DNI
-        // ==========================================
         if (telefono != null && !telefono.trim().isEmpty() && !telefono.matches("\\d{1,9}")) {
             throw new RuntimeException("El teléfono debe contener solo números y un máximo de 9 dígitos.");
         }

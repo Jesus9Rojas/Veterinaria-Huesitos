@@ -27,15 +27,13 @@ public class InventarioServicio {
             throw new RuntimeException("El stock inicial del lote debe ser mayor o igual a cero");
         }
 
-        // Validar que el producto exista y esté activo
         Producto producto = productoRepositorio.findById(lote.getProducto().getId())
                 .filter(p -> p.getActivo())
                 .orElseThrow(() -> new RuntimeException("El producto asociado no existe o no está activo"));
 
         lote.setProducto(producto);
-        lote.setFechaIngreso(LocalDate.now()); // Autogenera la fecha de ingreso actual
+        lote.setFechaIngreso(LocalDate.now()); 
 
-        // Si no envían código de lote, el sistema lo autogenera
         if (lote.getCodigoLote() == null || lote.getCodigoLote().trim().isEmpty()) {
             lote.setCodigoLote("LOTE-" + System.currentTimeMillis());
         } else {

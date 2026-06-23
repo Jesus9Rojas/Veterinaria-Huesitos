@@ -19,10 +19,6 @@ public class ConsultaMedicaServicio {
     private final ConsultaMedicaRepositorio consultaMedicaRepositorio;
     private final CitaRepositorio citaRepositorio;
 
-    /**
-     * Registra una nueva consulta médica para una mascota.
-     * Si la consulta está asociada a una cita, cambia el estado de la cita a COMPLETADA.
-     */
     @Transactional
     public ConsultaMedica registrarConsulta(ConsultaMedica consulta) {
         if (consulta.getFecha() == null) {
@@ -30,7 +26,6 @@ public class ConsultaMedicaServicio {
         }
         ConsultaMedica guardada = consultaMedicaRepositorio.save(consulta);
 
-        // Si la consulta viene vinculada a una cita, buscarla y marcarla como COMPLETADA
         if (consulta.getCita() != null && consulta.getCita().getId() != null) {
             Cita cita = citaRepositorio.findById(consulta.getCita().getId())
                     .orElseThrow(() -> new RuntimeException("Cita no encontrada"));

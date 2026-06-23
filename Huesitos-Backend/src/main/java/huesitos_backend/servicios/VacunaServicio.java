@@ -50,8 +50,7 @@ public class VacunaServicio {
         vacuna.setDescripcion(datosNuevos.getDescripcion());
         vacuna.setEspecieDestino(datosNuevos.getEspecieDestino());
         vacuna.setProveedor(datosNuevos.getProveedor());
-        
-        // Evitamos NullPointerExceptions asignando valores por defecto si vienen vacíos
+
         vacuna.setPrecio(datosNuevos.getPrecio() != null ? datosNuevos.getPrecio() : 0.0);
         vacuna.setStock(datosNuevos.getStock() != null ? datosNuevos.getStock() : 0);
         

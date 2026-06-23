@@ -52,14 +52,12 @@ public class ArchivoClinicoServicio {
             throw new RuntimeException("El tipo de examen es obligatorio");
         }
 
-        // Subir archivo físico
         String originalFilename = archivo.getOriginalFilename();
         if (originalFilename == null || originalFilename.trim().isEmpty()) {
             originalFilename = "archivo_clinico";
         }
         String fileUrl = storageService.guardarArchivoClinico(archivo);
 
-        // Crear registro en base de datos
         ArchivoClinico nuevoArchivo = new ArchivoClinico();
         nuevoArchivo.setMascota(mascota);
         nuevoArchivo.setConsultaMedica(consulta);

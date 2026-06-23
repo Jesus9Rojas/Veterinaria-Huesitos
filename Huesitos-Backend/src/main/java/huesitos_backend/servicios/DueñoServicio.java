@@ -36,7 +36,6 @@ public class DueñoServicio {
             res.setTelefono(d.getTelefono());
             res.setDireccion(d.getDireccion());
             
-            // Extrae los datos de la cuenta vinculada si existe
             if (d.getUsuario() != null) {
                 res.setUsuarioId(d.getUsuario().getId());
                 res.setCorreo(d.getUsuario().getCorreo());
@@ -52,7 +51,6 @@ public class DueñoServicio {
             throw new RuntimeException("El correo ya se encuentra registrado en el sistema.");
         }
 
-        // 1. Crea la cuenta de inicio de sesión inicial
         Usuario usuario = new Usuario();
         usuario.setCorreo(request.getCorreo());
         usuario.setContrasena(passwordEncoder.encode(request.getContrasena()));
@@ -60,7 +58,6 @@ public class DueñoServicio {
         usuario.setActivo(true);
         usuario = usuarioRepositorio.save(usuario);
 
-        // 2. Crea el perfil físico de contacto y lo enlaza
         Dueño dueño = new Dueño();
         dueño.setUsuario(usuario);
         dueño.setNombreCompleto(request.getNombreCompleto());
@@ -94,7 +91,6 @@ public class DueñoServicio {
         dueño.setTelefono(request.getTelefono());
         dueño.setDireccion(request.getDireccion());
 
-        // Actualiza el acceso SOLO si hubo un error al tipear el correo
         Usuario usuario = dueño.getUsuario();
         if (usuario != null) {
             if (request.getCorreo() != null && !request.getCorreo().isBlank() && !usuario.getCorreo().equals(request.getCorreo())) {

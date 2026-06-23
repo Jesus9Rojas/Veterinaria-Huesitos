@@ -107,8 +107,21 @@ const ConsultasVeterinarioPage = () => {
                         <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${cita.estado === 'EN_PROGRESO' ? 'bg-blue-50 text-blue-600 border-blue-200' : cita.estado === 'COMPLETADA' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>{cita.estado.replace('_', ' ')}</span>
                       </td>
                       <td className="px-6 py-4 text-right whitespace-nowrap">
+                        {/* AQUI ESTA LA LOGICA MEJORADA */}
                         {cita.estado === 'EN_ESPERA' || cita.estado === 'PENDIENTE' || cita.estado === 'CONFIRMADA' ? (
-                          <button onClick={() => actualizarEstado(cita.id, 'EN_PROGRESO')} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold rounded-xl transition-all"><Clock size={16} /> Iniciar Consulta</button>
+                          <button 
+                            onClick={() => actualizarEstado(cita.id, 'EN_PROGRESO')} 
+                            disabled={cita.estado !== 'EN_ESPERA'}
+                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-all shadow-sm
+                              ${cita.estado === 'EN_ESPERA' 
+                                ? 'bg-blue-100 hover:bg-blue-200 text-blue-700 cursor-pointer' 
+                                : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-80'
+                              }
+                            `}
+                          >
+                            <Clock size={16} /> 
+                            {cita.estado === 'EN_ESPERA' ? 'Iniciar Consulta' : 'En camino...'}
+                          </button>
                         ) : cita.estado === 'EN_PROGRESO' ? (
                           <div className="flex justify-end gap-2">
                             {/* 1. ATAJO AL HISTORIAL CLÍNICO */}

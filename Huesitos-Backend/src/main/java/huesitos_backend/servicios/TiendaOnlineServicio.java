@@ -21,8 +21,6 @@ public class TiendaOnlineServicio {
     private final ProductoRepositorio productoRepositorio;
     private final UsuarioRepositorio usuarioRepositorio;
 
-    // --- MÉTODOS DEL CARRITO ---
-
     @Transactional
     public CarritoItem agregarProductoAlCarrito(Long usuarioId, Long productoId, Integer cantidad) {
         if (cantidad == null || cantidad <= 0) {
@@ -36,7 +34,6 @@ public class TiendaOnlineServicio {
                 .filter(Producto::getActivo)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado o inactivo"));
 
-        // Validar stock disponible general antes de agregar
         Integer stockDisponible = inventarioRepositorio.obtenerStockDisponible(productoId);
         if (stockDisponible < cantidad) {
             throw new RuntimeException("Stock insuficiente para el producto: " + producto.getNombre() + " (Disponible: " + stockDisponible + ")");
@@ -72,7 +69,6 @@ public class TiendaOnlineServicio {
             return null;
         }
 
-        // Validar stock disponible general
         Integer stockDisponible = inventarioRepositorio.obtenerStockDisponible(item.getProducto().getId());
         if (stockDisponible < cantidad) {
             throw new RuntimeException("Stock insuficiente para el producto: " + item.getProducto().getNombre() + " (Disponible: " + stockDisponible + ")");
@@ -100,8 +96,6 @@ public class TiendaOnlineServicio {
         carritoItemRepositorio.deleteByClienteId(usuarioId);
     }
 
-    // --- MÉTODOS DE PEDIDOS Y CHECKOUT ---
-
     @Transactional
     public Pedido realizarCheckout(Long usuarioId) {
         List<CarritoItem> items = carritoItemRepositorio.findByClienteId(usuarioId);
@@ -114,18 +108,15 @@ public class TiendaOnlineServicio {
 
         BigDecimal total = BigDecimal.ZERO;
 
-        // 1. Validar y descontar stock por cada producto usando lógica FEFO
         for (CarritoItem item : items) {
             Producto producto = item.getProducto();
             int cantidadRequerida = item.getCantidad();
 
-            // Validar stock total disponible
             Integer stockTotal = inventarioRepositorio.obtenerStockDisponible(producto.getId());
             if (stockTotal < cantidadRequerida) {
                 throw new RuntimeException("Stock insuficiente para el producto '" + producto.getNombre() + "'. Requerido: " + cantidadRequerida + ", Disponible: " + stockTotal);
             }
 
-            // Descontar por lotes (FEFO: vencimiento más cercano primero, luego fecha de ingreso más antigua)
             List<Inventario> lotes = inventarioRepositorio.buscarLotesDisponiblesParaDescuento(producto.getId());
             int pendienteDescontar = cantidadRequerida;
 
@@ -147,13 +138,11 @@ public class TiendaOnlineServicio {
                 throw new RuntimeException("Error al descontar stock por lotes para el producto: " + producto.getNombre());
             }
 
-            // Acumular al total del pedido
             BigDecimal precioUnitario = producto.getPrecio();
             BigDecimal subtotal = precioUnitario.multiply(BigDecimal.valueOf(item.getCantidad()));
             total = total.add(subtotal);
         }
 
-        // 2. Crear y guardar el Pedido
         Pedido pedido = new Pedido();
         pedido.setCliente(cliente);
         pedido.setFechaPedido(LocalDateTime.now());
@@ -161,7 +150,6 @@ public class TiendaOnlineServicio {
         pedido.setEstadoPedido(EstadoPedido.PENDIENTE);
         Pedido pedidoGuardado = pedidoRepositorio.save(pedido);
 
-        // 3. Crear y guardar los detalles del pedido
         for (CarritoItem item : items) {
             DetallePedido detalle = new DetallePedido();
             detalle.setPedido(pedidoGuardado);
@@ -171,7 +159,6 @@ public class TiendaOnlineServicio {
             detallePedidoRepositorio.save(detalle);
         }
 
-        // 4. Vaciar el carrito
         carritoItemRepositorio.deleteByClienteId(usuarioId);
 
         return pedidoGuardado;

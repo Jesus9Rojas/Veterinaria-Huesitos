@@ -42,10 +42,12 @@ public class CitaServicio {
             .orElseThrow(() -> new RuntimeException("El servicio especificado no existe o no está disponible"));
         cita.setServicio(servicioReal);
 
-        if (cita.getMascota() == null || cita.getMascota().getId() == null ||
-            !mascotaRepositorio.existsById(cita.getMascota().getId())) {
-            throw new RuntimeException("La mascota especificada no existe");
+        if (cita.getMascota() == null || cita.getMascota().getId() == null) {
+            throw new RuntimeException("La mascota especificada no es válida");
         }
+        Mascota mascotaReal = mascotaRepositorio.findById(cita.getMascota().getId())
+            .orElseThrow(() -> new RuntimeException("La mascota especificada no existe"));
+        cita.setMascota(mascotaReal);
 
         if (cita.getVeterinario() != null && cita.getVeterinario().getId() != null) {
             if (!usuarioRepositorio.existsById(cita.getVeterinario().getId())) {
@@ -61,6 +63,22 @@ public class CitaServicio {
 
         Cita citaNueva = citaRepositorio.save(cita);
         transaccionServicio.crearOrdenPago(citaNueva);
+
+        try {
+            List<Usuario> recepcionistas = usuarioRepositorio.findByRol(Rol.RECEPCIONISTA);
+            for (Usuario recepcionista : recepcionistas) {
+                Notificacion nuevaNotif = new Notificacion();
+                nuevaNotif.setUsuario(recepcionista);
+                nuevaNotif.setMensaje("🔔 NUEVA CITA WEB: " + mascotaReal.getNombre() + 
+                                      " reservó para el " + citaNueva.getFechaHora().toLocalDate() + 
+                                      " a las " + citaNueva.getFechaHora().toLocalTime() + " hs.");
+                nuevaNotif.setLeida(false);
+                nuevaNotif.setFechaCreacion(LocalDateTime.now());
+                notificacionRepositorio.save(nuevaNotif);
+            }
+        } catch (Exception e) {
+            System.err.println("Aviso: No se pudo generar la notificación para recepción: " + e.getMessage());
+        }
 
         return citaNueva;
     }

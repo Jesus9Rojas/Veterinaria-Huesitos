@@ -20,7 +20,6 @@ public class DashboardServicio {
     public DashboardDTO obtenerEstadisticas() {
         DashboardDTO dto = new DashboardDTO();
         
-        // Extraemos datos reales de la Base de Datos
         dto.setTotalServicios(servicioRepo.count());
         dto.setServiciosActivos(servicioRepo.countByActivoTrue());
         dto.setTotalUsuarios(usuarioRepo.count());

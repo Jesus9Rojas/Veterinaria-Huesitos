@@ -21,7 +21,7 @@ public class PedidoServicio {
     private final ProductoRepositorio productoRepositorio;
     private final TransaccionRepositorio transaccionRepositorio;
     private final InventarioRepositorio inventarioRepositorio; 
-    private final UsuarioRepositorio usuarioRepositorio; // INYECTADO PARA CLIENTES
+    private final UsuarioRepositorio usuarioRepositorio; 
 
     @Transactional(readOnly = true)
     public List<Pedido> listarTodosLosPedidos() {
@@ -42,17 +42,14 @@ public class PedidoServicio {
         pedido.setEstadoPedido(EstadoPedido.ENTREGADO); 
         pedido.setFechaPedido(LocalDateTime.now());
         
-        // ¡SOLUCIÓN AL ERROR 400! Ponemos el total en 0 temporalmente
         pedido.setTotal(BigDecimal.ZERO); 
         
-        // ¡SOLUCIÓN PARA ANÓNIMOS VS REGISTRADOS!
         if (ventaDTO.getUsuarioId() != null) {
             Usuario cliente = usuarioRepositorio.findById(ventaDTO.getUsuarioId())
                     .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
             pedido.setCliente(cliente);
         }
 
-        // Se guarda el pedido base
         pedido = pedidoRepositorio.save(pedido);
         BigDecimal totalVenta = BigDecimal.ZERO;
 
@@ -91,7 +88,6 @@ public class PedidoServicio {
             totalVenta = totalVenta.add(subtotal);
         }
 
-        // Ahora sí, guardamos el Total real definitivo
         pedido.setTotal(totalVenta);
         pedido = pedidoRepositorio.save(pedido);
 

@@ -1,9 +1,5 @@
 package huesitos_backend.servicios;
 
-import com.lowagie.text.*;
-import com.lowagie.text.pdf.PdfPCell;
-import com.lowagie.text.pdf.PdfPTable;
-import com.lowagie.text.pdf.PdfWriter;
 import huesitos_backend.entidades.ConsultaMedica;
 import huesitos_backend.entidades.Receta;
 import huesitos_backend.repositorios.ConsultaMedicaRepositorio;
@@ -12,8 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.awt.Color;
-import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +18,8 @@ public class RecetaServicio {
 
     private final RecetaRepositorio recetaRepositorio;
     private final ConsultaMedicaRepositorio consultaMedicaRepositorio;
+    
+    private final PdfRecetaServicio pdfRecetaServicio;
 
     @Transactional
     public Receta registrarReceta(Receta receta) {
@@ -64,7 +60,6 @@ public class RecetaServicio {
                 .orElseThrow(() -> new RuntimeException("No se encontró receta para esta consulta médica"));
     }
 
-    // ¡MÉTODO ACTUALIZADO!
     @Transactional(readOnly = true)
     public List<Receta> listarPorMascota(Long mascotaId) {
         return recetaRepositorio.findByConsultaMedicaMascotaId(mascotaId);
@@ -75,98 +70,6 @@ public class RecetaServicio {
         Receta receta = recetaRepositorio.findById(recetaId)
                 .orElseThrow(() -> new RuntimeException("Receta no encontrada"));
 
-        ConsultaMedica consulta = receta.getConsultaMedica();
-
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Document document = new Document(PageSize.A5); 
-        document.setMargins(20, 20, 20, 20);
-
-        try {
-            PdfWriter.getInstance(document, out);
-            document.open();
-
-            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, new Color(44, 62, 80));
-            Paragraph header = new Paragraph("VETERINARIA HUESITOS 🐶", titleFont);
-            header.setAlignment(Element.ALIGN_CENTER);
-            document.add(header);
-
-            Font subFont = FontFactory.getFont(FontFactory.HELVETICA, 8, new Color(127, 140, 141));
-            Paragraph subheader = new Paragraph("Salud, cuidado y amor para tu mascota\nEmergencias y consultas 24 horas", subFont);
-            subheader.setAlignment(Element.ALIGN_CENTER);
-            subheader.setSpacingAfter(15);
-            document.add(subheader);
-
-            Paragraph separator = new Paragraph("____________________________________________________", subFont);
-            separator.setSpacingAfter(10);
-            document.add(separator);
-
-            Font docTitleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, new Color(52, 152, 219));
-            Paragraph docTitle = new Paragraph("RECETA MÉDICA", docTitleFont);
-            docTitle.setAlignment(Element.ALIGN_CENTER);
-            docTitle.setSpacingAfter(15);
-            document.add(docTitle);
-
-            PdfPTable table = new PdfPTable(2);
-            table.setWidthPercentage(100);
-            table.setSpacingAfter(15);
-
-            Font labelFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, new Color(44, 62, 80));
-            Font valueFont = FontFactory.getFont(FontFactory.HELVETICA, 9, new Color(51, 51, 51));
-
-            table.addCell(crearCeldaSinBorde("Paciente: " + consulta.getMascota().getNombre(), labelFont, valueFont));
-            table.addCell(crearCeldaSinBorde("Propietario: " + consulta.getMascota().getDueño().getNombreCompleto(), labelFont, valueFont));
-
-            table.addCell(crearCeldaSinBorde("Especie/Raza: " + consulta.getMascota().getEspecie() + " / " + consulta.getMascota().getRaza(), labelFont, valueFont));
-            table.addCell(crearCeldaSinBorde("Fecha Emisión: " + receta.getFechaEmision().toString(), labelFont, valueFont));
-
-            table.addCell(crearCeldaSinBorde("Veterinario: " + consulta.getVeterinario().getCorreo(), labelFont, valueFont));
-            table.addCell(crearCeldaSinBorde("Consulta ID: #" + consulta.getId(), labelFont, valueFont));
-
-            document.add(table);
-            document.add(separator);
-
-            Font sectionTitleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, new Color(44, 62, 80));
-            Paragraph medTitle = new Paragraph("MEDICAMENTOS", sectionTitleFont);
-            medTitle.setSpacingAfter(5);
-            document.add(medTitle);
-
-            Font contentFont = FontFactory.getFont(FontFactory.HELVETICA, 10, new Color(51, 51, 51));
-            Paragraph medContent = new Paragraph(receta.getMedicamentos(), contentFont);
-            medContent.setSpacingAfter(15);
-            document.add(medContent);
-
-            Paragraph indTitle = new Paragraph("INDICACIONES", sectionTitleFont);
-            indTitle.setSpacingAfter(5);
-            document.add(indTitle);
-
-            Paragraph indContent = new Paragraph(receta.getIndicaciones(), contentFont);
-            indContent.setSpacingAfter(30);
-            document.add(indContent);
-
-            Paragraph firmaLine = new Paragraph("__________________________________\nFirma del Médico Veterinario", labelFont);
-            firmaLine.setAlignment(Element.ALIGN_CENTER);
-            document.add(firmaLine);
-
-            document.close();
-        } catch (DocumentException e) {
-            throw new RuntimeException("Error al estructurar el documento PDF", e);
-        }
-
-        return out.toByteArray();
-    }
-
-    private PdfPCell crearCeldaSinBorde(String textoCompleto, Font labelFont, Font valueFont) {
-        String[] partes = textoCompleto.split(":", 2);
-        Phrase frase = new Phrase();
-        if (partes.length == 2) {
-            frase.add(new Chunk(partes[0] + ":", labelFont));
-            frase.add(new Chunk(partes[1], valueFont));
-        } else {
-            frase.add(new Chunk(textoCompleto, valueFont));
-        }
-        PdfPCell celda = new PdfPCell(frase);
-        celda.setBorder(Rectangle.NO_BORDER);
-        celda.setPaddingBottom(5);
-        return celda;
+        return pdfRecetaServicio.generarRecetaPdf(receta);
     }
 }

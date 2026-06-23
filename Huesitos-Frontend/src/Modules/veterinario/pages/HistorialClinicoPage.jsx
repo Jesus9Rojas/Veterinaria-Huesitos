@@ -206,6 +206,26 @@ const HistorialClinicoPage = () => {
     } finally { setProcesando(false); }
   };
 
+  // AQUÍ ESTÁ LA FUNCIÓN CORREGIDA SIN SILEO.LOADING
+  const handleImprimirReceta = async (recetaId) => {
+    try {
+      setProcesando(true);
+      const response = await axios.get(`http://localhost:8080/api/recetas/${recetaId}/pdf`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        responseType: 'blob' 
+      });
+
+      const fileURL = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      window.open(fileURL, '_blank');
+      
+    } catch (error) {
+      console.error("Error al generar el PDF de la receta:", error);
+      sileo.error({ title: 'Error', description: 'No se pudo descargar el documento PDF.' });
+    } finally {
+      setProcesando(false);
+    }
+  };
+
   if(loading) return <div className="flex flex-col items-center justify-center h-64 text-sky-500 animate-pulse"><Activity size={48} className="animate-spin mb-4" /><p className="font-bold">Cargando expediente...</p></div>;
 
   return (
@@ -430,7 +450,17 @@ const HistorialClinicoPage = () => {
                         <p className="font-black text-base text-slate-800">Receta #{r.id}</p>
                         <p className="text-xs font-bold text-slate-500 mt-0.5">{r.fechaEmision}</p>
                       </div>
-                      <a href={`http://localhost:8080/api/recetas/${r.id}/pdf`} target="_blank" rel="noreferrer" className="text-xs font-bold bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md transition-colors"><FileDown size={14}/> Imprimir PDF</a>
+                      
+                      {/* ================= BOTÓN CORREGIDO ================= */}
+                      <button 
+                        type="button" 
+                        onClick={() => handleImprimirReceta(r.id)} 
+                        disabled={procesando}
+                        className="text-xs font-bold bg-slate-800 hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md transition-colors"
+                      >
+                        <FileDown size={14}/> {procesando ? 'Abriendo...' : 'Imprimir PDF'}
+                      </button>
+                      
                     </div>
                   ))
                 )}

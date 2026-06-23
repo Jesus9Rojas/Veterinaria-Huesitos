@@ -14,6 +14,7 @@ import MisCitasCliente from './Modules/clientes/pages/MisCitasCliente';
 import RecepcionDashboard from './Modules/recepcion/pages/RecepcionDashboard';
 import InicioRecepcion from './Modules/recepcion/pages/InicioRecepcion';
 import CitasPage from './Modules/recepcion/pages/CitasPage';
+import HorariosMedicosPage from './Modules/recepcion/pages/HorariosMedicosPage';
 import ClientesPage from './Modules/recepcion/pages/ClientesPage';
 import CajaPage from './Modules/recepcion/pages/CajaPage';
 import PuntoVentaPage from './Modules/recepcion/pages/PuntoVentaPage';
@@ -33,7 +34,7 @@ import AuxiliarDashboard from './pages/AuxiliarDashboard';
 function App() {
   return (
     <>
-<Toaster 
+      <Toaster 
         position="top-right" 
         theme="dark" 
         options={{ 
@@ -66,6 +67,8 @@ function App() {
           <Route path="/recepcion" element={<RecepcionDashboard />}>
             <Route index element={<InicioRecepcion />} /> 
             <Route path="citas" element={<CitasPage />} />
+            {/* NUEVA RUTA AGREGADA AQUÍ */}
+            <Route path="horarios" element={<HorariosMedicosPage />} />
             <Route path="clientes" element={<ClientesPage />} />
             <Route path="caja" element={<CajaPage />} />
             <Route path="tienda" element={<PuntoVentaPage />} /> 

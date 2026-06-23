@@ -43,7 +43,6 @@ public class BoletaPdfServicio {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            // 1. Cabecera de la veterinaria
             Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, new Color(44, 62, 80));
             Paragraph header = new Paragraph("VETERINARIA HUESITOS 🐶", titleFont);
             header.setAlignment(Element.ALIGN_CENTER);
@@ -59,7 +58,6 @@ public class BoletaPdfServicio {
             separator.setSpacingAfter(10);
             document.add(separator);
 
-            // 2. Título dinámico (Factura o Boleta)
             String nombreDoc = "FACTURA".equalsIgnoreCase(tipoComprobante) ? "FACTURA ELECTRÓNICA" : "BOLETA DE VENTA ELECTRÓNICA";
             String prefijo = "FACTURA".equalsIgnoreCase(tipoComprobante) ? "F001-" : "B001-";
             
@@ -69,7 +67,6 @@ public class BoletaPdfServicio {
             docTitle.setSpacingAfter(15);
             document.add(docTitle);
 
-            // 3. Lógica para extraer datos (Cita vs Pedido)
             String nombreCliente = "Cliente Anónimo";
             String infoExtra = "";
             
@@ -94,7 +91,6 @@ public class BoletaPdfServicio {
                 infoExtra = "Tipo: Venta de Productos (Tienda)";
             }
 
-            // 4. Detalles de la Transacción
             PdfPTable tableDetalles = new PdfPTable(2);
             tableDetalles.setWidthPercentage(100);
             tableDetalles.setSpacingAfter(15);
@@ -120,7 +116,6 @@ public class BoletaPdfServicio {
             document.add(tableDetalles);
             document.add(separator);
 
-            // 5. Tabla de Items (Servicios, Fármacos, Productos)
             PdfPTable tableItems = new PdfPTable(3);
             tableItems.setWidthPercentage(100);
             tableItems.setWidths(new float[]{60, 20, 20});
@@ -148,7 +143,6 @@ public class BoletaPdfServicio {
             if (transaccion.getCita() != null) {
                 Cita cita = transaccion.getCita();
                 
-                // Imprimir el servicio médico base de la cita
                 PdfPCell cellItem = new PdfPCell(new Phrase("Consulta: " + cita.getServicio().getNombre(), valueFont));
                 cellItem.setPadding(6);
                 tableItems.addCell(cellItem);
@@ -163,7 +157,6 @@ public class BoletaPdfServicio {
                 cellTotal.setHorizontalAlignment(Element.ALIGN_RIGHT);
                 tableItems.addCell(cellTotal);
 
-                // IMPRESIÓN DINÁMICA DE ITEMS ADICIONALES (Medicina, Vacuna, Antiparasitarios)
                 if (cita.getItemsCobro() != null && !cita.getItemsCobro().isEmpty()) {
                     for (ItemCobroCita item : cita.getItemsCobro()) {
                         PdfPCell cellExtraItem = new PdfPCell(new Phrase(item.getTipoItem() + ": " + item.getNombreItem(), valueFont));
@@ -183,7 +176,6 @@ public class BoletaPdfServicio {
                 }
 
             } else if (transaccion.getPedido() != null) {
-                // Venta de tienda normal
                 List<DetallePedido> detalles = detallePedidoRepositorio.findByPedidoId(transaccion.getPedido().getId());
                 for(DetallePedido det : detalles) {
                     PdfPCell cellItem = new PdfPCell(new Phrase(det.getProducto().getNombre(), valueFont));
@@ -205,14 +197,12 @@ public class BoletaPdfServicio {
 
             document.add(tableItems);
 
-            // 6. Total a pagar destacado (Sumatoria final en Caja)
             Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, new Color(44, 62, 80));
             Paragraph totalParagraph = new Paragraph("TOTAL PAGADO: S/. " + String.format("%.2f", transaccion.getMonto()), totalFont);
             totalParagraph.setAlignment(Element.ALIGN_RIGHT);
             totalParagraph.setSpacingAfter(30);
             document.add(totalParagraph);
 
-            // 7. Mensaje de agradecimiento
             Font footerFont = FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 9, new Color(127, 140, 141));
             Paragraph footer = new Paragraph("¡Gracias por confiar en nosotros! 🐾", footerFont);
             footer.setAlignment(Element.ALIGN_CENTER);

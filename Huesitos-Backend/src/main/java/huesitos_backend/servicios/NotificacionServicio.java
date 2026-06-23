@@ -17,7 +17,6 @@ public class NotificacionServicio {
     @Transactional(readOnly = true)
     public List<Notificacion> obtenerPorUsuario(Long usuarioId) {
         List<Notificacion> lista = notificacionRepositorio.findByUsuarioIdOrderByFechaCreacionDesc(usuarioId);
-        // Si no hay resultados, devolvemos una lista vacía en vez de null para evitar el 404
         if (lista == null) {
             return new java.util.ArrayList<>();
         }

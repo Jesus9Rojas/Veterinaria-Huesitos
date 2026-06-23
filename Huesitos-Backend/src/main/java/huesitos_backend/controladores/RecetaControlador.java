@@ -49,12 +49,14 @@ public class RecetaControlador {
             
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
-            headers.set(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=receta_" + id + ".pdf");
+            headers.set(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=receta_medica_" + id + ".pdf");
             headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
             
             return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (RuntimeException e) {            if (e.getMessage().toLowerCase().contains("no encontrada")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 }

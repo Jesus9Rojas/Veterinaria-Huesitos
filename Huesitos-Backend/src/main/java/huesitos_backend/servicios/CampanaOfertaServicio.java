@@ -24,7 +24,6 @@ public class CampanaOfertaServicio {
     private final OfertaRepositorio ofertaRepositorio;
     private final ProductoRepositorio productoRepositorio;
 
-    // --- SERVICIOS DE CAMPAÑAS ---
 
     @Transactional
     public Campana guardarCampana(Campana campana) {
@@ -43,7 +42,6 @@ public class CampanaOfertaServicio {
             campana.setActivo(true);
         }
 
-        // Si la campaña ya expiró según la fecha de creación/guardado, nace inactiva
         if (campana.getFechaFin().isBefore(LocalDate.now())) {
             campana.setActivo(false);
         }
@@ -70,12 +68,9 @@ public class CampanaOfertaServicio {
     @Transactional
     public void eliminarCampana(Long id) {
         Campana campana = buscarCampanaPorId(id);
-        // Hacemos desactivación lógica para no borrar registros históricos
         campana.setActivo(false);
         campanaRepositorio.save(campana);
     }
-
-    // --- SERVICIOS DE OFERTAS ---
 
     @Transactional
     public Oferta guardarOferta(Oferta oferta) {
@@ -99,7 +94,6 @@ public class CampanaOfertaServicio {
         oferta.setProducto(producto);
         oferta.setTitulo(oferta.getTitulo().trim());
 
-        // Auto-calcular precio u porcentaje si corresponde
         BigDecimal precioBase = producto.getPrecio();
         if (oferta.getDescuentoPorcentaje() != null && oferta.getPrecioOferta() == null) {
             BigDecimal factor = BigDecimal.ONE.subtract(oferta.getDescuentoPorcentaje().divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
@@ -116,7 +110,6 @@ public class CampanaOfertaServicio {
             throw new RuntimeException("Debe especificar al menos el porcentaje de descuento o el precio de oferta");
         }
 
-        // Si tiene campaña asociada, validarla
         if (oferta.getCampana() != null && oferta.getCampana().getId() != null) {
             Campana campana = campanaRepositorio.findById(oferta.getCampana().getId())
                     .orElseThrow(() -> new RuntimeException("Campaña asociada no encontrada"));
@@ -159,13 +152,11 @@ public class CampanaOfertaServicio {
         ofertaRepositorio.save(oferta);
     }
 
-    // --- PROCESO PROGRAMADO DE INACTIVACIÓN ---
-
     @Transactional
     public void inactivarExpiradas(LocalDate fecha) {
         log.info("Iniciando proceso de inactivación de campañas y ofertas expiradas para la fecha: {}", fecha);
 
-        // 1. Inactivar campañas expiradas
+
         List<Campana> campanasExpiradas = campanaRepositorio.findByActivoTrueAndFechaFinBefore(fecha);
         for (Campana campana : campanasExpiradas) {
             campana.setActivo(false);
@@ -173,7 +164,6 @@ public class CampanaOfertaServicio {
             log.info("Campaña expirada e inactivada automáticamente: {} (ID: {})", campana.getNombre(), campana.getId());
         }
 
-        // 2. Inactivar ofertas expiradas
         List<Oferta> ofertasExpiradas = ofertaRepositorio.findByActivoTrueAndFechaFinBefore(fecha);
         for (Oferta oferta : ofertasExpiradas) {
             oferta.setActivo(false);

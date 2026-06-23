@@ -33,14 +33,10 @@ public class AutenticacionAvanzadaServicio {
         usuario.setExpiracionToken(expiracion);
         usuarioRepositorio.save(usuario);
 
-        // Simulación de envío de correo en consola
         System.out.println("[EMAIL SIMULADOR] Para restablecer tu contraseña de Huesitos, usa el siguiente token: http://localhost:8080/api/autenticacion/restablecer?token=" + token);
     }
 
-    /**
-     * Completa el proceso de restablecimiento de contraseña actualizando la contraseña del usuario.
-     * El token se limpia para que sea de un solo uso.
-     */
+
     @Transactional
     public void completarRestablecimiento(String token, String nuevaContrasena) {
         Usuario usuario = usuarioRepositorio.findByTokenRecuperacion(token)
