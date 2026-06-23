@@ -1,22 +1,28 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Heart, Activity, X, AlertCircle, ShieldCheck, Info, PawPrint, Calendar, User, ActivitySquare} from 'lucide-react';
-import { createPortal } from 'react-dom';
-import { sileo } from 'sileo';
+import { X, CalendarPlus, Heart, Stethoscope, Clock, CheckCircle2, Plus, ArrowLeft, Loader2, User, FileText } from 'lucide-react';
+import Swal from 'sweetalert2';
 
-const MisMascotasCliente = () => {
+const ModalReservaCliente = ({ cerrarModal }) => {
+  const [paso, setPaso] = useState(1);
+  const [cargando, setCargando] = useState(false);
+
   const [mascotas, setMascotas] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  
+  const [servicios, setServicios] = useState([]);
+  const [veterinarios, setVeterinarios] = useState([]);
+
   const [idUsuario] = useState(() => localStorage.getItem('usuarioId'));
   const [idDueño, setIdDueño] = useState(null); 
 
-  const [modalAbierto, setModalAbierto] = useState(false);
-  const [mascotaSeleccionada, setMascotaSeleccionada] = useState(null);
+  const [seleccion, setSeleccion] = useState({
+    mascotaId: '', servicioId: '', veterinarioId: '', fecha: '', hora: '', motivo: '' 
+  });
 
-  const [form, setForm] = useState({ 
+  const [nuevaMascota, setNuevaMascota] = useState({ 
     nombre: '', especie: 'PERRO', raza: '', sexo: 'MACHO', pesoActual: '', fechaNacimiento: '', alertasMedicas: '' 
   });
+  
+  const [modoCrearMascota, setModoCrearMascota] = useState(false);
 
   const getConfig = () => ({
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
@@ -24,293 +30,270 @@ const MisMascotasCliente = () => {
 
   useEffect(() => {
     let isMounted = true;
-
-    const inicializarDatos = async () => {
+    
+    const cargarDatos = async () => {
       if (!idUsuario) return;
       try {
         const resDueno = await axios.get(`http://localhost:8080/api/usuarios/${idUsuario}/dueño`, getConfig());
         const duenoId = resDueno.data.id;
-        
         if (isMounted) setIdDueño(duenoId);
 
         let resMascotas;
+
         try {
+
           resMascotas = await axios.get(`http://localhost:8080/api/mascotas/dueno/${duenoId}`, getConfig());
+
         } catch (error) {
+
           console.warn("Intentando ruta alternativa para mascotas...", error.message);
+
           resMascotas = await axios.get(`http://localhost:8080/api/mascotas/dueño/${duenoId}`, getConfig());
+
         }
 
-        if (isMounted) setMascotas(resMascotas?.data || []);
+        if (isMounted) {
+          setMascotas(resMascotas?.data || []);
+          if (resMascotas?.data.length === 0) setModoCrearMascota(true);
+        }
 
+        const resServicios = await axios.get('http://localhost:8080/api/servicios', getConfig());
+        if (isMounted) setServicios(resServicios.data || []);
+
+        const resVets = await axios.get('http://localhost:8080/api/usuarios/veterinarios', getConfig());
+        if (isMounted) setVeterinarios(resVets.data || []);
       } catch (error) {
-        console.error("Error al cargar datos del cliente:", error);
-      } finally {
-        if (isMounted) setCargando(false);
+        console.error("Error al sincronizar datos:", error);
       }
     };
 
-    inicializarDatos();
+    cargarDatos();
     return () => { isMounted = false; };
   }, [idUsuario]);
 
-  const formatearFechaSimple = (fecha) => {
-    if (!fecha) return 'No registrado';
-    const soloFecha = typeof fecha === 'string' ? fecha.split('T')[0] : new Date(fecha).toISOString().split('T')[0];
-    const [year, month, day] = soloFecha.split('-');
-    return `${day}/${month}/${year}`;
-  };
-
-  const calcularEdad = (fecha) => {
-    if(!fecha) return 'Desconocida';
-    const soloFecha = typeof fecha === 'string' ? fecha.split('T')[0] : new Date(fecha).toISOString().split('T')[0];
-    const [year, month, day] = soloFecha.split('-');
-    const nac = new Date(year, month - 1, day);
-    const hoy = new Date();
-    
-    let edad = hoy.getFullYear() - nac.getFullYear();
-    const m = hoy.getMonth() - nac.getMonth();
-    if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--;
-    return edad;
-  };
-
-  const handleGuardar = async (e) => {
+  const handleCrearMascota = async (e) => {
     e.preventDefault();
     if (!idDueño) {
-        sileo.error({ title: 'Error', description: 'No se pudo validar tu cuenta. Recarga la página.' });
-        return;
+      Swal.fire('Error', 'No se detectó tu perfil de cliente.', 'error');
+      return;
     }
 
+    setCargando(true);
     try {
       const payload = {
-        nombre: form.nombre,
-        especie: form.especie,
-        raza: form.raza || 'Común',
-        sexo: form.sexo,
-        fechaNacimiento: form.fechaNacimiento,
-        pesoActual: parseFloat(form.pesoActual) || 0.0,
-        alertasMedicas: form.alertasMedicas || '',
-        dueno: { id: parseInt(idDueño) }  
+        nombre: nuevaMascota.nombre,
+        especie: nuevaMascota.especie,
+        raza: nuevaMascota.raza || 'Común',
+        sexo: nuevaMascota.sexo,
+        fechaNacimiento: nuevaMascota.fechaNacimiento,
+        pesoActual: parseFloat(nuevaMascota.pesoActual) || 0.0,
+        alertasMedicas: nuevaMascota.alertasMedicas || '',
+        fotoUrl: '/uploads/defecto-mascota.png', 
+        dueño: { id: parseInt(idDueño) } 
+      };
+      
+      const res = await axios.post('http://localhost:8080/api/mascotas', payload, getConfig());
+      
+      setMascotas([...mascotas, res.data]);
+      setSeleccion({ ...seleccion, mascotaId: res.data.id });
+      setModoCrearMascota(false);
+      setPaso(2); 
+      Swal.fire({ icon: 'success', title: '¡Mascota registrada!', showConfirmButton: false, timer: 1500 });
+    } catch (error) {
+      console.error("Error al registrar mascota:", error); 
+      const mensajeBackend = typeof error.response?.data === 'string' ? error.response.data : 'Verifica los campos.';
+      Swal.fire('Error del Servidor', mensajeBackend, 'error');
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  const handleFinalizarCita = async () => {
+    setCargando(true);
+    try {
+      const payload = {
+        fechaHora: `${seleccion.fecha}T${seleccion.hora}:00`,
+        motivo: seleccion.motivo || 'Consulta programada desde el panel del cliente',
+        estado: 'PENDIENTE',
+        mascota: { id: parseInt(seleccion.mascotaId) },
+        servicio: { id: parseInt(seleccion.servicioId) }
       };
 
-      const peticion = axios.post('http://localhost:8080/api/mascotas', payload, getConfig());
-      
-      sileo.promise(peticion, {
-        loading: { title: 'Registrando mascota...' },
-        success: { title: '¡Mascota Registrada!', description: 'Se añadió a tu lista de engreídos' },
-        error: (err) => ({
-          title: 'No se pudo guardar',
-          description: typeof err.response?.data === 'string' ? err.response.data : 'Verifica los campos.'
-        })
-      });
+      if (seleccion.veterinarioId) {
+        payload.veterinario = { id: parseInt(seleccion.veterinarioId) };
+      }
 
-      const res = await peticion;
-      setMascotas([...mascotas, res.data]);
-      setModalAbierto(false);
-      setForm({ nombre: '', especie: 'PERRO', raza: '', sexo: 'MACHO', pesoActual: '', fechaNacimiento: '', alertasMedicas: '' });
-      
+      await axios.post('http://localhost:8080/api/citas', payload, getConfig());
+
+      Swal.fire({
+        icon: 'success',
+        title: '¡Cita Reservada Exitosamente!',
+        text: seleccion.veterinarioId 
+          ? 'Hemos agendado tu turno. Si hay algún cruce, la clínica se comunicará contigo.' 
+          : 'Tu cita está registrada. Recepción le asignará el especialista disponible más pronto.',
+        confirmButtonColor: '#185FA5'
+      }).then(() => cerrarModal());
+
     } catch (error) {
-      console.error(error);
+      console.error(error); 
+      const mensajeBackend = typeof error.response?.data === 'string' ? error.response.data : 'El especialista está ocupado o hay un problema.';
+      Swal.fire({ icon: 'error', title: 'No se pudo reservar', text: mensajeBackend });
+    } finally {
+      setCargando(false);
     }
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-      
-      <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-slate-200/60 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2"><Heart className="text-rose-500" size={28}/> Mis Engreídos</h1>
-          <p className="text-slate-500 text-sm mt-1">Registra y gestiona la información clínica de tus compañeros.</p>
-        </div>
-        <button 
-          onClick={() => setModalAbierto(true)} 
-          disabled={!idDueño} 
-          className="w-full sm:w-auto bg-gradient-to-tr from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 transition-all hover:-translate-y-0.5 disabled:opacity-50"
-        >
-          <Plus size={18}/> Agregar Mascota
-        </button>
-      </div>
-
-      {cargando ? (
-        <div className="flex justify-center py-20"><Activity className="animate-spin text-blue-500" size={40} /></div>
-      ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
-          <div className="xl:col-span-3">
-            {mascotas.length === 0 ? (
-              <div className="bg-white rounded-[2rem] border border-slate-200 p-12 text-center">
-                <Heart size={48} className="mx-auto text-slate-200 mb-4" />
-                <h3 className="text-xl font-black text-slate-700">Aún no tienes mascotas registradas</h3>
-                <p className="text-slate-500 mt-2 mb-6">Agrega a tu primer engreído para empezar a gestionar sus citas de control.</p>
-                <button onClick={() => setModalAbierto(true)} className="bg-gradient-to-tr from-sky-500 to-blue-600 text-white font-bold px-6 py-2.5 rounded-xl shadow-md">Registrar mi mascota</button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {mascotas.map(m => (
-                  <button 
-                    key={m.id} 
-                    onClick={() => setMascotaSeleccionada(m)}
-                    className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 flex flex-col items-center text-center relative overflow-hidden group hover:border-blue-300 hover:shadow-md transition-all cursor-pointer w-full"
-                  >
-                    {m.alertasMedicas && <div className="absolute top-4 right-4 text-rose-500" title="Alertas médicas"><AlertCircle size={20} /></div>}
-                    
-                    <div className="w-24 h-24 bg-gradient-to-tr from-sky-50 to-blue-50 rounded-full flex items-center justify-center text-blue-500 mb-4 border-4 border-white shadow-sm group-hover:scale-105 transition-transform">
-                      <PawPrint size={40} strokeWidth={1.5} />
-                    </div>
-                    
-                    <h3 className="text-xl font-black text-slate-800">{m.nombre}</h3>
-                    <p className="text-sm font-semibold text-slate-400 capitalize">{m.especie.toLowerCase()} • {m.raza || 'Raza común'}</p>
-                    
-                    <div className="w-full flex justify-between px-4 py-3 bg-slate-50 rounded-2xl mt-4 border border-slate-100 group-hover:bg-blue-50 transition-colors">
-                      <div className="text-center"><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Edad</p><p className="font-bold text-slate-700">{calcularEdad(m.fechaNacimiento)} años</p></div>
-                      <div className="w-px bg-slate-200 group-hover:bg-blue-200 transition-colors"></div>
-                      <div className="text-center"><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Peso</p><p className="font-bold text-slate-700">{m.pesoActual || 0} kg</p></div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+    <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={cerrarModal}></div>
+      <div className="relative bg-white rounded-[2rem] shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+        
+        {/* HEADER */}
+        <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
+          <div className="flex items-center gap-2">
+            <CalendarPlus className="text-blue-600" size={22} /> 
+            <h3 className="text-base font-black text-slate-800 uppercase tracking-wide">Agendar Cita Médica</h3>
           </div>
-
-          <div className="bg-white rounded-[2rem] border border-slate-200 p-6 space-y-6 shadow-sm">
-            <h3 className="font-black text-slate-800 text-sm uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
-              <ShieldCheck className="text-blue-500" size={18}/> Recomendaciones
-            </h3>
-            
-            <div className="space-y-4 text-xs">
-              <div className="p-3.5 bg-sky-50/50 rounded-2xl border border-sky-100 flex gap-3">
-                <Info className="text-sky-500 shrink-0" size={16}/>
-                <div>
-                  <p className="font-black text-sky-900 mb-0.5">Control de Vacunas</p>
-                  <p className="text-slate-600 leading-relaxed">Recuerda que los refuerzos anuales protegen a tus engreídos de enfermedades críticas.</p>
-                </div>
-              </div>
-
-              <div className="p-3.5 bg-amber-50/50 rounded-2xl border border-amber-100 flex gap-3">
-                <AlertCircle className="text-amber-500 shrink-0" size={16}/>
-                <div>
-                  <p className="font-black text-amber-900 mb-0.5">Atención 24 Horas</p>
-                  <p className="text-slate-600 leading-relaxed">Ante cualquier emergencia o signo de alerta médico, puedes acudir a sede directo sin cita previa.</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <button onClick={cerrarModal} className="text-slate-400 hover:text-rose-500 transition-colors bg-white p-1 rounded-lg border border-slate-200 shadow-sm"><X size={20} /></button>
         </div>
-      )}
 
-      {/* MODAL DETALLES DE MASCOTA */}
-      {mascotaSeleccionada && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setMascotaSeleccionada(null)}></div>
-          
-          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <h3 className="font-black text-xl text-slate-800 flex items-center gap-2"><PawPrint className="text-blue-500" size={24}/> Ficha del Paciente</h3>
-              <button onClick={() => setMascotaSeleccionada(null)} className="text-slate-400 hover:text-rose-500 bg-white p-1 rounded-lg border border-slate-200 shadow-sm transition-colors"><X size={20}/></button>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              <div className="flex items-center gap-4 border-b border-slate-100 pb-6">
-                <div className="w-20 h-20 bg-sky-50 rounded-full flex items-center justify-center text-blue-500 border-2 border-sky-100 shrink-0">
-                  <PawPrint size={36} strokeWidth={1.5} />
-                </div>
-                <div>
-                  <h4 className="text-3xl font-black text-slate-800 tracking-tight">{mascotaSeleccionada.nombre}</h4>
-                  <p className="text-sm font-semibold text-slate-500 capitalize">{mascotaSeleccionada.especie.toLowerCase()} • {mascotaSeleccionada.raza || 'Común'}</p>
-                </div>
-              </div>
+        {/* INDICADOR DE PASOS */}
+        <div className="bg-slate-50 px-6 py-3 border-b border-slate-100 flex items-center justify-between text-xs font-bold text-slate-400 shrink-0">
+          <span className={paso === 1 ? 'text-blue-600 font-black' : ''}>1. Mascota</span>
+          <span className={paso === 2 ? 'text-blue-600 font-black' : ''}>2. Servicio</span>
+          <span className={paso === 3 ? 'text-blue-600 font-black' : ''}>3. Horario</span>
+        </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-1.5 mb-1"><User size={12}/> Sexo</p>
-                  <p className="font-bold text-slate-700 capitalize">{mascotaSeleccionada.sexo.toLowerCase()}</p>
-                </div>
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-1.5 mb-1"><Calendar size={12}/> Edad</p>
-                  <p className="font-bold text-slate-700">{calcularEdad(mascotaSeleccionada.fechaNacimiento)} años</p>
-                </div>
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-1.5 mb-1"><ActivitySquare size={12}/> Peso Actual</p>
-                  <p className="font-bold text-slate-700">{mascotaSeleccionada.pesoActual || '0.0'} kg</p>
-                </div>
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-1.5 mb-1"><Calendar size={12}/> Nacimiento</p>
-                  <p className="font-bold text-slate-700">{formatearFechaSimple(mascotaSeleccionada.fechaNacimiento)}</p>
-                </div>
-              </div>
+        {/* CUERPO DEL MODAL */}
+        <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1">
 
-              {mascotaSeleccionada.alertasMedicas && (
-                <div className="bg-rose-50 p-4 rounded-2xl border border-rose-100">
-                  <p className="text-[10px] font-black uppercase text-rose-500 tracking-widest flex items-center gap-1.5 mb-2"><AlertCircle size={14}/> Alertas Médicas</p>
-                  <p className="text-sm font-semibold text-rose-800">{mascotaSeleccionada.alertasMedicas}</p>
-                </div>
+          {paso === 1 && (
+            <div className="space-y-5 animate-in fade-in duration-300">
+              {!modoCrearMascota ? (
+                <>
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><Heart size={14}/> ¿A quién atenderemos?</label>
+                    <button onClick={() => setModoCrearMascota(true)} disabled={!idDueño} className="text-xs font-black text-blue-600 flex items-center gap-1 hover:underline disabled:opacity-50"><Plus size={14}/> Nueva mascota</button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {mascotas.map(m => (
+                      <div key={m.id} onClick={() => setSeleccion({ ...seleccion, mascotaId: m.id })} className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${seleccion.mascotaId === m.id ? 'border-blue-600 bg-blue-50/40' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+                        <p className="font-black text-slate-800 text-base">{m.nombre}</p>
+                        <p className="text-xs font-semibold text-slate-400 capitalize">{m.especie.toLowerCase()} • {m.raza || 'Raza común'}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="pt-4 flex justify-end">
+                    <button disabled={!seleccion.mascotaId} onClick={() => setPaso(2)} className="px-6 py-2.5 bg-blue-600 text-white font-bold text-sm rounded-xl disabled:opacity-50 hover:bg-blue-700 transition-colors">Siguiente Paso</button>
+                  </div>
+                </>
+              ) : (
+                <form onSubmit={handleCrearMascota} className="space-y-4">
+                  <h4 className="font-black text-slate-800 text-lg">Datos de la Mascota</h4>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-500">Nombre *</label>
+                    <input required type="text" className="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-sm font-semibold focus:ring-2 focus:ring-blue-500" value={nuevaMascota.nombre} onChange={e => setNuevaMascota({...nuevaMascota, nombre: e.target.value})} placeholder="Ej: Yaco" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-500">Especie *</label>
+                      <select className="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-sm font-semibold focus:ring-2 focus:ring-blue-500" value={nuevaMascota.especie} onChange={e => setNuevaMascota({...nuevaMascota, especie: e.target.value})}>
+                        <option value="PERRO">Perro</option><option value="GATO">Gato</option><option value="AVE">Ave / Exótico</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-500">Sexo *</label>
+                      <select className="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-sm font-semibold focus:ring-2 focus:ring-blue-500" value={nuevaMascota.sexo} onChange={e => setNuevaMascota({...nuevaMascota, sexo: e.target.value})}>
+                        <option value="MACHO">Macho</option><option value="HEMBRA">Hembra</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-500">Fecha Nacimiento *</label>
+                      <input required type="date" max={new Date().toISOString().split("T")[0]} className="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-sm font-semibold focus:ring-2 focus:ring-blue-500" value={nuevaMascota.fechaNacimiento} onChange={e => setNuevaMascota({...nuevaMascota, fechaNacimiento: e.target.value})} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-500">Peso Actual (Kg) *</label>
+                      <input required type="number" step="0.1" className="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-sm font-semibold focus:ring-2 focus:ring-blue-500" value={nuevaMascota.pesoActual} onChange={e => setNuevaMascota({...nuevaMascota, pesoActual: e.target.value})} placeholder="Ej: 5.5" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-500">Raza / Variedad</label>
+                    <input type="text" className="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-sm font-semibold focus:ring-2 focus:ring-blue-500" value={nuevaMascota.raza} onChange={e => setNuevaMascota({...nuevaMascota, raza: e.target.value})} placeholder="Ej: Mestizo (Opcional)" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-500">Alertas Médicas (Opcional)</label>
+                    <textarea rows="2" className="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-sm font-semibold focus:ring-2 focus:ring-blue-500 resize-none" value={nuevaMascota.alertasMedicas} onChange={e => setNuevaMascota({...nuevaMascota, alertasMedicas: e.target.value})} placeholder="Ej: Alérgico a algo..." />
+                  </div>
+
+                  <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+                    {mascotas.length > 0 && <button type="button" onClick={() => setModoCrearMascota(false)} className="text-xs font-bold text-slate-500 flex items-center gap-1 hover:text-slate-700"><ArrowLeft size={14}/> Volver</button>}
+                    <button type="submit" disabled={cargando} className="ml-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl flex items-center gap-2 transition-colors">
+                      {cargando ? <Loader2 className="animate-spin" size={16}/> : 'Guardar y Continuar'}
+                    </button>
+                  </div>
+                </form>
               )}
             </div>
-          </div>
-        </div>,
-        document.body
-      )}
+          )}
 
-      {/* MODAL AGREGAR MASCOTA */}
-      {modalAbierto && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setModalAbierto(false)}></div>
-          
-          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh]">
-            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
-              <h3 className="font-black text-lg text-slate-800 flex items-center gap-2"><Heart className="text-rose-500" size={20}/> Nueva Mascota</h3>
-              <button onClick={() => setModalAbierto(false)} className="text-slate-400 hover:text-rose-500 bg-white p-1 rounded-lg border border-slate-200 shadow-sm transition-colors"><X size={20}/></button>
+          {paso === 2 && (
+            <div className="space-y-5 animate-in fade-in duration-300">
+              <label className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><Stethoscope size={14}/> ¿Qué servicio requiere?</label>
+              <div className="space-y-2">
+                {servicios.map(s => (
+                  <div key={s.id} onClick={() => setSeleccion({ ...seleccion, servicioId: s.id })} className={`p-4 rounded-xl border-2 cursor-pointer flex justify-between items-center transition-all ${seleccion.servicioId === s.id ? 'border-blue-600 bg-blue-50/40' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+                    <div><p className="font-black text-slate-800 text-sm">{s.nombre}</p></div>
+                    <span className="font-bold text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">S/ {s.precio?.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between pt-4 border-t border-slate-100">
+                <button onClick={() => setPaso(1)} className="px-5 py-2.5 bg-slate-100 text-slate-600 font-bold text-sm rounded-xl flex items-center gap-1 hover:bg-slate-200"><ArrowLeft size={16}/> Atrás</button>
+                <button disabled={!seleccion.servicioId} onClick={() => setPaso(3)} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl disabled:opacity-50 transition-colors">Siguiente</button>
+              </div>
             </div>
-            
-            <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
-              <form id="form-mascota" onSubmit={handleGuardar} className="space-y-5">
+          )}
+
+          {paso === 3 && (
+            <div className="space-y-5 animate-in fade-in duration-300">
+              <div className="space-y-1.5">
+                <label className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><User size={14}/> Especialista Médico</label>
+                <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none text-sm font-semibold focus:ring-2 focus:ring-blue-500" value={seleccion.veterinarioId} onChange={e => setSeleccion({ ...seleccion, veterinarioId: e.target.value })}>
+                  {/* CAMBIO MAESTRO: ESTA OPCIÓN AHORA ES LA POR DEFECTO Y MANDA UN ID VACÍO */}
+                  <option value="">Cualquier especialista disponible</option>
+                  {veterinarios.map(v => <option key={v.id} value={v.id}>{v.nombreVisible}</option>)}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500">Nombre *</label>
-                  <input required type="text" className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500" value={form.nombre} onChange={e=>setForm({...form, nombre: e.target.value})} placeholder="Ej: Pelusa" />
+                  <label className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><Clock size={14}/> Fecha</label>
+                  <input type="date" min={new Date().toISOString().split('T')[0]} className="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-sm font-semibold focus:ring-2 focus:ring-blue-500" value={seleccion.fecha} onChange={e => setSeleccion({ ...seleccion, fecha: e.target.value })} />
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500">Especie *</label>
-                    <select className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500" value={form.especie} onChange={e=>setForm({...form, especie: e.target.value})}><option value="PERRO">Perro</option><option value="GATO">Gato</option><option value="AVE">Ave / Exótico</option></select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500">Sexo *</label>
-                    <select className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500" value={form.sexo} onChange={e=>setForm({...form, sexo: e.target.value})}><option value="MACHO">Macho</option><option value="HEMBRA">Hembra</option></select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500">Fecha Nacimiento *</label>
-                    <input required type="date" max={new Date().toISOString().split("T")[0]} className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500" value={form.fechaNacimiento} onChange={e=>setForm({...form, fechaNacimiento: e.target.value})} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-500">Peso Actual (kg) *</label>
-                    <input type="number" step="0.1" required className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500" value={form.pesoActual} onChange={e=>setForm({...form, pesoActual: e.target.value})} placeholder="Ej: 5.5"/>
-                  </div>
-                </div>
-
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500">Raza / Variedad</label>
-                  <input type="text" className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500" value={form.raza} onChange={e=>setForm({...form, raza: e.target.value})} placeholder="Ej: Mestizo"/>
+                  <label className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><Clock size={14}/> Hora</label>
+                  <input type="time" className="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-sm font-semibold focus:ring-2 focus:ring-blue-500" value={seleccion.hora} onChange={e => setSeleccion({ ...seleccion, hora: e.target.value })} />
                 </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-500">Alertas Médicas (Opcional)</label>
-                  <textarea rows="2" className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none resize-none focus:ring-2 focus:ring-blue-500" value={form.alertasMedicas} onChange={e=>setForm({...form, alertasMedicas: e.target.value})} placeholder="Ej: Alérgico a..."/>
-                </div>
-              </form>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><FileText size={14}/> Motivo de Consulta (Opcional)</label>
+                <textarea rows="2" className="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-sm font-semibold resize-none focus:ring-2 focus:ring-blue-500" value={seleccion.motivo} onChange={e => setSeleccion({ ...seleccion, motivo: e.target.value })} placeholder="Ej: Chequeo de rutina, mi perrito no quiere comer..." />
+              </div>
+              
+              <div className="flex justify-between pt-6 border-t border-slate-100">
+                <button onClick={() => setPaso(2)} className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm rounded-xl flex items-center gap-1"><ArrowLeft size={16}/> Atrás</button>
+                {/* YA NO ES OBLIGATORIO EL VETERINARIO PARA CONTINUAR */}
+                <button disabled={!seleccion.fecha || !seleccion.hora || cargando} onClick={handleFinalizarCita} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black text-sm rounded-xl flex items-center gap-2 shadow-md disabled:opacity-50 transition-colors">
+                  {cargando ? <Loader2 className="animate-spin" size={16}/> : <><CheckCircle2 size={16}/> Confirmar Reserva</>}
+                </button>
+              </div>
             </div>
-
-            <div className="p-6 border-t border-slate-100 bg-slate-50 shrink-0">
-              <button disabled={!idDueño || cargando} form="form-mascota" type="submit" className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-md shadow-blue-500/10 disabled:opacity-50">Guardar Mascota</button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+          )}
+        </div>
+      </div>
     </div>
   );
 };
 
-export default MisMascotasCliente;
+export default ModalReservaCliente;

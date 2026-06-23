@@ -1,21 +1,32 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import logo from '../assets/Logo Huesitos.png';
 import { sileo } from 'sileo';
+import { ShieldPlus, Microscope, Stethoscope, Phone, Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
-const BG_IMAGE_URL = null; 
+const BG_IMAGE_URL = null;
+
+// Mismo lenguaje visual que Landing.jsx — acento serif itálico autocontenido.
+const accentFont = { fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" };
+
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 18 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] },
+});
 
 const VetLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(''); 
-  
-  const navigate = useNavigate(); 
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMsg(''); 
+    setErrorMsg('');
 
     try {
       const response = await fetch('http://localhost:8080/api/autenticacion/login', {
@@ -23,15 +34,15 @@ const VetLogin = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          correo: email, 
-          contrasena: password 
+        body: JSON.stringify({
+          correo: email,
+          contrasena: password
         }),
       });
 
       if (response.ok) {
-        const data = await response.json(); 
-        
+        const data = await response.json();
+
         localStorage.setItem('token', data.token);
         localStorage.setItem('usuarioCorreo', data.correo);
         localStorage.setItem('usuarioRol', data.rol);
@@ -52,7 +63,7 @@ const VetLogin = () => {
         } else if (data.rol === 'AUXILIAR_VETERINARIO') {
           navigate('/auxiliar');
         } else {
-          navigate('/');  
+          navigate('/');
         }
       } else {
         const errorText = await response.text();
@@ -66,89 +77,48 @@ const VetLogin = () => {
     }
   };
 
-  const colors = {
-    blue900: '#042C53',
-    blue800: '#0C447C',
-    blue600: '#185FA5',
-    blue400: '#378ADD',
-    blue200: '#85B7EB',
-    blue100: '#B5D4F4',
-    blue50:  '#E6F1FB',
-    red100:  '#F7C1C1',
-    red600:  '#A32D2D',
-    red50:   '#FCEBEB',
-  };
-
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#f1f5f9',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '1rem',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-    }}>
-      <div style={{
-        display: 'flex',
-        width: '100%',
-        maxWidth: '840px',
-        borderRadius: '20px',
-        overflow: 'hidden',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 4px 32px rgba(0,0,0,0.10)',
-        position: 'relative', 
-      }}>
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
+      <motion.div
+        {...fadeUp(0)}
+        className="flex w-full max-w-[840px] rounded-[28px] overflow-hidden border border-slate-200 shadow-2xl shadow-slate-900/10 relative bg-white"
+      >
 
         {/* PANEL IZQUIERDO */}
-        <div style={{
-          width: '52%',
-          position: 'relative',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: "space-between",
-          overflow: 'hidden',
-          minHeight: '580px',
-          ...(BG_IMAGE_URL
+        <div
+          className="hidden sm:flex w-[52%] relative flex-col justify-between overflow-hidden min-h-[600px]"
+          style={BG_IMAGE_URL
             ? { backgroundImage: `url(${BG_IMAGE_URL})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-            : { background: `linear-gradient(135deg, ${colors.blue600} 0%, ${colors.blue900} 100%)` }
-          ),
-        }}>
-          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(160deg, rgba(4,44,83,0.55) 0%, rgba(4,44,83,0.82) 50%, rgba(4,44,83,0.97) 100%)`, zIndex: 1 }} />
+            : { background: 'linear-gradient(135deg, #0284c7 0%, #020617 100%)' }}
+        >
+          <div className="absolute inset-0 z-[1]" style={{ background: 'linear-gradient(160deg, rgba(2,6,23,0.45) 0%, rgba(2,6,23,0.8) 50%, rgba(2,6,23,0.97) 100%)' }} />
+          <div className="absolute top-0 right-0 w-72 h-72 bg-sky-400/20 rounded-full blur-3xl -translate-y-1/3 translate-x-1/3 z-0" />
 
-          <div style={{ position: 'relative', zIndex: 2, padding: '2.5rem 2rem 0' }}>
-            <div className="w-14 h-14 bg-gradient-to-tr from-sky-500 to-cyan-300 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-sky-400/30">
-             <img src={logo} alt="Logo de la clínica" />
+          <div className="relative z-10 p-9 pb-0">
+            <div className="w-14 h-14 bg-gradient-to-tr from-sky-500 to-cyan-300 rounded-2xl flex items-center justify-center shadow-lg shadow-sky-400/30">
+              <img src={logo} alt="Logo de la clínica" className="w-full h-full object-contain p-1.5" />
             </div>
           </div>
 
-          <div style={{ position: 'relative', zIndex: 2, padding: '0 2rem 2.5rem', marginBottom: '8rem' }}>
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: '8px',
-              background: 'rgba(55,138,221,0.18)', border: '1px solid rgba(133,183,235,0.3)',
-              borderRadius: '999px', padding: '5px 14px', marginBottom: '1rem',
-            }}>
-              <span style={{ fontSize: '14px' }}>🛡️</span>
-              <span style={{ fontSize: '11px', color: colors.blue200, fontWeight: 500, letterSpacing: '0.04em' }}>Medicina veterinaria de vanguardia</span>
+          <div className="relative z-10 px-9 pb-12">
+            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/15 rounded-full px-3.5 py-1.5 mb-4 backdrop-blur-md">
+              <ShieldPlus size={14} className="text-sky-200" />
+              <span className="text-[11px] text-sky-200 font-semibold tracking-wide">Medicina veterinaria de vanguardia</span>
             </div>
-            <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#fff', lineHeight: 1.3, marginBottom: '10px' }}>
-              Excelencia médica para <span style={{ color: colors.blue200 }}>quienes más amas</span>
+            <h2 className="text-2xl font-semibold text-white leading-snug mb-2.5">
+              Excelencia médica para <span className="italic text-sky-200" style={accentFont}>quienes más amas</span>
             </h2>
-            <p style={{ fontSize: '13px', color: colors.blue100, lineHeight: 1.6, marginBottom: '1.25rem', maxWidth: '280px' }}>
+            <p className="text-[13px] text-slate-300 leading-relaxed mb-5 max-w-[280px]">
               Las consultas médicas nos ayudan a monitorear la salud de tu mascota con tecnología de vanguardia y especialistas certificados.
             </p>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <div className="flex gap-2 flex-wrap">
               {[
-                { icon: '🔬', label: 'Laboratorio 24h' },
-                { icon: '🩺', label: 'Especialistas' },
-                { icon: '📞', label: 'Emergencias 24/7' },
+                { icon: <Microscope size={13} />, label: 'Laboratorio 24h' },
+                { icon: <Stethoscope size={13} />, label: 'Especialistas' },
+                { icon: <Phone size={13} />, label: 'Emergencias 24/7' },
               ].map(({ icon, label }) => (
-                <div key={label} style={{
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                  background: 'rgba(255,255,255,0.08)', border: '0.5px solid rgba(255,255,255,0.15)',
-                  borderRadius: '999px', padding: '5px 12px', fontSize: '12px', color: colors.blue50,
-                }}>
-                  <span>{icon}</span> {label}
+                <div key={label} className="flex items-center gap-1.5 bg-white/[0.08] border border-white/15 rounded-full px-3 py-1.5 text-[12px] text-slate-100">
+                  {icon} {label}
                 </div>
               ))}
             </div>
@@ -156,100 +126,95 @@ const VetLogin = () => {
         </div>
 
         {/* PANEL DERECHO */}
-        <div style={{
-          width: '48%', background: '#fff', padding: '2.5rem 2rem', display: 'flex',
-          flexDirection: 'column', justifyContent: 'center', position: 'relative'
-        }}>
-          
-          <button 
-            onClick={() => navigate('/')} 
-            style={{
-              position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none',
-              color: '#64748b', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px'
-            }}
+        <div className="w-full sm:w-[48%] bg-white p-8 sm:p-10 flex flex-col justify-center relative">
+
+          <button
+            onClick={() => navigate('/')}
+            className="absolute top-5 right-5 flex items-center gap-1.5 text-slate-400 hover:text-slate-700 text-[13px] font-semibold transition-colors"
           >
-            ← Volver
+            <ArrowLeft size={14} /> Volver
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem' }}>
-            <div className="w-14 h-14 bg-gradient-to-tr from-sky-500 to-cyan-300 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-sky-400/30">
-             <img src={logo} alt="Logo de la clínica" />
+          <div className="flex items-center gap-2.5 mb-6">
+            <div className="w-12 h-12 bg-gradient-to-tr from-sky-500 to-cyan-300 rounded-2xl flex items-center justify-center shadow-md shadow-sky-400/30">
+              <img src={logo} alt="Logo de la clínica" className="w-full h-full object-contain p-1.5" />
             </div>
             <div>
-              <div style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>Huesitos</div>
-              <div style={{ fontSize: '11px', color: colors.blue600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Clínica Veterinaria</div>
+              <div className="text-lg font-bold text-slate-900">Huesitos</div>
+              <div className="text-[11px] text-sky-600 uppercase tracking-[0.06em] font-semibold">Clínica Veterinaria</div>
             </div>
           </div>
 
-          <div style={{ marginBottom: '1.5rem' }}>
-            <h2 style={{ fontSize: '21px', fontWeight: 700, color: '#0f172a', marginBottom: '3px' }}>Iniciar sesión</h2>
-            <p style={{ fontSize: '13px', color: '#64748b' }}>Bienvenido de nuevo a Huesitos</p>
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-slate-900 mb-0.5">Iniciar sesión</h2>
+            <p className="text-[13px] text-slate-500">Bienvenido de nuevo a Huesitos</p>
           </div>
 
           {errorMsg && (
-            <div style={{ background: colors.red50, color: colors.red600, padding: '10px', borderRadius: '8px', fontSize: '12px', marginBottom: '1rem', border: `1px solid ${colors.red100}` }}>
+            <div className="bg-rose-50 text-rose-600 border border-rose-200 rounded-xl px-3.5 py-2.5 text-[12px] mb-4">
               {errorMsg}
             </div>
           )}
 
-          <div style={{ marginBottom: '1.1rem' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '5px' }}>Correo electrónico</label>
-            <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', fontSize: '16px', color: '#94a3b8' }}>✉</span>
+          <div className="mb-4">
+            <label className="block text-[12px] font-semibold text-slate-600 mb-1.5">Correo electrónico</label>
+            <div className="relative">
+              <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
-                type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="correo@ejemplo.com" required
-                style={{
-                  width: '100%', padding: '0 11px 0 35px', height: '42px', borderRadius: '10px', border: '1px solid #e2e8f0',
-                  background: '#f8fafc', fontSize: '13px', color: '#0f172a', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box',
-                }}
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="correo@ejemplo.com"
+                required
+                className="w-full h-[44px] pl-10 pr-3 rounded-xl border border-slate-200 bg-slate-50 text-[13px] text-slate-900 outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-400 transition-all"
               />
             </div>
           </div>
 
-          <div style={{ marginBottom: '0.5rem' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '5px' }}>Contraseña</label>
-            <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', fontSize: '16px', color: '#94a3b8' }}>🔒</span>
+          <div className="mb-2">
+            <label className="block text-[12px] font-semibold text-slate-600 mb-1.5">Contraseña</label>
+            <div className="relative">
+              <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
-                type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required
-                style={{
-                  width: '100%', padding: '0 38px 0 35px', height: '42px', borderRadius: '10px', border: '1px solid #e2e8f0',
-                  background: '#f8fafc', fontSize: '13px', color: '#0f172a', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box',
-                }}
+                type={showPass ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                className="w-full h-[44px] pl-10 pr-10 rounded-xl border border-slate-200 bg-slate-50 text-[13px] text-slate-900 outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-400 transition-all"
               />
               <button
-                type="button" onClick={() => setShowPass(!showPass)}
-                style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '16px', padding: 0 }}
+                type="button"
+                onClick={() => setShowPass(!showPass)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
-                {showPass ? '🙈' : '👁'}
+                {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
 
-          <div style={{ textAlign: 'right', marginBottom: '1.25rem' }}>
-            <a href="#" style={{ fontSize: '12px', color: colors.blue600, textDecoration: 'none', fontWeight: 500 }}>¿Olvidaste tu contraseña?</a>
+          <div className="text-right mb-5">
+            <a href="#" className="text-[12px] text-sky-600 font-medium hover:underline">¿Olvidaste tu contraseña?</a>
           </div>
 
           <button
-            type="button" onClick={handleSubmit}
-            style={{
-              width: '100%', height: '44px', background: colors.blue600, color: colors.blue50, border: 'none', borderRadius: '10px',
-              fontSize: '14px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontFamily: 'inherit', transition: 'background 0.15s',
-            }}
+            type="button"
+            onClick={handleSubmit}
+            className="w-full h-[46px] bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[14px] font-semibold transition-colors shadow-lg shadow-slate-900/15"
           >
-             Ingresar
+            Ingresar
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '1rem 0' }}>
-            <hr style={{ flex: 1, border: 'none', borderTop: '1px solid #e2e8f0' }} />
+          <div className="flex items-center gap-2.5 my-4">
+            <hr className="flex-1 border-t border-slate-200" />
           </div>
 
-          <p style={{ textAlign: 'center', fontSize: '12px', color: '#64748b', marginTop: '1rem' }}>
-            ¿Nuevo aquí? <Link to="/registro" style={{ color: colors.blue600, textDecoration: 'none', fontWeight: 600 }}>Crea una cuenta</Link>
+          <p className="text-center text-[12px] text-slate-500">
+            ¿Nuevo aquí? <Link to="/registro" className="text-sky-600 font-semibold hover:underline">Crea una cuenta</Link>
           </p>
 
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

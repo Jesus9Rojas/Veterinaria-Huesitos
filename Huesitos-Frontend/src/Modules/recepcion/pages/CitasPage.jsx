@@ -4,7 +4,7 @@ import axios from 'axios';
 import { sileo } from 'sileo';
 import { 
   CalendarDays, Plus, Search, User, Clock, 
-  Activity, X, CheckCircle2, ChevronRight, ChevronLeft, Stethoscope, ChevronDown, PawPrint, UserPlus, Loader2
+  Activity, X, CheckCircle2, ChevronRight, ChevronLeft, Stethoscope, ChevronDown, UserPlus, Loader2, LayoutList
 } from 'lucide-react';
 import { obtenerCitasPorDia, crearCita, cambiarEstadoCita } from '../../../services/citaService';
 import { obtenerListaDuenos } from '../../../services/duenoService';
@@ -13,8 +13,22 @@ import { listarServicios } from '../../../services/servicioService';
 import { obtenerListaUsuarios } from '../../../services/usuarioService';
 import Swal from 'sweetalert2';
 
+// Importaciones para el Calendario
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
+import { format, parse, startOfWeek, getDay } from 'date-fns';
+import { es } from 'date-fns/locale';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+
+const locales = { 'es': es };
+const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
+const mensajesCalendario = {
+  next: "Siguiente", previous: "Anterior", today: "Hoy", month: "Mes", week: "Semana", day: "Día", 
+  agenda: "Lista", date: "Fecha", time: "Hora", event: "Consulta Médica", noEventsInRange: "No hay citas programadas para esta fecha."
+};
+
 const CitasPage = () => {
   const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date());
+  const [vistaCalendario, setVistaCalendario] = useState('day'); // 'day' o 'agenda'
   const [citas, setCitas] = useState([]);
   const [loading, setLoading] = useState(true); 
   const [triggerRecarga, setTriggerRecarga] = useState(0); 
@@ -26,6 +40,9 @@ const CitasPage = () => {
   const [citaActivaId, setCitaActivaId] = useState(null);
   const [vetAsignarId, setVetAsignarId] = useState("");
   const [asignando, setAsignando] = useState(false);
+
+  const [visorCitaAbierto, setVisorCitaAbierto] = useState(false);
+  const [citaVisualizada, setCitaVisualizada] = useState(null);
 
   const [duenos, setDuenos] = useState([]);
   const [mascotas, setMascotas] = useState([]);
@@ -49,15 +66,14 @@ const CitasPage = () => {
   useEffect(() => {
     obtenerListaDuenos().then(res => setDuenos(res)).catch(console.error);
     listarServicios().then(res => setServicios(res.filter(s => s.activo))).catch(console.error);
-    obtenerListaUsuarios().then(res => {
-      setVeterinarios(res.filter(u => u.rol === 'VETERINARIO'));
-    }).catch(console.error);
+    obtenerListaUsuarios().then(res => setVeterinarios(res.filter(u => u.rol === 'VETERINARIO'))).catch(console.error);
   }, []);
 
   useEffect(() => {
     let isMounted = true;
     const extraerAgenda = async () => {
       try {
+        setLoading(true);
         const fechaStr = fechaSeleccionada.toLocaleDateString('en-CA'); 
         const data = await obtenerCitasPorDia(fechaStr);
         if (isMounted) {
@@ -75,21 +91,16 @@ const CitasPage = () => {
   }, [fechaSeleccionada, triggerRecarga]);
 
   const cambiarDia = (dias) => {
-    setLoading(true); 
     const nuevaFecha = new Date(fechaSeleccionada);
     nuevaFecha.setDate(nuevaFecha.getDate() + dias);
     setFechaSeleccionada(nuevaFecha);
   };
 
-  const irAHoy = () => {
-    setLoading(true);
-    setFechaSeleccionada(new Date());
-  };
+  const irAHoy = () => setFechaSeleccionada(new Date());
 
   const handleCambiarFechaCalendario = (e) => {
     const nuevaFechaStr = e.target.value; 
     if (nuevaFechaStr) {
-      setLoading(true);
       const [year, month, day] = nuevaFechaStr.split('-');
       setFechaSeleccionada(new Date(year, month - 1, day));
     }
@@ -104,8 +115,8 @@ const CitasPage = () => {
       try {
         const mascotasData = await obtenerMascotasPorDueno(duenoId);
         setMascotas(mascotasData);
-      } catch (error) {
-        console.error("Error cargando mascotas:", error);
+      } catch {
+        // CORRECCIÓN: Se remueve el parámetro 'error' del catch porque no se utilizaba
         setMascotas([]);
       }
     } else {
@@ -119,9 +130,7 @@ const CitasPage = () => {
     setBusquedaVeterinario('');
   };
 
-  const handleChange = (e) => {
-    setFormCita({ ...formCita, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setFormCita({ ...formCita, [e.target.name]: e.target.value });
 
   const getVetName = (v) => {
     if (!v) return "";
@@ -132,9 +141,6 @@ const CitasPage = () => {
   };
 
   const abrirModalAsignacion = (citaId) => {
-    if (veterinarios.length === 0) {
-      return sileo.warning({ title: 'Aviso', description: 'No hay veterinarios activos registrados en el sistema.' });
-    }
     setCitaActivaId(citaId);
     setVetAsignarId(""); 
     setModalAsignarOpen(true);
@@ -142,11 +148,6 @@ const CitasPage = () => {
 
   const handleConfirmarAsignacion = async (e) => {
     e.preventDefault();
-    if (!vetAsignarId) {
-      sileo.warning({ title: 'Atención', description: 'Debes seleccionar un médico de la lista.' });
-      return;
-    }
-
     setAsignando(true);
     try {
       const peticion = axios.patch(`http://localhost:8080/api/citas/${citaActivaId}/asignar-veterinario?veterinarioId=${vetAsignarId}`, null, getConfig());
@@ -162,7 +163,12 @@ const CitasPage = () => {
 
       await peticion;
       setModalAsignarOpen(false);
-      setTriggerRecarga(prev => prev + 1); 
+      setTriggerRecarga(prev => prev + 1);
+      
+      if (citaVisualizada && citaVisualizada.id === citaActivaId) {
+        const vet = veterinarios.find(v => v.id.toString() === vetAsignarId);
+        setCitaVisualizada({ ...citaVisualizada, veterinario: vet });
+      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -206,7 +212,6 @@ const CitasPage = () => {
       setFormCita({ duenoId: "", mascotaId: "", servicioId: "", veterinarioId: "", hora: "", motivo: "" });
       setMascotas([]); 
       
-      setLoading(true);
       setTriggerRecarga(prev => prev + 1); 
     } catch (error) {
       console.error("Error al guardar:", error);
@@ -245,7 +250,11 @@ const CitasPage = () => {
       });
 
       await peticion;
-      setTriggerRecarga(prev => prev + 1); 
+      setTriggerRecarga(prev => prev + 1);
+      
+      if (citaVisualizada && citaVisualizada.id === citaId) {
+        setCitaVisualizada({ ...citaVisualizada, estado: nuevoEstado });
+      }
     } catch (error) {
       console.error("Error al actualizar estado:", error);
     }
@@ -265,17 +274,6 @@ const CitasPage = () => {
   const duenoSeleccionadoInfo = duenos.find(d => d.id.toString() === formCita.duenoId.toString());
   const veterinarioSeleccionadoInfo = veterinarios.find(v => v.id.toString() === formCita.veterinarioId.toString());
 
-  const getEstadoColor = (estado) => {
-    switch (estado) {
-      case "PENDIENTE": return "bg-blue-50 text-blue-600 border-blue-200";
-      case "CONFIRMADA": return "bg-sky-50 text-sky-600 border-sky-200";
-      case "EN_ESPERA": return "bg-amber-50 text-amber-600 border-amber-200";
-      case "COMPLETADA": return "bg-emerald-50 text-emerald-600 border-emerald-200";
-      case "CANCELADA": return "bg-red-50 text-red-600 border-red-200";
-      default: return "bg-slate-50 text-slate-600 border-slate-200";
-    }
-  };
-
   const renderEstadoTexto = (estado) => {
     switch (estado) {
       case "PENDIENTE": return "PROGRAMADA";
@@ -287,6 +285,67 @@ const CitasPage = () => {
     }
   }
 
+  const getEstadoColor = (estado) => {
+    switch (estado) {
+      case "PENDIENTE": return "bg-blue-50 text-blue-600 border-blue-200";
+      case "CONFIRMADA": return "bg-sky-50 text-sky-600 border-sky-200";
+      case "EN_ESPERA": return "bg-amber-50 text-amber-600 border-amber-200";
+      case "COMPLETADA": return "bg-emerald-50 text-emerald-600 border-emerald-200";
+      case "CANCELADA": return "bg-red-50 text-red-600 border-red-200";
+      default: return "bg-slate-50 text-slate-600 border-slate-200";
+    }
+  };
+
+  // ================= CONFIGURACIÓN DEL CALENDARIO ================= //
+  const eventosCalendario = citas.map(cita => {
+    const startDate = new Date(cita.fechaHora);
+    const endDate = new Date(startDate.getTime() + 45 * 60000); // 45 min duración visual
+    return {
+      id: cita.id,
+      title: `${cita.mascota?.nombre} - ${cita.servicio?.nombre}`,
+      start: startDate,
+      end: endDate,
+      resource: cita
+    };
+  });
+
+  // ESTILOS PASTEL Y TEXTO OSCURO
+  const eventStyleGetter = (event) => {
+    const estado = event.resource.estado;
+    let bg = '#eff6ff'; // blue-50 (PENDIENTE)
+    let color = '#1e3a8a'; // blue-900
+    let border = '#bfdbfe'; // blue-200
+
+    if (estado === 'CONFIRMADA') { bg = '#f0f9ff'; color = '#0c4a6e'; border = '#bae6fd'; }
+    if (estado === 'EN_ESPERA') { bg = '#fffbeb'; color = '#78350f'; border = '#fde68a'; }
+    if (estado === 'COMPLETADA') { bg = '#ecfdf5'; color = '#064e3b'; border = '#a7f3d0'; }
+    if (estado === 'CANCELADA') { bg = '#fff1f2'; color = '#881337'; border = '#fecdd3'; }
+
+    return {
+      style: {
+        backgroundColor: bg,
+        color: color,
+        border: `2px solid ${border}`,
+        borderRadius: '12px',
+        display: 'block',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+        padding: '4px 8px'
+      }
+    };
+  };
+
+  const EventoPersonalizado = ({ event }) => (
+    <div className="flex flex-col h-full overflow-hidden px-1 py-0.5">
+      <span className="text-[11px] font-black leading-tight mb-0.5 truncate">{event.title}</span>
+      <span className="text-[10px] font-bold opacity-80 truncate">{event.resource.veterinario ? `Dr. ${getVetName(event.resource.veterinario)}` : 'Sin asignar'}</span>
+    </div>
+  );
+
+  const handleSelectEvent = (event) => {
+    setCitaVisualizada(event.resource);
+    setVisorCitaAbierto(true);
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
       
@@ -294,103 +353,185 @@ const CitasPage = () => {
       <div className="flex flex-col xl:flex-row justify-between items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-200/60">
         <div>
           <h1 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-            <CalendarDays className="text-sky-500" /> Agenda de Citas
+            <CalendarDays className="text-sky-500" /> Calendario de Citas
           </h1>
           <p className="text-slate-500 text-sm mt-1 capitalize">
             {fechaSeleccionada.toLocaleDateString('es-PE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center items-center gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-200 ml-auto">
-          <button onClick={() => cambiarDia(-1)} className="p-2 text-slate-500 hover:bg-white hover:text-sky-600 rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-200"><ChevronLeft size={20} /></button>
-          <button onClick={irAHoy} className="px-3 py-2 text-sm font-bold text-slate-700 hover:text-sky-600 transition-colors hidden sm:block">Hoy</button>
-          <div className="relative">
-            <input type="date" value={fechaSeleccionada.toLocaleDateString('en-CA')} onChange={handleCambiarFechaCalendario} className="px-3 py-2 border border-slate-300 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-sky-500 bg-white cursor-pointer hover:border-sky-400 transition-all shadow-sm" />
+        <div className="flex flex-wrap justify-center items-center gap-2 ml-auto">
+          {/* Switcher de Vistas */}
+          <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 mr-2">
+            <button onClick={() => setVistaCalendario('day')} className={`px-4 py-2 text-sm font-bold rounded-xl transition-all shadow-sm ${vistaCalendario === 'day' ? 'bg-white text-sky-600' : 'text-slate-500 hover:text-slate-700'}`}><Clock size={16} className="inline mr-1"/> Día</button>
+            <button onClick={() => setVistaCalendario('agenda')} className={`px-4 py-2 text-sm font-bold rounded-xl transition-all shadow-sm ${vistaCalendario === 'agenda' ? 'bg-white text-sky-600' : 'text-slate-500 hover:text-slate-700'}`}><LayoutList size={16} className="inline mr-1"/> Lista</button>
           </div>
-          <button onClick={() => cambiarDia(1)} className="p-2 text-slate-500 hover:bg-white hover:text-sky-600 rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-200"><ChevronRight size={20} /></button>
+
+          <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+            <button onClick={() => cambiarDia(-1)} className="p-2 text-slate-500 hover:bg-white hover:text-sky-600 rounded-xl transition-all shadow-sm"><ChevronLeft size={20} /></button>
+            <button onClick={irAHoy} className="px-3 py-2 text-sm font-bold text-slate-700 hover:text-sky-600 hidden sm:block">Hoy</button>
+            <input type="date" value={fechaSeleccionada.toLocaleDateString('en-CA')} onChange={handleCambiarFechaCalendario} className="px-3 py-2 border border-slate-300 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-sky-500 bg-white cursor-pointer" />
+            <button onClick={() => cambiarDia(1)} className="p-2 text-slate-500 hover:bg-white hover:text-sky-600 rounded-xl transition-all shadow-sm"><ChevronRight size={20} /></button>
+          </div>
         </div>
 
-        <button onClick={() => setModalOpen(true)} className="bg-gradient-to-r from-sky-500 to-cyan-400 hover:from-sky-600 hover:to-cyan-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-sky-500/30 transition-all flex items-center gap-2">
+        <button onClick={() => setModalOpen(true)} className="bg-gradient-to-r from-sky-500 to-cyan-400 text-white px-6 py-3 rounded-xl font-bold shadow-lg flex items-center gap-2">
           <Plus size={20} /> Nueva Cita
         </button>
       </div>
 
-      {/* TABLA AGENDA */}
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-200/60 p-6 min-h-[400px]">
-        <h2 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2"><Clock className="text-slate-400" /> Atenciones Programadas</h2>
-
+      {/* RENDERIZADO CONDICIONAL: CALENDARIO O LISTA PERSONALIZADA */}
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-200/60 p-6">
         {loading ? (
-          <div className="flex flex-col justify-center items-center h-48 text-sky-500 font-semibold animate-pulse gap-3">
+          <div className="flex flex-col justify-center items-center h-[600px] text-sky-500 font-semibold animate-pulse gap-3">
             <Activity className="animate-spin" size={32} />
             <p>Sincronizando agenda...</p>
           </div>
-        ) : citas.length === 0 ? (
-          <div className="flex flex-col justify-center items-center h-48 text-slate-400 bg-slate-50/50 rounded-2xl border border-slate-100 border-dashed">
-            <CalendarDays size={48} className="mb-4 text-slate-300" />
-            <p className="text-lg font-bold text-slate-500">Agenda libre</p>
-            <p className="text-sm">No hay citas programadas para este día.</p>
+        ) : vistaCalendario === 'day' ? (
+          
+          <div className="h-[600px] custom-calendar-wrapper animate-in fade-in duration-300">
+            <Calendar
+              localizer={localizer}
+              events={eventosCalendario}
+              date={fechaSeleccionada}
+              view="day"
+              onNavigate={setFechaSeleccionada}
+              toolbar={false} 
+              step={15}
+              timeslots={2}
+              min={new Date(0, 0, 0, 8, 0, 0)} 
+              max={new Date(0, 0, 0, 21, 0, 0)} 
+              messages={mensajesCalendario}
+              eventPropGetter={eventStyleGetter}
+              onSelectEvent={handleSelectEvent}
+              components={{ event: EventoPersonalizado }}
+              className="font-sans text-sm text-slate-600"
+            />
           </div>
+
         ) : (
-          <div className="space-y-4">
-            {citas.map((cita) => {
-              const horaFormat = new Date(cita.fechaHora).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
-              const nombreDueño = cita.mascota?.dueño?.nombreCompleto || cita.mascota?.dueno?.nombreCompleto || 'Desconocido';
-              
-              return (
-                <div key={cita.id} className="group relative flex flex-col lg:flex-row gap-4 p-5 rounded-2xl border border-slate-100 bg-white hover:bg-slate-50 hover:shadow-md transition-all lg:items-center">
-                  <div className="lg:w-40 flex flex-col justify-center shrink-0 border-b lg:border-b-0 lg:border-r border-slate-100 pb-4 lg:pb-0 lg:pr-4">
-                    <span className="text-2xl font-black text-slate-800 tracking-tight">{horaFormat}</span>
-                    <span className={`inline-block text-center w-max mt-2 px-3 py-1 rounded-md text-[10px] font-black tracking-widest border ${getEstadoColor(cita.estado)}`}>
-                      {renderEstadoTexto(cita.estado)}
-                    </span>
-                  </div>
-
-                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full py-2">
-                    <div className="space-y-1">
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><PawPrint size={12}/> Paciente</p>
-                      <p className="text-base font-bold text-slate-800">{cita.mascota?.nombre}<span className="text-xs font-medium text-slate-500 ml-1">({cita.mascota?.especie})</span></p>
-                      <p className="text-xs text-slate-600 flex items-center gap-1.5"><User size={11}/> {nombreDueño}</p>
+          
+          /* ========================================================= */
+          /* NUEVA VISTA LISTA (AGENDA) 100% PERSONALIZADA Y PERFECTA  */
+          /* ========================================================= */
+          <div className="max-h-[600px] overflow-y-auto pr-2 custom-scrollbar space-y-4 animate-in fade-in duration-300">
+            {citas.length === 0 ? (
+              <div className="text-center py-20 text-slate-400 flex flex-col items-center">
+                <LayoutList size={48} className="mb-4 opacity-30" />
+                <p className="text-lg font-bold">No hay citas en este día</p>
+              </div>
+            ) : (
+              citas.map(cita => {
+                const horaFormat = new Date(cita.fechaHora).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+                const fechaFormat = new Date(cita.fechaHora).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                return (
+                  <div 
+                    key={cita.id} 
+                    onClick={() => { setCitaVisualizada(cita); setVisorCitaAbierto(true); }}
+                    className={`flex flex-col sm:flex-row items-center justify-between p-5 rounded-2xl border-2 transition-all cursor-pointer hover:shadow-md ${getEstadoColor(cita.estado)}`}
+                  >
+                    <div className="flex items-center gap-6 w-full sm:w-auto">
+                      <div className="text-center shrink-0 min-w-[100px] border-r border-current/20 pr-4">
+                        <p className="text-xl font-black tracking-tight">{horaFormat}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-70 mt-1">{fechaFormat}</p>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-lg font-black leading-tight flex items-center gap-2">
+                          {cita.mascota?.nombre} <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-current/30 opacity-80 uppercase">{cita.mascota?.especie}</span>
+                        </h4>
+                        <p className="text-sm font-semibold opacity-90 mt-1">{cita.servicio?.nombre}</p>
+                        <p className="text-xs font-medium opacity-70 mt-1 flex items-center gap-1.5"><Stethoscope size={12}/> Dr/a. {getVetName(cita.veterinario) || 'Por asignar'}</p>
+                      </div>
                     </div>
-                    
-                    <div className="space-y-1">
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><Stethoscope size={12}/> Servicio / Motivo</p>
-                      <p className="text-base font-bold text-slate-800">{cita.servicio?.nombre}</p>
-                      <p className="text-xs text-slate-500 truncate" title={cita.motivo}>{cita.motivo}</p>
-                    </div>
-                    
-                    <div className="space-y-1">
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><User size={12}/> Veterinario</p>
-                      {cita.veterinario ? (
-                        <p className="text-sm font-bold text-slate-700">Dr/a. {getVetName(cita.veterinario)}</p>
-                      ) : (
-                        <button 
-                          onClick={() => abrirModalAsignacion(cita.id)}
-                          className="flex items-center gap-1 mt-1 px-3 py-1.5 bg-amber-100 text-amber-700 hover:bg-amber-200 font-bold text-xs rounded-lg transition-colors shadow-sm w-max"
-                        >
-                          <UserPlus size={14} /> Por asignar
-                        </button>
-                      )}
+                    <div className="shrink-0 mt-4 sm:mt-0 w-full sm:w-auto text-right">
+                      <span className="inline-block px-4 py-2 rounded-xl text-xs font-black tracking-widest uppercase bg-white/50 border border-current/20">
+                        {renderEstadoTexto(cita.estado)}
+                      </span>
                     </div>
                   </div>
-
-                  <div className="shrink-0 w-full lg:w-48 flex items-center justify-end mt-2 lg:mt-0 pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100">
-                    <div className="relative w-full">
-                      <select value={cita.estado} onChange={(e) => handleCambiarEstado(cita.id, e.target.value)} className="w-full appearance-none border-2 border-slate-200 hover:border-sky-300 p-3 pr-10 rounded-xl text-sm font-black text-slate-700 bg-slate-50 hover:bg-white focus:ring-4 focus:ring-sky-500/20 outline-none cursor-pointer transition-all shadow-sm">
-                        <option value="PENDIENTE">Programada</option>
-                        <option value="CONFIRMADA">Confirmada</option>
-                        <option value="EN_ESPERA">En Espera</option>
-                        <option value="COMPLETADA">Completada</option>
-                        <option value="CANCELADA">Cancelada</option>
-                      </select>
-                      <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         )}
       </div>
+
+      {/* ================= MODAL VISOR DE CITA (NUEVO DISEÑO ENFOCADO AL PACIENTE) ================= */}
+      {visorCitaAbierto && citaVisualizada && createPortal(
+        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setVisorCitaAbierto(false)}></div>
+          
+          <div className="relative bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-lg max-h-full flex flex-col overflow-visible animate-in zoom-in-95 duration-200">
+            
+            {/* Cabecera con Nombre del Paciente Gigante */}
+            <div className="px-6 py-6 border-b border-slate-100 flex justify-between items-start shrink-0 bg-sky-50/50 rounded-t-3xl">
+              <div>
+                <h2 className="text-3xl font-black text-slate-800 tracking-tight">{citaVisualizada.mascota?.nombre}</h2>
+                <div className="text-sm font-bold text-slate-500 mt-2 flex items-center gap-2">
+                  <span className="bg-sky-100 text-sky-700 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-widest">{citaVisualizada.mascota?.especie}</span>
+                  <span className="flex items-center gap-1"><User size={14}/> {citaVisualizada.mascota?.dueño?.nombreCompleto || citaVisualizada.mascota?.dueno?.nombreCompleto}</span>
+                </div>
+              </div>
+              <button type="button" onClick={() => setVisorCitaAbierto(false)} className="text-slate-400 hover:text-slate-700 transition-colors bg-white p-2 rounded-xl shadow-sm border border-slate-200"><X size={20}/></button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              
+              {/* Resumen de Hora y Estado */}
+              <div className="flex justify-between items-center bg-slate-50 border border-slate-100 p-4 rounded-2xl">
+                <div>
+                  <span className="text-xl font-black text-slate-800 tracking-tight">{new Date(citaVisualizada.fechaHora).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}</span>
+                  <p className="text-xs font-bold text-slate-400 mt-1">{new Date(citaVisualizada.fechaHora).toLocaleDateString('es-PE', { dateStyle: 'long' })}</p>
+                </div>
+                <span className={`inline-block px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase border ${getEstadoColor(citaVisualizada.estado)}`}>
+                  {renderEstadoTexto(citaVisualizada.estado)}
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><Stethoscope size={14}/> Servicio y Motivo</p>
+                  <p className="text-base font-bold text-slate-800 bg-white border border-slate-200 p-3 rounded-xl">{citaVisualizada.servicio?.nombre}</p>
+                  <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 italic" title={citaVisualizada.motivo}>"{citaVisualizada.motivo}"</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><UserPlus size={12}/> Veterinario a Cargo</p>
+                  {citaVisualizada.veterinario ? (
+                    <p className="text-base font-black text-slate-700">Dr/a. {getVetName(citaVisualizada.veterinario)}</p>
+                  ) : (
+                    <p className="text-sm font-bold text-amber-500 flex items-center gap-1"><Activity size={14}/> Pendiente de Asignar</p>
+                  )}
+                </div>
+                <button 
+                  onClick={() => abrirModalAsignacion(citaVisualizada.id)}
+                  className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl transition-colors shadow-sm flex items-center gap-2"
+                >
+                  <UserPlus size={14} /> Asignar / Cambiar
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wide">Cambiar Estado Operativo</label>
+                <div className="relative">
+                  <select value={citaVisualizada.estado} onChange={(e) => handleCambiarEstado(citaVisualizada.id, e.target.value)} className="w-full appearance-none border-2 border-slate-200 hover:border-sky-300 p-3.5 pr-10 rounded-xl text-sm font-black text-slate-700 bg-white focus:ring-4 focus:ring-sky-500/20 outline-none cursor-pointer transition-all shadow-sm">
+                    <option value="PENDIENTE">Programada (Pendiente)</option>
+                    <option value="CONFIRMADA">Confirmada</option>
+                    <option value="EN_ESPERA">En Espera (Llegó a clínica)</option>
+                    <option value="COMPLETADA">Completada (Finalizada)</option>
+                    <option value="CANCELADA">Cancelada</option>
+                  </select>
+                  <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* ================= MODAL AGENDAR NUEVA CITA ================= */}
       {modalOpen && createPortal(
@@ -552,7 +693,7 @@ const CitasPage = () => {
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setModalOpen(false)} className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 transition-colors">Cancelar</button>
                 <button type="submit" disabled={guardando} className="px-6 py-2.5 bg-gradient-to-r from-sky-500 to-cyan-400 hover:from-sky-600 hover:to-cyan-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-sky-500/30 transition-all flex items-center gap-2">
-                  {guardando ? 'Programando...' : <><CheckCircle2 size={18}/> Agendar Cita</>}
+                  {guardando ? <Loader2 className="animate-spin" size={18}/> : <><CheckCircle2 size={18}/> Agendar Cita</>}
                 </button>
               </div>
             </form>
@@ -561,7 +702,7 @@ const CitasPage = () => {
         document.body
       )}
 
-      {/* ================= MODAL ASIGNAR MÉDICO ================= */}
+      {/* ================= MODAL ASIGNAR MÉDICO DESDE EL VISOR ================= */}
       {modalAsignarOpen && createPortal(
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setModalAsignarOpen(false)}></div>
@@ -602,6 +743,29 @@ const CitasPage = () => {
         document.body
       )}
 
+      {/* ESTILOS INYECTADOS PARA ARREGLAR REACT-BIG-CALENDAR (SIN ROMPER LA VISTA LISTA) */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .custom-calendar-wrapper .rbc-calendar { font-family: inherit; border: none; }
+        .custom-calendar-wrapper .rbc-header { padding: 16px 0; font-weight: 900; color: #334155; border-bottom: 2px solid #f1f5f9; text-transform: capitalize; }
+        .custom-calendar-wrapper .rbc-allday-cell { display: none; }
+        .custom-calendar-wrapper .rbc-time-view { border: 2px solid #f1f5f9; border-radius: 1.5rem; overflow: hidden; background: white; }
+        .custom-calendar-wrapper .rbc-time-header.rbc-overflowing { border-right: none; }
+        .custom-calendar-wrapper .rbc-timeslot-group { border-bottom: 1px solid #f1f5f9; min-height: 60px; }
+        .custom-calendar-wrapper .rbc-time-content > * + * > * { border-left: 2px solid #f1f5f9; }
+        .custom-calendar-wrapper .rbc-day-slot .rbc-time-slot { border-top: 1px dashed #e2e8f0; }
+        
+        .custom-calendar-wrapper .rbc-event {
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          border-radius: 12px !important; 
+          padding: 4px 8px !important;
+        }
+        .custom-calendar-wrapper .rbc-event:hover {
+          transform: scale(1.02);
+          z-index: 50;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+        }
+        .custom-calendar-wrapper .rbc-current-time-indicator { background-color: #ef4444; height: 2px; }
+      `}} />
     </div>
   );
 };
