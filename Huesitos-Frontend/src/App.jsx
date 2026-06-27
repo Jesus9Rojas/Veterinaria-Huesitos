@@ -7,6 +7,10 @@ import ServiciosPage from './Modules/admin/pages/ServicioPage';
 import AdminDashboard from './pages/AdminDashboard';
 import RegistroClientePage from './pages/RegistroClientePage';
 
+// NUEVOS COMPONENTES DE RECUPERACIÓN DE CONTRASEÑA
+import SolicitarRecuperacion from './pages/SolicitarRecuperacion';
+import RestablecerPassword from './pages/RestablecerPassword';
+
 import ClienteDashboard from './Modules/clientes/pages/ClienteDashboard';
 import MisMascotasCliente from './Modules/clientes/pages/MisMascotasCliente';
 import MisCitasCliente from './Modules/clientes/pages/MisCitasCliente';
@@ -54,6 +58,11 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<VetLogin />} />
           <Route path="/registro" element={<RegistroClientePage />} />
+          
+          {/* NUEVAS RUTAS AGREGADAS AQUÍ */}
+          <Route path="/recuperar-cuenta" element={<SolicitarRecuperacion />} />
+          <Route path="/restablecer-password" element={<RestablecerPassword />} />
+          
           <Route path="/servicios" element={<ServiciosPage/>} />
           
           <Route path="/cliente" element={<ClienteDashboard />}>
@@ -67,7 +76,6 @@ function App() {
           <Route path="/recepcion" element={<RecepcionDashboard />}>
             <Route index element={<InicioRecepcion />} /> 
             <Route path="citas" element={<CitasPage />} />
-            {/* NUEVA RUTA AGREGADA AQUÍ */}
             <Route path="horarios" element={<HorariosMedicosPage />} />
             <Route path="clientes" element={<ClientesPage />} />
             <Route path="caja" element={<CajaPage />} />

@@ -76,22 +76,30 @@ public class AutenticacionControlador {
         }
     }
 
+    // ACTUALIZADO: Usa @RequestBody para procesar el JSON desde el Frontend de manera segura
     @PostMapping("/olvide-contrasena")
-    public ResponseEntity<?> solicitarRestablecimiento(@RequestParam String correo) {
+    public ResponseEntity<?> solicitarRestablecimiento(@RequestBody Map<String, String> request) {
         try {
+            String correo = request.get("correo");
             autenticacionAvanzadaServicio.solicitarRestablecimiento(correo);
+            
             Map<String, String> respuesta = new HashMap<>();
-            respuesta.put("mensaje", "Se ha generado el enlace de recuperación (revisa la consola del backend)");
+            respuesta.put("mensaje", "Si el correo está registrado, se ha enviado un enlace de recuperación.");
             return ResponseEntity.ok(respuesta);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
+    // ACTUALIZADO: Usa @RequestBody para ocultar la contraseña en el cuerpo de la petición HTTP
     @PostMapping("/restablecer-contrasena")
-    public ResponseEntity<?> completarRestablecimiento(@RequestParam String token, @RequestParam String nuevaContrasena) {
+    public ResponseEntity<?> completarRestablecimiento(@RequestBody Map<String, String> request) {
         try {
+            String token = request.get("token");
+            String nuevaContrasena = request.get("nuevaContrasena");
+            
             autenticacionAvanzadaServicio.completarRestablecimiento(token, nuevaContrasena);
+            
             Map<String, String> respuesta = new HashMap<>();
             respuesta.put("mensaje", "Contraseña actualizada correctamente");
             return ResponseEntity.ok(respuesta);

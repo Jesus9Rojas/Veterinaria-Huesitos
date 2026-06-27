@@ -1,4 +1,5 @@
 import usuarioAPI from "../api/usuarioAPI";
+import axios from 'axios';
 
 export const obtenerListaUsuarios = async () => {
   const response = await usuarioAPI.get("");
@@ -32,5 +33,18 @@ export const obtenerDetallesPersonal = async (id) => {
 
 export const actualizarPersonal = async (id, data) => {
   const response = await usuarioAPI.put(`/${id}/personal`, data);
+  return response.data;
+};
+
+// NUEVAS FUNCIONES PARA RECUPERACIÓN DE CONTRASEÑA
+const AUTH_API_URL = 'http://localhost:8080/api/autenticacion';
+
+export const solicitarRecuperacion = async (correo) => {
+  const response = await axios.post(`${AUTH_API_URL}/olvide-contrasena`, { correo });
+  return response.data;
+};
+
+export const restablecerPassword = async (token, nuevaContrasena) => {
+  const response = await axios.post(`${AUTH_API_URL}/restablecer-contrasena`, { token, nuevaContrasena });
   return response.data;
 };
