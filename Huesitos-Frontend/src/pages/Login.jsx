@@ -194,7 +194,10 @@ const VetLogin = () => {
           </div>
 
           <div className="text-right mb-5">
-            <a href="#" className="text-[12px] text-sky-600 font-medium hover:underline">¿Olvidaste tu contraseña?</a>
+            {/* AQUÍ ESTÁ EL CAMBIO: Se usa Link redirigiendo a la pantalla de recuperación */}
+            <Link to="/recuperar-cuenta" className="text-[12px] text-sky-600 font-medium hover:underline">
+              ¿Olvidaste tu contraseña?
+            </Link>
           </div>
 
           <button
