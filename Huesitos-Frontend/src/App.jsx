@@ -3,13 +3,11 @@ import { Toaster } from 'sileo';
 
 import Landing from './pages/Landing';
 import VetLogin from './pages/Login';
-import ServiciosPage from './Modules/admin/pages/ServicioPage';
-import AdminDashboard from './pages/AdminDashboard';
-import RegistroClientePage from './pages/RegistroClientePage';
-
-// NUEVOS COMPONENTES DE RECUPERACIÓN DE CONTRASEÑA
 import SolicitarRecuperacion from './pages/SolicitarRecuperacion';
 import RestablecerPassword from './pages/RestablecerPassword';
+import RegistroClientePage from './pages/RegistroClientePage';
+
+import AdminDashboard from '../src/Modules/admin/pages/AdminDashboard';
 
 import ClienteDashboard from './Modules/clientes/pages/ClienteDashboard';
 import MisMascotasCliente from './Modules/clientes/pages/MisMascotasCliente';
@@ -33,25 +31,29 @@ import MisHorariosPage from './Modules/veterinario/pages/MisHorariosPage';
 import MiPerfilPage from './Modules/veterinario/pages/MiPerfilPage';
 import ConsultasVeterinarioPage from './Modules/veterinario/pages/ConsultasVeterinarioPage';
 
-import AuxiliarDashboard from './pages/AuxiliarDashboard';
+import AuxiliarDashboard from '../src/Modules/auxiliar/pages/AuxiliarDashboard';
 
 function App() {
   return (
     <>
-      <Toaster 
-        position="top-right" 
-        theme="dark" 
-        options={{ 
-          fill: "#020617", 
-          roundness: 16, 
-          styles: { 
-            title: "!text-white font-black tracking-wide", 
-            description: "!text-slate-300", 
-            badge: "!bg-slate-800", 
-            button: "!bg-slate-800 hover:!bg-slate-700 !text-white" 
-          } 
-        }} 
-      />
+      <div className="!z-[99999] relative" style={{ zIndex: 99999 }}>
+        <Toaster 
+          position="top-right" 
+          theme="dark" 
+          className="!z-[99999]"
+          style={{ zIndex: 99999 }}
+          options={{ 
+            fill: "#020617", 
+            roundness: 16, 
+            styles: { 
+              title: "!text-white font-black tracking-wide", 
+              description: "!text-slate-300", 
+              badge: "!bg-slate-800", 
+              button: "!bg-slate-800 hover:!bg-slate-700 !text-white" 
+            } 
+          }} 
+        />
+      </div>
 
       <Router>
         <Routes>
@@ -59,11 +61,8 @@ function App() {
           <Route path="/login" element={<VetLogin />} />
           <Route path="/registro" element={<RegistroClientePage />} />
           
-          {/* NUEVAS RUTAS AGREGADAS AQUÍ */}
           <Route path="/recuperar-cuenta" element={<SolicitarRecuperacion />} />
           <Route path="/restablecer-password" element={<RestablecerPassword />} />
-          
-          <Route path="/servicios" element={<ServiciosPage/>} />
           
           <Route path="/cliente" element={<ClienteDashboard />}>
             <Route index element={<MisMascotasCliente />} />
@@ -99,4 +98,5 @@ function App() {
     </>
   );
 }
+
 export default App;

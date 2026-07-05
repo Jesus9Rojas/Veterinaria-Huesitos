@@ -1,24 +1,34 @@
 import { useState, useEffect } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, LogOut, CalendarPlus, Heart, CalendarDays, UserCircle, Home, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
-import logo from '../../../assets/Logo Huesitos.png';
-import ModalReservaCliente from '../../../components/ModalReservaCliente';
+import { useNavigate } from 'react-router-dom';
+import { 
+  LayoutDashboard, Stethoscope, ShieldCheck, Users, 
+  Wallet, Settings, LogOut, User, ChevronDown, ChevronLeft, ChevronRight, Clock, Menu
+} from 'lucide-react';
 
-const ClienteDashboard = () => {
+import DashboardAnalytics from '../pages/DashboardAnaliticas';
+import ConfiguracionDinamica from '../pages/ConfiguracionDinamica';
+import UsuariosPage from '../pages/UsuariosPage';
+import FinanzasPage from '../pages/FinanzasPage';
+import ServicioPage from '../pages/ServicioPage';
+import DuenosPage from '../pages/DuenosPage';
+import AdminPerfilPage from '../pages/AdminPerfilPage';
+import GestionHorariosPage from '../pages/GestionHorariosPage';
+import logo from '../../../assets/Logo Huesitos.png';
+
+const AdminDashboard = () => {
+  const navigate = useNavigate();
+  const [vistaActual, setVistaActual] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [menuPerfilOpen, setMenuPerfilOpen] = useState(false);
-  const [modalReservaAbierto, setModalReservaAbierto] = useState(false);
-  const [imgError, setImgError] = useState(false); 
-  
-  const usuarioNombre = localStorage.getItem('usuarioNombre') || 'Cliente';
-  const usuarioFoto = localStorage.getItem('usuarioFoto') || '../../assets/defecto-usuario.jpg';
-  
-  const location = useLocation();
-  const navigate = useNavigate();
+
+  const usuarioNombre = localStorage.getItem('usuarioNombre') || 'Administrador';
+  const usuarioRol = localStorage.getItem('usuarioRol') || 'ADMINISTRADOR';
+  const usuarioFoto = localStorage.getItem('usuarioFoto') || '/uploads/defecto-usuario.png';
 
   useEffect(() => {
-    if (localStorage.getItem('usuarioRol') !== 'CLIENTE') navigate('/login');
+    const rol = localStorage.getItem('usuarioRol');
+    if (rol !== 'ADMINISTRADOR') navigate('/');
   }, [navigate]);
 
   const handleLogout = () => {
@@ -26,16 +36,40 @@ const ClienteDashboard = () => {
     navigate('/');
   };
 
-  const menuItems = [
-    { path: '/cliente/mascotas', icon: Heart, label: 'Mis Mascotas' },
-    { path: '/cliente/citas', icon: CalendarDays, label: 'Mis Citas e Historial' }
-  ];
+  const renderizarVista = () => {
+    switch (vistaActual) {
+      case 'dashboard': return <DashboardAnalytics />;
+      case 'servicios': return <ServicioPage/>;
+      case 'usuarios': return <UsuariosPage />;
+      case 'duenos': return <DuenosPage />;
+      case 'finanzas': return <FinanzasPage />;
+      case 'configuracion': return <ConfiguracionDinamica />;
+      case 'perfil': return <AdminPerfilPage />;
+      case 'horarios': return <GestionHorariosPage />;
+      default: return <DashboardAnalytics />;
+    }
+  };
+
+  const fechaActual = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   const baseBtnClass = `group relative flex items-center p-3 rounded-xl mb-1 cursor-pointer transition-colors ${isCollapsed ? 'justify-center' : 'gap-4'}`;
   const activeBtnClass = `${baseBtnClass} bg-white/5 text-white`;
   const inactiveBtnClass = `${baseBtnClass} text-slate-400 hover:text-white hover:bg-white/5`;
 
-  const fechaActual = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const renderSidebarItem = (id, Icon, label) => {
+    const isActive = vistaActual === id;
+    return (
+      <button 
+        onClick={() => { setVistaActual(id); setSidebarOpen(false); }}
+        className={isActive ? activeBtnClass : inactiveBtnClass}
+        title={isCollapsed ? label : ""}
+      >
+        {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-sky-500 rounded-r-full shadow-[0_0_12px_rgba(14,165,233,0.6)]"></div>}
+        <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className={isActive ? "text-white" : "group-hover:text-white transition-colors"} />
+        {!isCollapsed && <span className="font-semibold text-sm tracking-wide">{label}</span>}
+      </button>
+    );
+  };
 
   return (
     <div className="flex h-screen bg-[#f3f4f6] font-sans overflow-hidden selection:bg-sky-500 selection:text-white">
@@ -48,44 +82,36 @@ const ClienteDashboard = () => {
         >
           {isCollapsed ? <ChevronRight size={16} strokeWidth={3} /> : <ChevronLeft size={16} strokeWidth={3} />}
         </button>
-        
+
         <div className={`pt-10 pb-6 px-6 flex items-center border-b border-white/5 ${isCollapsed ? 'justify-center' : 'gap-4'}`}>
           <div className="w-12 h-12 bg-gradient-to-tr from-sky-500 to-cyan-400 rounded-2xl flex items-center justify-center text-white p-1 shrink-0 shadow-lg">
-            <img src={logo} alt="Logo" className="w-full h-full object-contain" />
+            <img src={logo} alt="Logo de la clínica" className="w-full h-full object-contain" />
           </div>
           {!isCollapsed && (
             <div className="flex flex-col overflow-hidden">
-              <span className="text-[10px] font-bold text-sky-400 uppercase tracking-widest">Portal Cliente</span>
+              <span className="text-[10px] font-bold text-sky-400 uppercase tracking-widest">Portal Admin</span>
               <span className="text-sm font-bold text-white truncate">Vet. Huesitos</span>
             </div>
           )}
         </div>
 
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
-          {!isCollapsed && <p className="px-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Mi Panel</p>}
-          {menuItems.map((item) => {
-            const isActive = location.pathname.includes(item.path);
-            const Icono = item.icon;
-            return (
-              <Link 
-                key={item.path} 
-                to={item.path} 
-                onClick={() => setSidebarOpen(false)} 
-                className={isActive ? activeBtnClass : inactiveBtnClass}
-                title={isCollapsed ? item.label : ""}
-              >
-                {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-sky-500 rounded-r-full shadow-[0_0_12px_rgba(14,165,233,0.6)]"></div>}
-                <Icono size={22} strokeWidth={isActive ? 2.5 : 2} className={isActive ? "text-white" : "group-hover:text-white transition-colors"} />
-                {!isCollapsed && <span className="font-semibold text-sm tracking-wide">{item.label}</span>}
-              </Link>
-            );
-          })}
+          {renderSidebarItem('dashboard', LayoutDashboard, 'Panel de Control')}
+          
+          {!isCollapsed && <div className="pt-4 pb-1"><p className="px-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Gestión Clínica</p></div>}
+          {isCollapsed && <div className="h-4"></div>}
+          {renderSidebarItem('servicios', Stethoscope, 'Servicios Médicos')}
+          {renderSidebarItem('duenos', Users, 'Directorio Clientes')}
+
+          {!isCollapsed && <div className="pt-4 pb-1"><p className="px-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Administración</p></div>}
+          {isCollapsed && <div className="h-4"></div>}
+          {renderSidebarItem('finanzas', Wallet, 'Caja y Finanzas')}
+          {renderSidebarItem('usuarios', ShieldCheck, 'Usuarios y Roles')}
+          {renderSidebarItem('horarios', Clock, 'Gestión de Horarios')}
+          {renderSidebarItem('configuracion', Settings, 'Configuración Global')}
         </nav>
 
         <div className="p-4 border-t border-white/5">
-          <button onClick={() => navigate('/')} className={`w-full flex items-center justify-center gap-3 text-slate-400 hover:text-sky-400 p-3 rounded-xl transition-colors font-semibold text-sm mb-1 ${isCollapsed ? 'px-0' : ''}`} title="Volver a la Web">
-            <Home size={20} /> {!isCollapsed && "Volver a la Web"}
-          </button>
           <button onClick={handleLogout} className={`w-full flex items-center justify-center gap-3 bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white p-3 rounded-xl transition-colors font-semibold text-sm ${isCollapsed ? 'px-0' : ''}`} title="Cerrar Sesión">
             <LogOut size={20} /> {!isCollapsed && "Cerrar Sesión"}
           </button>
@@ -98,37 +124,28 @@ const ClienteDashboard = () => {
             <button className="md:hidden text-slate-500 bg-white p-2 rounded-xl shadow-sm" onClick={() => setSidebarOpen(true)}>
               <Menu size={20} />
             </button>
-            <div className="hidden md:flex flex-col">
-              <h2 className="text-xl font-black text-slate-800">¡Hola de nuevo, {usuarioNombre}!</h2>
-              <span className="text-xs font-semibold text-slate-500 capitalize">{fechaActual}</span>
+            <div className="hidden md:flex text-xs font-semibold text-slate-500 bg-white px-4 py-2.5 rounded-2xl border border-slate-200 shadow-sm capitalize">
+              {fechaActual}
             </div>
           </div>
-          
-          <div className="ml-auto flex items-center gap-4 sm:gap-6">
-            <button 
-              onClick={() => setModalReservaAbierto(true)}
-              className="flex items-center gap-2 bg-gradient-to-tr from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all hover:-translate-y-0.5"
-            >
-              <CalendarPlus size={18} /> <span className="hidden sm:inline">Nueva Cita</span>
-            </button>
 
+          <div className="ml-auto flex items-center gap-4 sm:gap-6">
             <div className="relative">
               <button onClick={() => setMenuPerfilOpen(!menuPerfilOpen)} className="flex items-center gap-3 bg-white p-2 pr-4 rounded-2xl shadow-sm border border-slate-200 transition-colors hover:border-sky-300">
-                {!imgError ? (
-                  <img 
-                    src={`http://localhost:8080${usuarioFoto}`} 
-                    alt="Perfil" 
-                    className="w-10 h-10 rounded-xl border border-slate-200 object-cover bg-slate-100 shrink-0" 
-                    onError={() => setImgError(true)} 
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shadow-sm shrink-0">
-                    <UserCircle size={24} strokeWidth={1.5} />
-                  </div>
-                )}
+                <img 
+                  src={`http://localhost:8080${usuarioFoto}`} 
+                  alt="Perfil" 
+                  className="w-10 h-10 rounded-xl border border-slate-200 object-cover bg-slate-100" 
+                  onError={(e) => { 
+                    if (!e.target.dataset.error) {
+                      e.target.dataset.error = true;
+                      e.target.src = '/uploads/defecto-usuario.png'; 
+                    }
+                  }} 
+                />
                 <div className="text-left hidden sm:block">
                   <p className="text-sm font-bold text-slate-800 leading-tight">{usuarioNombre}</p>
-                  <p className="text-[10px] font-bold text-sky-500 uppercase tracking-widest">Cliente</p>
+                  <p className="text-[10px] font-bold text-sky-500 uppercase tracking-widest">{usuarioRol}</p>
                 </div>
                 <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${menuPerfilOpen ? 'rotate-180' : ''}`}/>
               </button>
@@ -141,8 +158,8 @@ const ClienteDashboard = () => {
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Conectado como</p>
                       <p className="text-sm font-black text-slate-800 truncate">{usuarioNombre}</p>
                     </div>
-                    <button onClick={() => navigate('/')} className="w-full text-left px-5 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-sky-600 flex items-center gap-3 transition-colors">
-                      <Home size={18}/> Volver a la Web
+                    <button onClick={() => { setMenuPerfilOpen(false); setVistaActual('perfil'); }} className="w-full text-left px-5 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-sky-600 flex items-center gap-3 transition-colors">
+                      <User size={18}/> Mi Perfil
                     </button>
                     <div className="h-px bg-slate-100 my-1 mx-3"></div>
                     <button onClick={handleLogout} className="w-full px-5 py-3 text-sm font-semibold text-rose-500 hover:bg-rose-50 flex items-center gap-3 transition-colors">
@@ -156,15 +173,15 @@ const ClienteDashboard = () => {
         </header>
 
         <div className="flex-1 p-6 md:p-8 overflow-y-auto custom-scrollbar text-left text-slate-800">
-          <Outlet /> 
+          <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {renderizarVista()}
+          </div>
         </div>
       </main>
 
       {sidebarOpen && <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
-      
-      {modalReservaAbierto && <ModalReservaCliente cerrarModal={() => setModalReservaAbierto(false)} />}
     </div>
   );
 };
 
-export default ClienteDashboard;
+export default AdminDashboard;

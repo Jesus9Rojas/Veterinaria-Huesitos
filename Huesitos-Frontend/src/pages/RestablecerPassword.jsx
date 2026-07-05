@@ -28,7 +28,7 @@ export default function RestablecerPassword() {
             const data = await restablecerPassword(token, nuevaPassword);
             setMensaje(data.mensaje);
             setTimeout(() => {
-                navigate('/login'); // Redirigir al login tras 3 segundos
+                navigate('/login'); 
             }, 3000);
         } catch (err) {
             setError(err.response?.data?.error || 'No se pudo restablecer la contraseña.');

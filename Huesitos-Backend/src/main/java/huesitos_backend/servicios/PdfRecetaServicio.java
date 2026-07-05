@@ -7,13 +7,11 @@ import huesitos_backend.entidades.ConsultaMedica;
 import huesitos_backend.entidades.Mascota;
 import huesitos_backend.entidades.Receta;
 import huesitos_backend.entidades.Dueño;
-import huesitos_backend.entidades.Personal;
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
-import java.time.Period;
 import java.time.format.DateTimeFormatter;
 
 @Service
@@ -24,7 +22,8 @@ public class PdfRecetaServicio {
         Document document = new Document(PageSize.A4, 40, 40, 40, 40);
 
         try {
-            PdfWriter writer = PdfWriter.getInstance(document, baos);
+            // SOLUCIÓN: Solo se llama a la instancia, ya no se guarda en la variable "writer"
+            PdfWriter.getInstance(document, baos);
             document.open();
 
             Font fontTitulo = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, Color.BLACK);

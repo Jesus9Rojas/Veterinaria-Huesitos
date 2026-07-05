@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { User, Mail, Lock, Phone, CreditCard, Camera, Save, Activity } from 'lucide-react';
+import { User, Mail, Lock, Phone, CreditCard, Camera, Save, Activity, UserCircle } from 'lucide-react';
 import axios from 'axios';
 import { obtenerDetallesPersonal, actualizarPersonal } from "../../../services/usuarioService";
 import { sileo } from 'sileo';
@@ -8,6 +8,7 @@ const AdminPerfilPage = () => {
   const [loading, setLoading] = useState(true);
   const [procesando, setProcesando] = useState(false);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
+  const [imgError, setImgError] = useState(false); 
   const fileInputRef = useRef(null);
 
   const usuarioId = localStorage.getItem("usuarioId");
@@ -75,6 +76,7 @@ const AdminPerfilPage = () => {
       const nuevaFotoUrl = response.data.fotoPerfilUrl;
       setFotoUrl(nuevaFotoUrl);
       localStorage.setItem("usuarioFoto", nuevaFotoUrl);
+      setImgError(false); 
       
       setTimeout(() => { window.location.reload(); }, 1500); 
     } catch (error) {
@@ -124,13 +126,21 @@ const AdminPerfilPage = () => {
       
       <div className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col md:flex-row items-center gap-6">
         <div className="relative group">
+          
           <div className="w-28 h-28 rounded-full border-4 border-white shadow-lg overflow-hidden bg-slate-100 relative">
-            <img 
-              src={`http://localhost:8080${fotoUrl}`} 
-              alt="Mi Perfil" 
-              className={`w-full h-full object-cover transition-opacity duration-300 ${subiendoFoto ? 'opacity-50' : 'group-hover:opacity-70'}`}
-              onError={(e) => { e.target.onerror = null; e.target.src='/uploads/defecto-usuario.png'; }}
-            />
+            {!imgError ? (
+              <img 
+                src={`http://localhost:8080${fotoUrl}`} 
+                alt="Mi Perfil" 
+                className={`w-full h-full object-cover transition-opacity duration-300 ${subiendoFoto ? 'opacity-50' : 'group-hover:opacity-70'}`}
+                onError={() => setImgError(true)}
+              />
+            ) : (
+              <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400">
+                <UserCircle size={48} strokeWidth={1.5} />
+              </div>
+            )}
+            
             {subiendoFoto && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <Activity className="text-sky-600 animate-spin" size={28} />

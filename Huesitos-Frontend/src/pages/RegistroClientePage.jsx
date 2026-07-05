@@ -8,17 +8,20 @@ import logo from '../assets/Logo Huesitos.png';
 import { ShieldPlus, User, Phone, MapPin, Mail, Lock, ArrowLeft } from 'lucide-react';
 
 const BG_IMAGE_URL = null;
-
-// Mismo lenguaje visual que Landing.jsx — acento serif itálico autocontenido.
 const accentFont = { fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" };
 
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 18 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] },
-});
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
 
-const inputClass = "w-full h-[42px] pl-10 pr-3 rounded-xl border border-slate-200 bg-slate-50 text-[13px] text-slate-900 outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-400 transition-all";
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+};
 
 const RegistroClientePage = () => {
   const navigate = useNavigate();
@@ -35,11 +38,9 @@ const RegistroClientePage = () => {
 
   const handleChange = (e) => {
     let { name, value } = e.target;
-
     if (name === 'telefono') {
       value = value.replace(/\D/g, '');
     }
-
     setForm({ ...form, [name]: value });
   };
 
@@ -101,137 +102,192 @@ const RegistroClientePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
-      <motion.div
-        {...fadeUp(0)}
-        className="flex w-full max-w-[840px] rounded-[28px] overflow-hidden border border-slate-200 shadow-2xl shadow-slate-900/10 relative bg-white"
+    <div className="flex min-h-screen bg-white font-sans overflow-hidden selection:bg-sky-500 selection:text-white">
+      
+      <div 
+        className="hidden lg:flex lg:w-[45%] relative flex-col justify-between p-12 overflow-hidden bg-slate-950"
+        style={BG_IMAGE_URL ? { backgroundImage: `url(${BG_IMAGE_URL})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
       >
+        <div className="absolute inset-0 z-[1]" style={BG_IMAGE_URL ? { background: 'linear-gradient(160deg, rgba(2,6,23,0.7) 0%, rgba(2,6,23,0.9) 100%)' } : { background: 'linear-gradient(145deg, #020617 0%, #0f172a 100%)' }} />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-500/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 z-0" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-500/20 rounded-full blur-[100px] translate-y-1/3 -translate-x-1/4 z-0" />
 
-        {/* PANEL IZQUIERDO */}
-        <div
-          className="hidden sm:flex w-[52%] relative flex-col justify-between overflow-hidden min-h-[600px]"
-          style={BG_IMAGE_URL
-            ? { backgroundImage: `url(${BG_IMAGE_URL})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-            : { background: 'linear-gradient(135deg, #0284c7 0%, #020617 100%)' }}
-        >
-          <div className="absolute inset-0 z-[1]" style={{ background: 'linear-gradient(160deg, rgba(2,6,23,0.45) 0%, rgba(2,6,23,0.8) 50%, rgba(2,6,23,0.97) 100%)' }} />
-          <div className="absolute bottom-0 left-0 w-72 h-72 bg-sky-400/20 rounded-full blur-3xl translate-y-1/3 -translate-x-1/3 z-0" />
-
-          <div className="relative z-10 p-9 pb-0">
-            <div className="w-14 h-14 bg-gradient-to-tr from-sky-500 to-cyan-300 rounded-2xl flex items-center justify-center shadow-lg shadow-sky-400/30">
-              <img src={logo} alt="Logo de la clínica" className="w-full h-full object-contain p-1.5" />
-            </div>
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="w-12 h-12 bg-gradient-to-tr from-sky-500 to-cyan-300 rounded-xl flex items-center justify-center shadow-lg shadow-sky-500/20 p-1">
+            <img src={logo} alt="Logo" className="w-full h-full object-contain" />
           </div>
-
-          <div className="relative z-10 px-9 pb-12">
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/15 rounded-full px-3.5 py-1.5 mb-4 backdrop-blur-md">
-              <ShieldPlus size={14} className="text-sky-200" />
-              <span className="text-[11px] text-sky-200 font-semibold tracking-wide">Tu familia es nuestra prioridad</span>
-            </div>
-            <h2 className="text-2xl font-semibold text-white leading-snug mb-2.5">
-              Únete a la <span className="italic text-sky-200" style={accentFont}>Familia Huesitos</span>
-            </h2>
-            <p className="text-[13px] text-slate-300 leading-relaxed max-w-[280px]">
-              Crea tu cuenta gratuita para agendar citas en línea y llevar un control perfecto de la salud de tus engreídos.
-            </p>
+          <div>
+            <span className="block text-xl font-black text-white tracking-tight leading-none">Vet.Huesitos</span>
+            <span className="block text-[10px] font-bold text-sky-400 uppercase tracking-widest mt-0.5">Clínica Especializada</span>
           </div>
         </div>
 
-        {/* PANEL DERECHO */}
-        <div className="w-full sm:w-[48%] bg-white p-8 sm:p-10 flex flex-col justify-center relative">
+        <div className="relative z-10 mb-10">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}>
+            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/15 rounded-full px-4 py-2 mb-6 backdrop-blur-md">
+              <ShieldPlus size={16} className="text-sky-300" />
+              <span className="text-xs text-sky-100 font-semibold tracking-wide">Tu familia es nuestra prioridad</span>
+            </div>
+            <h1 className="text-4xl xl:text-5xl font-semibold text-white leading-[1.1] mb-6 tracking-tight">
+              Únete a la <br /><span className="italic text-sky-300" style={accentFont}>Familia Huesitos</span>
+            </h1>
+            <p className="text-slate-400 text-sm xl:text-base leading-relaxed max-w-md mb-10 font-medium">
+              Crea tu cuenta de forma gratuita para agendar citas en línea y llevar un control perfecto de la salud de tus engreídos en todo momento.
+            </p>
+          </motion.div>
+        </div>
+      </div>
 
-          <button
-            onClick={() => navigate('/login')}
-            className="absolute top-5 right-5 flex items-center gap-1.5 text-slate-400 hover:text-slate-700 text-[13px] font-semibold transition-colors"
-          >
+      <div className="w-full lg:w-[55%] flex flex-col relative bg-white overflow-y-auto custom-scrollbar">
+        
+        <div className="absolute top-6 right-6 z-20">
+          <button onClick={() => navigate('/login')} className="flex items-center gap-2 text-slate-400 hover:text-slate-800 bg-slate-50 hover:bg-slate-100 px-4 py-2 rounded-full text-xs font-bold transition-all">
             <ArrowLeft size={14} /> Volver
           </button>
-
-          <div className="flex items-center gap-2.5 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-tr from-sky-500 to-cyan-300 rounded-2xl flex items-center justify-center shadow-md shadow-sky-400/30">
-              <img src={logo} alt="Logo de la clínica" className="w-full h-full object-contain p-1.5" />
-            </div>
-            <div>
-              <div className="text-lg font-bold text-slate-900">Huesitos</div>
-              <div className="text-[11px] text-sky-600 uppercase tracking-[0.06em] font-semibold">Clínica Veterinaria</div>
-            </div>
-          </div>
-
-          <div className="mb-5">
-            <h2 className="text-xl font-semibold text-slate-900 mb-0.5">Crear mi cuenta</h2>
-            <p className="text-[13px] text-slate-500">Por favor, completa tus datos personales</p>
-          </div>
-
-          <form onSubmit={handleRegistro}>
-            <div className="grid grid-cols-2 gap-2.5 mb-3">
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Nombres</label>
-                <div className="relative">
-                  <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input type="text" name="nombre" value={form.nombre} onChange={handleChange} required className={inputClass} />
-                </div>
-              </div>
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Apellidos</label>
-                <div className="relative">
-                  <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input type="text" name="apellidos" value={form.apellidos} onChange={handleChange} required className={inputClass} />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2.5 mb-3">
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Teléfono</label>
-                <div className="relative">
-                  <Phone size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input type="text" name="telefono" maxLength="9" value={form.telefono} onChange={handleChange} required placeholder="987654321" className={inputClass} />
-                </div>
-              </div>
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Dirección</label>
-                <div className="relative">
-                  <MapPin size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input type="text" name="direccion" value={form.direccion} onChange={handleChange} required placeholder="Calle Ej. 123" className={inputClass} />
-                </div>
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <label className="block text-[11px] font-semibold text-slate-600 mb-1">Correo electrónico</label>
-              <div className="relative">
-                <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="email" name="correo" value={form.correo} onChange={handleChange} required placeholder="ejemplo@correo.com" className={inputClass} />
-              </div>
-            </div>
-
-            <div className="mb-5">
-              <label className="block text-[11px] font-semibold text-slate-600 mb-1">Contraseña</label>
-              <div className="relative">
-                <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="password" name="password" value={form.password} onChange={handleChange} required placeholder="••••••••" className={inputClass} />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={cargando}
-              className="w-full h-[46px] bg-slate-900 hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl text-[14px] font-semibold transition-colors shadow-lg shadow-slate-900/15 flex items-center justify-center"
-            >
-              {cargando ? 'Registrando...' : 'Registrarme'}
-            </button>
-          </form>
-
-          <div className="flex items-center gap-2.5 my-4">
-            <hr className="flex-1 border-t border-slate-200" />
-          </div>
-
-          <p className="text-center text-[12px] text-slate-500">
-            ¿Ya tienes una cuenta? <Link to="/login" className="text-sky-600 font-semibold hover:underline">Inicia sesión</Link>
-          </p>
-
         </div>
-      </motion.div>
+
+        <div className="m-auto w-full max-w-[500px] px-6 py-12">
+          
+          <div className="lg:hidden flex justify-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-tr from-sky-500 to-cyan-300 rounded-2xl flex items-center justify-center shadow-lg shadow-sky-500/20 p-2">
+              <img src={logo} alt="Logo" className="w-full h-full object-contain" />
+            </div>
+          </div>
+
+          <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-6">
+            
+            <motion.div variants={itemVariants} className="text-center lg:text-left mb-2">
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Crear mi cuenta</h2>
+              <p className="text-slate-500 text-sm font-medium">Por favor, completa tus datos personales</p>
+            </motion.div>
+
+            <form className="space-y-5" onSubmit={handleRegistro}>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <motion.div variants={itemVariants} className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide ml-1">Nombres</label>
+                  <div className="relative group">
+                    <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors" />
+                    <input
+                      type="text"
+                      name="nombre"
+                      value={form.nombre}
+                      onChange={handleChange}
+                      required
+                      className="w-full h-[52px] pl-11 pr-4 rounded-2xl border-2 border-slate-100 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 transition-all placeholder:text-slate-400 placeholder:font-medium"
+                    />
+                  </div>
+                </motion.div>
+
+                <motion.div variants={itemVariants} className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide ml-1">Apellidos</label>
+                  <div className="relative group">
+                    <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors" />
+                    <input
+                      type="text"
+                      name="apellidos"
+                      value={form.apellidos}
+                      onChange={handleChange}
+                      required
+                      className="w-full h-[52px] pl-11 pr-4 rounded-2xl border-2 border-slate-100 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 transition-all placeholder:text-slate-400 placeholder:font-medium"
+                    />
+                  </div>
+                </motion.div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <motion.div variants={itemVariants} className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide ml-1">Teléfono</label>
+                  <div className="relative group">
+                    <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors" />
+                    <input
+                      type="text"
+                      name="telefono"
+                      maxLength="9"
+                      value={form.telefono}
+                      onChange={handleChange}
+                      placeholder="987654321"
+                      required
+                      className="w-full h-[52px] pl-11 pr-4 rounded-2xl border-2 border-slate-100 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 transition-all placeholder:text-slate-400 placeholder:font-medium"
+                    />
+                  </div>
+                </motion.div>
+
+                <motion.div variants={itemVariants} className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide ml-1">Dirección</label>
+                  <div className="relative group">
+                    <MapPin size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors" />
+                    <input
+                      type="text"
+                      name="direccion"
+                      value={form.direccion}
+                      onChange={handleChange}
+                      placeholder="Calle Ej. 123"
+                      required
+                      className="w-full h-[52px] pl-11 pr-4 rounded-2xl border-2 border-slate-100 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 transition-all placeholder:text-slate-400 placeholder:font-medium"
+                    />
+                  </div>
+                </motion.div>
+              </div>
+
+              <motion.div variants={itemVariants} className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide ml-1">Correo Electrónico</label>
+                <div className="relative group">
+                  <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors" />
+                  <input
+                    type="email"
+                    name="correo"
+                    value={form.correo}
+                    onChange={handleChange}
+                    placeholder="ejemplo@correo.com"
+                    required
+                    className="w-full h-[52px] pl-11 pr-4 rounded-2xl border-2 border-slate-100 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 transition-all placeholder:text-slate-400 placeholder:font-medium"
+                  />
+                </div>
+              </motion.div>
+
+              <motion.div variants={itemVariants} className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide ml-1">Contraseña</label>
+                <div className="relative group">
+                  <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-sky-500 transition-colors" />
+                  <input
+                    type="password"
+                    name="password"
+                    value={form.password}
+                    onChange={handleChange}
+                    placeholder="••••••••"
+                    required
+                    className="w-full h-[52px] pl-11 pr-4 rounded-2xl border-2 border-slate-100 bg-slate-50 text-sm font-semibold text-slate-800 outline-none focus:bg-white focus:border-sky-400 focus:ring-4 focus:ring-sky-500/10 transition-all placeholder:text-slate-400 placeholder:font-medium"
+                  />
+                </div>
+              </motion.div>
+
+              <motion.div variants={itemVariants} className="pt-2">
+                <button
+                  type="submit"
+                  disabled={cargando}
+                  className="w-full h-[52px] bg-slate-900 hover:bg-slate-800 disabled:bg-slate-800/70 text-white rounded-2xl text-sm font-bold transition-all shadow-lg shadow-slate-900/20 hover:shadow-xl hover:shadow-slate-900/30 hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2"
+                >
+                  {cargando ? (
+                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                  ) : (
+                    'Registrarme'
+                  )}
+                </button>
+              </motion.div>
+
+            </form>
+
+            <motion.div variants={itemVariants} className="text-center pt-2">
+              <p className="text-sm font-medium text-slate-500">
+                ¿Ya tienes una cuenta? <Link to="/login" className="font-bold text-sky-600 hover:text-sky-700 transition-colors">Inicia sesión</Link>
+              </p>
+            </motion.div>
+
+          </motion.div>
+        </div>
+      </div>
+
     </div>
   );
 };

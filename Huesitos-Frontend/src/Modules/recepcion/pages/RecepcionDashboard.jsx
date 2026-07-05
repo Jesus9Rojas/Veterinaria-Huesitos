@@ -3,20 +3,19 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios'; 
 import { 
   LayoutDashboard, CalendarDays, Users, ShoppingBag, 
-  LogOut, Menu, X, Bell, User, ChevronDown, CheckCircle2, UserCircle, Wallet, Clock
+  LogOut, Menu, Bell, User, ChevronDown, CheckCircle2, UserCircle, Wallet, Clock, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import logo from '../../../assets/Logo Huesitos.png';
 import { obtenerNotificaciones, marcarNotificacionLeida } from '../../../services/notificacionService';
 
 const RecepcionDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [menuPerfilOpen, setMenuPerfilOpen] = useState(false);
   const [menuNotificacionesOpen, setMenuNotificacionesOpen] = useState(false);
   const [notificaciones, setNotificaciones] = useState([]);
-  
   const [imgError, setImgError] = useState(false);
   
-  const usuarioCorreo = localStorage.getItem('usuarioCorreo') || 'recepcion@huesitos.com';
   let nombreReal = localStorage.getItem('usuarioNombre');
   const usuarioNombre = (!nombreReal || nombreReal === 'null') ? 'Recepción' : nombreReal;
   const usuarioRol = localStorage.getItem('usuarioRol') || 'RECEPCIONISTA';
@@ -110,33 +109,38 @@ const RecepcionDashboard = () => {
     navigate('/login');
   };
 
-  const baseBtnClass = "w-full text-left px-4 py-3.5 rounded-xl font-semibold transition-all duration-300 flex items-center gap-4 text-sm tracking-wide group";
-  const activeBtnClass = `${baseBtnClass} bg-gradient-to-r from-sky-500 to-cyan-400 text-white shadow-lg shadow-sky-500/30 translate-x-1`;
-  const inactiveBtnClass = `${baseBtnClass} text-slate-400 hover:bg-slate-800/50 hover:text-slate-100`;
+  const fechaActual = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  const baseBtnClass = `group relative flex items-center p-3 rounded-xl mb-1 cursor-pointer transition-colors ${isCollapsed ? 'justify-center' : 'gap-4'}`;
+  const activeBtnClass = `${baseBtnClass} bg-white/5 text-white`;
+  const inactiveBtnClass = `${baseBtnClass} text-slate-400 hover:text-white hover:bg-white/5`;
 
   return (
-    <div className="flex h-screen bg-slate-50 font-sans overflow-hidden selection:bg-sky-500 selection:text-white">
+    <div className="flex h-screen bg-[#f3f4f6] font-sans overflow-hidden selection:bg-sky-500 selection:text-white">
       
-      {/* SIDEBAR TIPO ADMINISTRADOR */}
-      <aside className={`fixed md:static inset-y-0 left-0 z-50 w-72 bg-slate-950 flex flex-col border-r border-slate-800 shadow-2xl transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 shrink-0`}>
+      <aside className={`relative my-4 ml-4 rounded-[2rem] bg-[#121520] shadow-2xl transition-all duration-300 flex flex-col shrink-0 z-50 ${isCollapsed ? 'w-20' : 'w-71'} ${sidebarOpen ? 'absolute inset-y-0 left-0 translate-x-0' : 'hidden md:flex'}`}>
         
-        <div className="h-24 flex items-center px-8 border-b border-slate-800/50 shrink-0">
-          <div className="flex items-center gap-3 cursor-pointer">
-            <div className="w-11 h-11 bg-gradient-to-tr from-sky-500 to-cyan-300 rounded-xl flex items-center justify-center text-white shadow-lg shadow-sky-500/20 p-1">
-              <img src={logo} alt="Logo de la clínica" className="w-full h-full object-contain" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl font-black text-white tracking-tight leading-tight">Vet.Huesitos</span>
-              <span className="text-[10px] font-bold text-sky-400 uppercase tracking-widest">Panel Recepción</span>
-            </div>
+        <button 
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="hidden md:flex absolute -right-3 top-16 w-7 h-7 bg-sky-500 hover:bg-sky-400 text-white rounded-full items-center justify-center shadow-[0_0_15px_rgba(14,165,233,0.4)] transition-all z-10"
+        >
+          {isCollapsed ? <ChevronRight size={16} strokeWidth={3} /> : <ChevronLeft size={16} strokeWidth={3} />}
+        </button>
+
+        <div className={`pt-10 pb-6 px-6 flex items-center border-b border-white/5 ${isCollapsed ? 'justify-center' : 'gap-4'}`}>
+          <div className="w-12 h-12 bg-gradient-to-tr from-sky-500 to-cyan-400 rounded-2xl flex items-center justify-center text-white p-1 shrink-0 shadow-lg">
+            <img src={logo} alt="Logo de la clínica" className="w-full h-full object-contain" />
           </div>
-          <button className="ml-auto md:hidden text-slate-500 hover:text-white" onClick={() => setSidebarOpen(false)}>
-            <X size={20} />
-          </button>
+          {!isCollapsed && (
+            <div className="flex flex-col overflow-hidden">
+              <span className="text-[10px] font-bold text-sky-400 uppercase tracking-widest">Panel Recepción</span>
+              <span className="text-sm font-bold text-white truncate">Vet. Huesitos</span>
+            </div>
+          )}
         </div>
 
-        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto custom-scrollbar">
-          <div className="pt-2 pb-2"><p className="px-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Gestión Diaria</p></div>
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
+          {!isCollapsed && <div className="pt-2 pb-1"><p className="px-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Gestión Diaria</p></div>}
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path || (item.path !== '/recepcion' && location.pathname.startsWith(item.path));
             const Icono = item.Icon;
@@ -146,122 +150,72 @@ const RecepcionDashboard = () => {
                 to={item.path} 
                 onClick={() => setSidebarOpen(false)} 
                 className={isActive ? activeBtnClass : inactiveBtnClass}
+                title={isCollapsed ? item.label : ""}
               >
-                <Icono size={20} className={isActive ? "text-white" : "text-slate-500 group-hover:text-sky-400 transition-colors"} />
-                {item.label}
+                {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-sky-500 rounded-r-full shadow-[0_0_12px_rgba(14,165,233,0.6)]"></div>}
+                <Icono size={22} strokeWidth={isActive ? 2.5 : 2} className={isActive ? "text-white" : "group-hover:text-white transition-colors"} />
+                {!isCollapsed && <span className="font-semibold text-sm tracking-wide">{item.label}</span>}
               </Link>
             );
           })}
         </nav>
 
-        {/* ÁREA DE PERFIL INFERIOR / CERRAR SESIÓN */}
-        <div className="p-4 border-t border-slate-800/50 bg-slate-950/50 shrink-0 relative">
-          {menuPerfilOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setMenuPerfilOpen(false)}></div>
-              <div className="absolute bottom-full mb-2 left-4 right-4 bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden z-50 animate-in slide-in-from-bottom-2">
-                <div className="p-4 bg-slate-800 border-b border-slate-700">
-                  <p className="font-bold text-white truncate">{usuarioNombre}</p>
-                  <p className="text-xs text-slate-400 truncate">{usuarioCorreo}</p>
-                </div>
-                <div className="p-2">
-                  <Link 
-                    to="/recepcion/perfil" 
-                    onClick={() => setMenuPerfilOpen(false)} 
-                    className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-300 hover:bg-slate-700 hover:text-sky-400 rounded-xl transition-colors flex items-center gap-2"
-                  >
-                    <User size={16} /> Mi Perfil Profesional
-                  </Link>
-                  <button 
-                    onClick={handleLogout} 
-                    className="w-full text-left px-4 py-2.5 text-sm font-bold text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors flex items-center gap-2 mt-1"
-                  >
-                    <LogOut size={16} /> Cerrar Sesión
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-
-          <button 
-            onClick={() => setMenuPerfilOpen(!menuPerfilOpen)}
-            className="w-full flex items-center justify-between gap-3 hover:bg-slate-800/50 rounded-2xl p-3 transition-colors cursor-pointer group"
-          >
-            <div className="flex items-center gap-3 overflow-hidden">
-              {/* LÓGICA DE ESCUDO ANTI-BUCLE AQUÍ */}
-              {!imgError ? (
-                <img 
-                  src={`http://localhost:8080${usuarioFoto}`} 
-                  alt="Perfil" 
-                  className="w-10 h-10 rounded-full border border-slate-700 object-cover bg-slate-900 shrink-0" 
-                  onError={() => setImgError(true)} 
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full border border-slate-700 bg-slate-900 shrink-0 flex items-center justify-center text-slate-400">
-                  <UserCircle size={24} strokeWidth={1.5} />
-                </div>
-              )}
-
-              <div className="text-left overflow-hidden">
-                <p className="text-sm font-bold text-white truncate group-hover:text-sky-400 transition-colors">{usuarioNombre}</p>
-                <p className="text-[10px] font-black uppercase text-sky-500 tracking-widest truncate">{usuarioRol}</p>
-              </div>
-            </div>
-            <ChevronDown size={16} className={`text-slate-500 shrink-0 transition-transform ${menuPerfilOpen ? 'rotate-180' : ''}`} />
+        <div className="p-4 border-t border-white/5">
+          <button onClick={handleLogout} className={`w-full flex items-center justify-center gap-3 bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white p-3 rounded-xl transition-colors font-semibold text-sm ${isCollapsed ? 'px-0' : ''}`} title="Cerrar Sesión">
+            <LogOut size={20} /> {!isCollapsed && "Cerrar Sesión"}
           </button>
         </div>
       </aside>
 
-      {/* CONTENIDO PRINCIPAL Y HEADER */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        <header className="bg-white/80 backdrop-blur-md h-20 px-4 sm:px-8 flex justify-between items-center shadow-sm z-10 border-b border-slate-200/60 sticky top-0">
+        <header className="bg-transparent h-24 px-6 md:px-8 flex justify-between items-center z-40 pt-4">
           <div className="flex items-center gap-4">
-            <button className="md:hidden text-slate-500 hover:text-slate-700 bg-white p-2 rounded-lg border border-slate-200 shadow-sm" onClick={() => setSidebarOpen(true)}>
+            <button className="md:hidden text-slate-500 bg-white p-2 rounded-xl shadow-sm" onClick={() => setSidebarOpen(true)}>
               <Menu size={20} />
             </button>
-            <h1 className="text-xl font-black text-slate-800 tracking-tight hidden sm:block">Recepción y Caja</h1>
+            <div className="hidden md:flex text-xs font-semibold text-slate-500 bg-white px-4 py-2.5 rounded-2xl border border-slate-200 shadow-sm capitalize">
+              {fechaActual}
+            </div>
           </div>
           
-          <div className="flex items-center gap-6">
+          <div className="ml-auto flex items-center gap-4 sm:gap-6">
             
+            <div className="hidden md:flex flex-col text-right mr-2">
+              <span className="text-xs font-black uppercase text-emerald-600 flex items-center gap-1.5 justify-end">Caja Activa <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div></span>
+              <span className="text-[10px] font-bold text-slate-400">En Turno</span>
+            </div>
+
             {/* CAMPANITA DE NOTIFICACIONES */}
             <div className="relative">
               <button 
                 onClick={() => { setMenuNotificacionesOpen(!menuNotificacionesOpen); setMenuPerfilOpen(false); }} 
-                className={`relative p-2.5 transition-colors rounded-full border ${noLeidas > 0 ? 'bg-sky-50 border-sky-100 text-sky-600' : 'bg-slate-50 border-slate-100 text-slate-400 hover:text-sky-500'}`}
+                className={`relative p-3 rounded-2xl bg-white shadow-sm border border-slate-200 transition-colors ${noLeidas > 0 ? 'text-sky-600' : 'text-slate-500 hover:text-sky-500 hover:border-sky-200'}`}
               >
                 <Bell size={20} className={noLeidas > 0 ? 'animate-pulse' : ''} />
-                {noLeidas > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-5 w-5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-5 w-5 bg-red-500 border-2 border-white text-[10px] font-black text-white items-center justify-center">
-                      {noLeidas}
-                    </span>
-                  </span>
-                )}
+                {noLeidas > 0 && <span className="absolute -top-1 -right-1 flex h-5 w-5 bg-red-500 rounded-full border-2 border-white text-[10px] font-black text-white items-center justify-center">{noLeidas}</span>}
               </button>
 
               {menuNotificacionesOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setMenuNotificacionesOpen(false)}></div>
-                  <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 animate-in slide-in-from-top-2">
-                    <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                  <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in slide-in-from-top-2">
+                    <div className="p-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-slate-800 text-lg">Notificaciones</h3>
+                        <h3 className="font-black text-slate-800 text-base">Notificaciones</h3>
                         {noLeidas > 0 && <span className="bg-sky-100 text-sky-600 text-xs font-black px-2 py-0.5 rounded-full">{noLeidas}</span>}
                       </div>
                       {notificaciones.length > 0 && (
-                        <button onClick={handleLimpiarTodas} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors bg-white hover:bg-rose-50 px-2 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                        <button onClick={handleLimpiarTodas} className="text-[10px] font-bold uppercase tracking-widest text-sky-500 hover:text-sky-700 bg-sky-50 px-3 py-1.5 rounded-lg border border-sky-100">
                           Limpiar todas
                         </button>
                       )}
                     </div>
                     
-                    <div className="max-h-[60vh] overflow-y-auto custom-scrollbar flex flex-col bg-white">
+                    <div className="max-h-[300px] overflow-y-auto custom-scrollbar flex flex-col bg-white">
                       {notificaciones.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
                           <Bell size={40} className="text-slate-200 mb-3" strokeWidth={1.5} />
-                          <p className="text-sm text-slate-400 font-medium">No tienes notificaciones nuevas</p>
+                          <p className="text-sm text-slate-400 font-medium">Bandeja vacía</p>
                         </div>
                       ) : (
                         notificaciones.map((notif) => (
@@ -288,22 +242,56 @@ const RecepcionDashboard = () => {
               )}
             </div>
 
-            <div className="hidden md:flex flex-col text-right">
-              <span className="text-xs font-black uppercase text-emerald-600 flex items-center gap-1.5 justify-end">Caja Activa <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div></span>
-              <span className="text-[10px] font-bold text-slate-400">En Turno</span>
+            <div className="relative">
+              <button onClick={() => { setMenuPerfilOpen(!menuPerfilOpen); setMenuNotificacionesOpen(false); }} className="flex items-center gap-3 bg-white p-2 pr-4 rounded-2xl shadow-sm border border-slate-200 transition-colors hover:border-sky-300">
+                {!imgError ? (
+                  <img 
+                    src={`http://localhost:8080${usuarioFoto}`} 
+                    alt="Perfil" 
+                    className="w-10 h-10 rounded-xl border border-slate-200 object-cover bg-slate-100 shrink-0" 
+                    onError={() => setImgError(true)} 
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shadow-sm shrink-0">
+                    <UserCircle size={24} strokeWidth={1.5} />
+                  </div>
+                )}
+                <div className="text-left hidden sm:block">
+                  <p className="text-sm font-bold text-slate-800 leading-tight">{usuarioNombre}</p>
+                  <p className="text-[10px] font-bold text-sky-500 uppercase tracking-widest">{usuarioRol}</p>
+                </div>
+                <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${menuPerfilOpen ? 'rotate-180' : ''}`}/>
+              </button>
+
+              {menuPerfilOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setMenuPerfilOpen(false)}></div>
+                  <div className="absolute right-0 mt-3 w-56 bg-white rounded-3xl shadow-xl border border-slate-100 z-50 overflow-hidden py-2 animate-in slide-in-from-top-2">
+                    <div className="px-5 py-3 border-b border-slate-50 mb-1">
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Conectado como</p>
+                      <p className="text-sm font-black text-slate-800 truncate">{usuarioNombre}</p>
+                    </div>
+                    <Link to="/recepcion/perfil" onClick={() => setMenuPerfilOpen(false)} className="w-full text-left px-5 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-sky-600 flex items-center gap-3 transition-colors">
+                      <User size={18}/> Mi Perfil
+                    </Link>
+                    <div className="h-px bg-slate-100 my-1 mx-3"></div>
+                    <button onClick={handleLogout} className="w-full px-5 py-3 text-sm font-semibold text-rose-500 hover:bg-rose-50 flex items-center gap-3 transition-colors">
+                      <LogOut size={18}/> Cerrar Sesión
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
 
           </div>
         </header>
 
-        <div className="flex-1 p-4 sm:p-8 overflow-y-auto bg-slate-50 custom-scrollbar">
+        <div className="flex-1 p-6 md:p-8 overflow-y-auto custom-scrollbar text-left text-slate-800">
           <Outlet /> 
         </div>
       </main>
 
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>
-      )}
+      {sidebarOpen && <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden" onClick={() => setSidebarOpen(false)}></div>}
     </div>
   );
 };
