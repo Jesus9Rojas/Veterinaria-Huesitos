@@ -33,7 +33,7 @@ public class HuesitosBackendApplication {
     }
 
     @Bean
-    public CommandLineRunner inicializarDatos(UsuarioRepositorio usuarioRepo, DuenoRepositorio dueñoRepo, huesitos_backend.repositorios.PersonalRepositorio personalRepo, PasswordEncoder passwordEncoder) {
+    public CommandLineRunner inicializarDatos(UsuarioRepositorio usuarioRepo, DuenoRepositorio duenoRepo, huesitos_backend.repositorios.PersonalRepositorio personalRepo, PasswordEncoder passwordEncoder) {
         return args -> {
             String claveEncriptada = passwordEncoder.encode("123456");
 
@@ -81,12 +81,12 @@ public class HuesitosBackendApplication {
                 cliente.setFotoPerfilUrl("/uploads/defecto-usuario.png");
                 Usuario clienteGuardado = usuarioRepo.save(cliente);
 
-                Dueno dueño = new Dueno();
-                dueño.setNombreCompleto("Usuario de Prueba Cliente");
-                dueño.setTelefono("999888777");
-                dueño.setDireccion("Avenida Siempre Viva 123");
-                dueño.setUsuario(clienteGuardado);
-                dueñoRepo.save(dueño);
+                Dueno dueno = new Dueno();
+                dueno.setNombreCompleto("Usuario de Prueba Cliente");
+                dueno.setTelefono("999888777");
+                dueno.setDireccion("Avenida Siempre Viva 123");
+                dueno.setUsuario(clienteGuardado);
+                duenoRepo.save(dueno);
             }
         };
     }
