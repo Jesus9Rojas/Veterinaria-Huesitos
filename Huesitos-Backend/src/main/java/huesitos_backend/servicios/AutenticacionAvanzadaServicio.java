@@ -49,7 +49,7 @@ public class AutenticacionAvanzadaServicio {
         mensaje.setSubject("Recuperación de Contraseña - Veterinaria Huesitos");
         
         // Enlace que redirigirá al Frontend (React)
-        String urlRecuperacion = "https://veterinaria-huesitos-production.up.railway.app/restablecer-password?token=" + token;
+        String urlRecuperacion = "https://veterinaria-huesitos.vercel.app/restablecer-password?token=" + token;
         
         mensaje.setText("Hola,\n\nHas solicitado restablecer tu contraseña en el sistema Huesitos.\n"
                 + "Haz clic en el siguiente enlace para ingresar tu nueva contraseña:\n" 
