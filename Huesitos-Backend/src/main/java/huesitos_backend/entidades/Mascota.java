@@ -44,7 +44,7 @@ public class Mascota {
     private String fotoUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dueño_id", nullable = false)
-    @com.fasterxml.jackson.annotation.JsonAlias({"dueño", "dueno"})
-    private Dueño dueño;
+    @JoinColumn(name = "dueno_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonAlias({"dueno", "dueno"})
+    private Dueno dueno;
 }

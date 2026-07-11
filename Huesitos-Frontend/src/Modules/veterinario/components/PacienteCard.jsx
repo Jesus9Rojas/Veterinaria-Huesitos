@@ -1,8 +1,8 @@
 import { PawPrint, User, Smartphone, ChevronRight } from 'lucide-react';
 
 const PacienteCard = ({ paciente, onVerPerfil }) => {
-  const nombreDueno = paciente.dueño?.nombreCompleto || paciente.dueno?.nombreCompleto || 'Sin dueño asignado';
-  const telefonoDueno = paciente.dueño?.telefono || paciente.dueno?.telefono || 'No registrado';
+  const nombreDueno = paciente.dueno?.nombreCompleto || paciente.dueno?.nombreCompleto || 'Sin dueño asignado';
+  const telefonoDueno = paciente.dueno?.telefono || paciente.dueno?.telefono || 'No registrado';
   const inicialMascota = paciente.nombre ? paciente.nombre.charAt(0).toUpperCase() : 'M';
 
   return (

@@ -26,7 +26,7 @@ const MisCitasCliente = () => {
     const cargarMisCitas = async () => {
       if (!idUsuario) return;
       try {
-        const resDueno = await axios.get(`http://localhost:8080/api/usuarios/${idUsuario}/dueño`, getConfig());
+        const resDueno = await axios.get(`http://localhost:8080/api/usuarios/${idUsuario}/dueno`, getConfig());
         const duenoId = resDueno.data.id;
 
         const resCitas = await axios.get(`http://localhost:8080/api/citas/dueno/${duenoId}`, getConfig());

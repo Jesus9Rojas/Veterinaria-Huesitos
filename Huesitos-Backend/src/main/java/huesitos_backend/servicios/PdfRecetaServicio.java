@@ -6,7 +6,7 @@ import com.lowagie.text.pdf.*;
 import huesitos_backend.entidades.ConsultaMedica;
 import huesitos_backend.entidades.Mascota;
 import huesitos_backend.entidades.Receta;
-import huesitos_backend.entidades.Dueño;
+import huesitos_backend.entidades.Dueno;
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
@@ -68,7 +68,7 @@ public class PdfRecetaServicio {
             Mascota mascota = consulta.getMascota();
             if (mascota == null) throw new RuntimeException("La consulta no tiene paciente.");
             
-            Dueño dueno = mascota.getDueño();
+            Dueno dueno = mascota.getDueno();
 
             PdfPTable tablaPaciente = new PdfPTable(4);
             tablaPaciente.setWidthPercentage(100);

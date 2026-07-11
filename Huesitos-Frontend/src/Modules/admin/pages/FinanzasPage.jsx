@@ -28,12 +28,12 @@ const FinanzasPage = () => {
             let tipoConcepto = "";
             
             if (t.cita) {
-              const nombreDueno = t.cita.mascota?.dueño?.nombreCompleto || "Desconocido";
+              const nombreDueno = t.cita.mascota?.dueno?.nombreCompleto || "Desconocido";
               const nombreServicio = t.cita.servicio?.nombre || "Consulta Médica";
               conceptoReal = `Cita: ${nombreServicio} - Cliente: ${nombreDueno}`;
               tipoConcepto = "CITA";
             } else if (t.pedido) {
-              const nombreDueno = t.pedido.dueño?.nombreCompleto || "Público General";
+              const nombreDueno = t.pedido.dueno?.nombreCompleto || "Público General";
               conceptoReal = `Tienda: Pedido #${t.pedido.id} - Cliente: ${nombreDueno}`;
               tipoConcepto = "TIENDA";
             } else if (t.referencia) {

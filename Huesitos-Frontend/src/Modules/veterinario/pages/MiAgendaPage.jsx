@@ -66,7 +66,7 @@ const MiAgendaPage = () => {
 
   const TarjetaCita = ({ cita, tipo }) => {
     const hora = new Date(cita.fechaHora).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
-    const nombreDueño = cita.mascota?.dueño?.nombreCompleto || cita.mascota?.dueno?.nombreCompleto || 'Desconocido';
+    const nombreDueno = cita.mascota?.dueno?.nombreCompleto || cita.mascota?.dueno?.nombreCompleto || 'Desconocido';
 
     let borderCol = "border-slate-200";
     let bgCol = "bg-white hover:shadow-md";
@@ -116,7 +116,7 @@ const MiAgendaPage = () => {
               </span>
             </p>
             <p className="text-xs font-medium text-slate-500 flex items-center gap-1 mt-1 truncate">
-              <User size={12}/> {nombreDueño}
+              <User size={12}/> {nombreDueno}
             </p>
           </div>
           <div className="bg-slate-50/80 p-2 rounded-xl border border-slate-100/50">

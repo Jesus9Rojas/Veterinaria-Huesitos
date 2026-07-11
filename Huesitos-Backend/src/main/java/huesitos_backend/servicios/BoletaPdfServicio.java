@@ -7,7 +7,7 @@ import com.lowagie.text.pdf.PdfWriter;
 import huesitos_backend.entidades.*;
 import huesitos_backend.repositorios.TransaccionRepositorio;
 import huesitos_backend.repositorios.DetallePedidoRepositorio;
-import huesitos_backend.repositorios.DueñoRepositorio;
+import huesitos_backend.repositorios.DuenoRepositorio;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +24,7 @@ public class BoletaPdfServicio {
 
     private final TransaccionRepositorio transaccionRepositorio;
     private final DetallePedidoRepositorio detallePedidoRepositorio;
-    private final DueñoRepositorio dueñoRepositorio;
+    private final DuenoRepositorio duenoRepositorio;
 
     @Transactional(readOnly = true)
     public byte[] generarPdfComprobante(Long transaccionId, String tipoComprobante) {
@@ -72,8 +72,8 @@ public class BoletaPdfServicio {
             
             if (transaccion.getCita() != null) {
                 Cita cita = transaccion.getCita();
-                if (cita.getMascota().getDueño() != null) {
-                    nombreCliente = cita.getMascota().getDueño().getNombreCompleto();
+                if (cita.getMascota().getDueno() != null) {
+                    nombreCliente = cita.getMascota().getDueno().getNombreCompleto();
                 } else {
                      nombreCliente = "Cliente no asignado";
                 }
@@ -81,9 +81,9 @@ public class BoletaPdfServicio {
             } else if (transaccion.getPedido() != null) {
                 Pedido pedido = transaccion.getPedido();
                 if (pedido.getCliente() != null) {
-                    Dueño dueño = dueñoRepositorio.findByUsuarioId(pedido.getCliente().getId()).orElse(null);
-                    if (dueño != null && dueño.getNombreCompleto() != null) {
-                        nombreCliente = dueño.getNombreCompleto();
+                    Dueno dueno = duenoRepositorio.findByUsuarioId(pedido.getCliente().getId()).orElse(null);
+                    if (dueno != null && dueno.getNombreCompleto() != null) {
+                        nombreCliente = dueno.getNombreCompleto();
                     } else {
                         nombreCliente = pedido.getCliente().getCorreo();
                     }

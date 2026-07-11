@@ -1,11 +1,11 @@
 package huesitos_backend.controladores;
 
 import huesitos_backend.dto.RespuestaLogin;
-import huesitos_backend.entidades.Dueño;
+import huesitos_backend.entidades.Dueno;
 import huesitos_backend.entidades.Usuario;
 import huesitos_backend.entidades.Personal;
 import huesitos_backend.repositorios.UsuarioRepositorio;
-import huesitos_backend.repositorios.DueñoRepositorio;
+import huesitos_backend.repositorios.DuenoRepositorio;
 import huesitos_backend.repositorios.PersonalRepositorio;
 import huesitos_backend.servicios.AutenticacionAvanzadaServicio;
 import huesitos_backend.servicios.AutenticacionServicio;
@@ -27,13 +27,13 @@ public class AutenticacionControlador {
     private final AutenticacionAvanzadaServicio autenticacionAvanzadaServicio;
     private final UsuarioRepositorio usuarioRepositorio;
 
-    private final DueñoRepositorio dueñoRepositorio;
+    private final DuenoRepositorio duenoRepositorio;
     private final PersonalRepositorio personalRepositorio;
 
     @PostMapping("/registro")
-    public ResponseEntity<?> registrarCliente(@RequestBody Dueño dueño) {
+    public ResponseEntity<?> registrarCliente(@RequestBody Dueno dueno) {
         try {
-            Dueño resultado = autenticacionServicio.registrarCliente(dueño);
+            Dueno resultado = autenticacionServicio.registrarCliente(dueno);
             return ResponseEntity.ok(resultado);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -51,9 +51,9 @@ public class AutenticacionControlador {
             String nombreCompleto = "Usuario del Sistema";
             
             if (usuario.getRol() == huesitos_backend.entidades.Rol.CLIENTE) {
-                Optional<Dueño> dueñoOpt = dueñoRepositorio.findByUsuarioId(usuario.getId());
-                if (dueñoOpt.isPresent() && dueñoOpt.get().getNombreCompleto() != null) {
-                    nombreCompleto = dueñoOpt.get().getNombreCompleto();
+                Optional<Dueno> duenoOpt = duenoRepositorio.findByUsuarioId(usuario.getId());
+                if (duenoOpt.isPresent() && duenoOpt.get().getNombreCompleto() != null) {
+                    nombreCompleto = duenoOpt.get().getNombreCompleto();
                 }
             } else {
                 Optional<Personal> personalOpt = personalRepositorio.findByUsuarioId(usuario.getId());

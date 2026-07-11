@@ -35,7 +35,7 @@ const ConsultasVeterinarioPage = () => {
 
   const citasFiltradas = citas.filter(c => 
     (c.mascota?.nombre || '').toLowerCase().includes(busqueda.toLowerCase()) ||
-    (c.mascota?.dueño?.nombreCompleto || '').toLowerCase().includes(busqueda.toLowerCase())
+    (c.mascota?.dueno?.nombreCompleto || '').toLowerCase().includes(busqueda.toLowerCase())
   );
 
   const actualizarEstado = async (id, nuevoEstado) => {
@@ -100,7 +100,7 @@ const ConsultasVeterinarioPage = () => {
                       <td className="px-6 py-4 font-black text-slate-700 whitespace-nowrap">{hora}</td>
                       <td className="px-6 py-4">
                         <div className="font-bold text-slate-800 text-base">{cita.mascota?.nombre} <span className="text-xs text-slate-400">({cita.mascota?.especie})</span></div>
-                        <div className="text-xs text-slate-500 font-semibold flex items-center gap-1 mt-0.5"><User size={12}/> {cita.mascota?.dueño?.nombreCompleto}</div>
+                        <div className="text-xs text-slate-500 font-semibold flex items-center gap-1 mt-0.5"><User size={12}/> {cita.mascota?.dueno?.nombreCompleto}</div>
                       </td>
                       <td className="px-6 py-4"><span className="font-bold text-sky-600 bg-sky-50 px-3 py-1 rounded-lg border border-sky-100">{cita.servicio?.nombre}</span></td>
                       <td className="px-6 py-4 text-center">

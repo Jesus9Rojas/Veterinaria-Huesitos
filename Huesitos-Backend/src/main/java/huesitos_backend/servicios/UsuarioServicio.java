@@ -2,11 +2,11 @@ package huesitos_backend.servicios;
 
 import huesitos_backend.entidades.Usuario;
 import huesitos_backend.entidades.Rol;
-import huesitos_backend.entidades.Dueño;
+import huesitos_backend.entidades.Dueno;
 import huesitos_backend.entidades.Personal;
 import huesitos_backend.entidades.Actividad;
 import huesitos_backend.repositorios.UsuarioRepositorio;
-import huesitos_backend.repositorios.DueñoRepositorio;
+import huesitos_backend.repositorios.DuenoRepositorio;
 import huesitos_backend.repositorios.PersonalRepositorio;
 import huesitos_backend.repositorios.ActividadRepositorio;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import java.util.HashMap;
 public class UsuarioServicio {
 
     private final UsuarioRepositorio usuarioRepositorio;
-    private final DueñoRepositorio dueñoRepositorio;
+    private final DuenoRepositorio duenoRepositorio;
     private final PersonalRepositorio personalRepositorio;
     private final ActividadRepositorio actividadRepositorio;
     private final PasswordEncoder passwordEncoder;
@@ -36,8 +36,8 @@ public class UsuarioServicio {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Dueño> obtenerDatosDueño(Long usuarioId) {
-        return dueñoRepositorio.findByUsuarioId(usuarioId);
+    public Optional<Dueno> obtenerDatosDueno(Long usuarioId) {
+        return duenoRepositorio.findByUsuarioId(usuarioId);
     }
 
     @Transactional(readOnly = true)

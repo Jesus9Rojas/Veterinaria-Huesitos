@@ -21,8 +21,8 @@ export const modificarEstadoUsuario = async (id, nuevoEstado) => {
   return response.data;
 };
 
-export const obtenerDetallesDueño = async (usuarioId) => {
-  const response = await usuarioAPI.get(`/${usuarioId}/dueño`);
+export const obtenerDetallesDueno = async (usuarioId) => {
+  const response = await usuarioAPI.get(`/${usuarioId}/dueno`);
   return response.data;
 };
 

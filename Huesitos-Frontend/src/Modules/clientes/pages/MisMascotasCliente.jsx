@@ -9,7 +9,7 @@ const MisMascotasCliente = () => {
   const [cargando, setCargando] = useState(true);
   
   const [idUsuario] = useState(() => localStorage.getItem('usuarioId'));
-  const [idDueño, setIdDueño] = useState(null); 
+  const [idDueno, setIdDueno] = useState(null); 
 
   const [modalAbierto, setModalAbierto] = useState(false);
   const [mascotaSeleccionada, setMascotaSeleccionada] = useState(null);
@@ -28,17 +28,17 @@ const MisMascotasCliente = () => {
     const inicializarDatos = async () => {
       if (!idUsuario) return;
       try {
-        const resDueno = await axios.get(`http://localhost:8080/api/usuarios/${idUsuario}/dueño`, getConfig());
+        const resDueno = await axios.get(`http://localhost:8080/api/usuarios/${idUsuario}/dueno`, getConfig());
         const duenoId = resDueno.data.id;
         
-        if (isMounted) setIdDueño(duenoId);
+        if (isMounted) setIdDueno(duenoId);
 
         let resMascotas;
         try {
           resMascotas = await axios.get(`http://localhost:8080/api/mascotas/dueno/${duenoId}`, getConfig());
         } catch (error) {
           console.warn("Intentando ruta alternativa para mascotas...", error.message);
-          resMascotas = await axios.get(`http://localhost:8080/api/mascotas/dueño/${duenoId}`, getConfig());
+          resMascotas = await axios.get(`http://localhost:8080/api/mascotas/dueno/${duenoId}`, getConfig());
         }
 
         if (isMounted) setMascotas(resMascotas?.data || []);
@@ -76,7 +76,7 @@ const MisMascotasCliente = () => {
 
   const handleGuardar = async (e) => {
     e.preventDefault();
-    if (!idDueño) {
+    if (!idDueno) {
         sileo.error({ title: 'Error', description: 'No se pudo validar tu cuenta. Recarga la página.' });
         return;
     }
@@ -90,7 +90,7 @@ const MisMascotasCliente = () => {
         fechaNacimiento: form.fechaNacimiento,
         pesoActual: parseFloat(form.pesoActual) || 0.0,
         alertasMedicas: form.alertasMedicas || '',
-        dueno: { id: parseInt(idDueño) }  
+        dueno: { id: parseInt(idDueno) }  
       };
 
       const peticion = axios.post('http://localhost:8080/api/mascotas', payload, getConfig());
@@ -124,7 +124,7 @@ const MisMascotasCliente = () => {
         </div>
         <button 
           onClick={() => setModalAbierto(true)} 
-          disabled={!idDueño} 
+          disabled={!idDueno} 
           className="w-full sm:w-auto bg-gradient-to-tr from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 transition-all hover:-translate-y-0.5 disabled:opacity-50"
         >
           <Plus size={18}/> Agregar Mascota
@@ -303,7 +303,7 @@ const MisMascotasCliente = () => {
             </div>
 
             <div className="p-6 border-t border-slate-100 bg-slate-50 shrink-0">
-              <button disabled={!idDueño || cargando} form="form-mascota" type="submit" className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-md shadow-blue-500/10 disabled:opacity-50">Guardar Mascota</button>
+              <button disabled={!idDueno || cargando} form="form-mascota" type="submit" className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-md shadow-blue-500/10 disabled:opacity-50">Guardar Mascota</button>
             </div>
           </div>
         </div>,

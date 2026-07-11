@@ -469,7 +469,7 @@ const CitasPage = () => {
                 <h2 className="text-3xl font-black text-slate-800 tracking-tight">{citaVisualizada.mascota?.nombre}</h2>
                 <div className="text-sm font-bold text-slate-500 mt-2 flex items-center gap-2">
                   <span className="bg-sky-100 text-sky-700 px-2 py-0.5 rounded-md text-[10px] uppercase tracking-widest">{citaVisualizada.mascota?.especie}</span>
-                  <span className="flex items-center gap-1"><User size={14}/> {citaVisualizada.mascota?.dueño?.nombreCompleto || citaVisualizada.mascota?.dueno?.nombreCompleto}</span>
+                  <span className="flex items-center gap-1"><User size={14}/> {citaVisualizada.mascota?.dueno?.nombreCompleto || citaVisualizada.mascota?.dueno?.nombreCompleto}</span>
                 </div>
               </div>
               <button type="button" onClick={() => setVisorCitaAbierto(false)} className="text-slate-400 hover:text-slate-700 transition-colors bg-white p-2 rounded-xl shadow-sm border border-slate-200"><X size={20}/></button>

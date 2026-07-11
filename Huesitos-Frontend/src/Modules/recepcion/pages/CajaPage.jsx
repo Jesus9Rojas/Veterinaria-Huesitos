@@ -65,7 +65,7 @@ const CajaPage = () => {
     if (!esCita && !esPedido) concepto = t.motivo || t.descripcion || t.referenciaPago || 'Servicio General';
 
     let nombreCliente = "Cliente Anónimo";
-    if (esCita) nombreCliente = t.cita.mascota?.dueño?.nombreCompleto || t.cita.mascota?.dueno?.nombreCompleto || "Cliente no asignado";
+    if (esCita) nombreCliente = t.cita.mascota?.dueno?.nombreCompleto || t.cita.mascota?.dueno?.nombreCompleto || "Cliente no asignado";
     if (esPedido && t.pedido.cliente) nombreCliente = t.pedido.cliente.nombreCompleto || t.pedido.cliente.correo;
 
     return { concepto, nombreCliente, esCita, esPedido };
@@ -324,7 +324,7 @@ const CajaPage = () => {
                   <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b pb-1">Datos de Cita Médica</h4>
                   <div className="text-sm font-medium text-slate-700 space-y-1 bg-slate-50 p-4 rounded-xl">
                     <p><span className="font-bold">Mascota:</span> {transaccionDetalle.cita.mascota?.nombre} ({transaccionDetalle.cita.mascota?.especie})</p>
-                    <p><span className="font-bold">Dueño:</span> {transaccionDetalle.cita.mascota?.dueño?.nombreCompleto || transaccionDetalle.cita.mascota?.dueno?.nombreCompleto}</p>
+                    <p><span className="font-bold">Dueño:</span> {transaccionDetalle.cita.mascota?.dueno?.nombreCompleto || transaccionDetalle.cita.mascota?.dueno?.nombreCompleto}</p>
                     <p><span className="font-bold">Servicio:</span> {transaccionDetalle.cita.servicio?.nombre}</p>
                     <p><span className="font-bold">Motivo:</span> {transaccionDetalle.cita.motivo}</p>
                   </div>

@@ -34,13 +34,13 @@ const InicioRecepcion = () => {
             if (c.estado === 'EN_ESPERA') enEspera++;
             
             const timeString = new Date(c.fechaHora).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
-            const nombreDueno = c.mascota.dueño?.nombreCompleto || c.mascota.dueno?.nombreCompleto || "No registrado";
+            const nombreDueno = c.mascota.dueno?.nombreCompleto || c.mascota.dueno?.nombreCompleto || "No registrado";
 
             return {
               id: c.id,
               hora: timeString,
               paciente: `${c.mascota.nombre} (${c.mascota.especie})`,
-              dueño: nombreDueno,
+              dueno: nombreDueno,
               motivo: c.servicio.nombre,
               estado: c.estado
             };
@@ -195,7 +195,7 @@ const InicioRecepcion = () => {
                     <td className="px-6 py-4 font-black text-slate-800">{cita.hora}</td>
                     <td className="px-6 py-4">
                       <div className="font-bold text-slate-800">{cita.paciente}</div>
-                      <div className="text-xs text-slate-500 font-medium">{cita.dueño}</div>
+                      <div className="text-xs text-slate-500 font-medium">{cita.dueno}</div>
                     </td>
                     <td className="px-6 py-4 font-semibold text-slate-600">{cita.motivo}</td>
                     <td className="px-6 py-4">

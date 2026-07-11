@@ -7,6 +7,6 @@ import java.util.List;
 
 public interface RecordatorioRepositorio extends JpaRepository<Recordatorio, Long> {
     List<Recordatorio> findByMascotaId(Long mascotaId);
-    List<Recordatorio> findByMascotaDueñoUsuarioId(Long usuarioId);
+    List<Recordatorio> findByMascotaDuenoUsuarioId(Long usuarioId);
     boolean existsByMascotaIdAndFechaRecordatorioAndTitulo(Long mascotaId, LocalDate fechaRecordatorio, String titulo);
 }

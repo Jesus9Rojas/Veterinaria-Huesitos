@@ -122,6 +122,6 @@ public class CitaControlador {
     @GetMapping("/dueno/{duenoId}")
     @PreAuthorize("hasAnyRole('CLIENTE', 'ADMINISTRADOR', 'RECEPCIONISTA')")
     public ResponseEntity<List<Cita>> obtenerCitasPorDueno(@PathVariable Long duenoId) {
-        return ResponseEntity.ok(citaServicio.obtenerCitasPorDueño(duenoId));
+        return ResponseEntity.ok(citaServicio.obtenerCitasPorDueno(duenoId));
     }
 }

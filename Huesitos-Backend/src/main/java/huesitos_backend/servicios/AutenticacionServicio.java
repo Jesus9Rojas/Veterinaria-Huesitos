@@ -1,9 +1,9 @@
 package huesitos_backend.servicios;
 
-import huesitos_backend.entidades.Dueño;
+import huesitos_backend.entidades.Dueno;
 import huesitos_backend.entidades.Rol;
 import huesitos_backend.entidades.Usuario;
-import huesitos_backend.repositorios.DueñoRepositorio;
+import huesitos_backend.repositorios.DuenoRepositorio;
 import huesitos_backend.repositorios.UsuarioRepositorio;
 import huesitos_backend.seguridad.TokenJwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -18,24 +18,24 @@ import java.util.List;
 public class AutenticacionServicio {
 
     private final UsuarioRepositorio usuarioRepositorio;
-    private final DueñoRepositorio dueñoRepositorio;
+    private final DuenoRepositorio duenoRepositorio;
     private final PasswordEncoder passwordEncoder;
     private final TokenJwtUtil tokenJwtUtil;
     private final HorarioPersonalServicio horarioPersonalServicio;
 
     @Transactional
-    public Dueño registrarCliente(Dueño dueño) {
-        if (dueño.getUsuario() == null) {
+    public Dueno registrarCliente(Dueno dueno) {
+        if (dueno.getUsuario() == null) {
             throw new RuntimeException("El dueño debe tener un usuario asociado");
         }
 
-        Usuario usuario = dueño.getUsuario();
+        Usuario usuario = dueno.getUsuario();
 
         if (usuarioRepositorio.findByCorreo(usuario.getCorreo()).isPresent()) {
             throw new RuntimeException("El correo ya está registrado");
         }
 
-        if (dueñoRepositorio.existsByTelefono(dueño.getTelefono())) {
+        if (duenoRepositorio.existsByTelefono(dueno.getTelefono())) {
             throw new RuntimeException("El teléfono ya está registrado");
         }
 
@@ -44,9 +44,9 @@ public class AutenticacionServicio {
         usuario.setContrasena(passwordEncoder.encode(usuario.getContrasena()));
 
         Usuario usuarioGuardado = usuarioRepositorio.save(usuario);
-        dueño.setUsuario(usuarioGuardado);
+        dueno.setUsuario(usuarioGuardado);
 
-        return dueñoRepositorio.save(dueño);
+        return duenoRepositorio.save(dueno);
     }
 
     /**

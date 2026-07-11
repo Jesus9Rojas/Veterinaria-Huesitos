@@ -114,7 +114,7 @@ const ClientesPage = () => {
         pesoActual: parseFloat(formMascota.pesoActual),
         alertasMedicas: formMascota.alertasMedicas || "Ninguna",
         fotoUrl: "/uploads/defecto-mascota.png", 
-        dueño: { id: duenoSeleccionado.id } 
+        dueno: { id: duenoSeleccionado.id } 
       };
 
       const peticion = crearMascota(payload);

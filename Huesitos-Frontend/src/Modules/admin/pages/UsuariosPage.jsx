@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { obtenerListaUsuarios, modificarRolUsuario, modificarEstadoUsuario, obtenerDetallesDueño, obtenerDetallesPersonal, actualizarPersonal, registrarNuevoPersonal } from "../../../services/usuarioService";
+import { obtenerListaUsuarios, modificarRolUsuario, modificarEstadoUsuario, obtenerDetallesDueno, obtenerDetallesPersonal, actualizarPersonal, registrarNuevoPersonal } from "../../../services/usuarioService";
 import { UserPlus, ShieldAlert, ShieldCheck, Edit, Mail, Lock, UserCircle, X, Info, Phone, CreditCard, User } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { sileo } from 'sileo';
@@ -12,8 +12,8 @@ const UsuariosPage = () => {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
-  const [datosDueño, setDatosDueño] = useState(null);
-  const [loadingDueño, setLoadingDueño] = useState(false);
+  const [datosDueno, setDatosDueno] = useState(null);
+  const [loadingDueno, setLoadingDueno] = useState(false);
   const [editForm, setEditForm] = useState({ correo: "", contrasena: "", nombreCompleto: "", dni: "", telefono: "" });
   const [procesandoForm, setProcesandoForm] = useState(false);
 
@@ -80,14 +80,14 @@ const UsuariosPage = () => {
   const abrirDetallesModal = async (usuario) => {
     setUsuarioSeleccionado(usuario);
     setEditForm({ correo: usuario.correo, contrasena: "", nombreCompleto: "", dni: "", telefono: "" });
-    setDatosDueño(null);
+    setDatosDueno(null);
     setModalOpen(true);
-    setLoadingDueño(true);
+    setLoadingDueno(true);
 
     try {
       if (usuario.rol === "CLIENTE") {
-        const data = await obtenerDetallesDueño(usuario.id);
-        setDatosDueño(data);
+        const data = await obtenerDetallesDueno(usuario.id);
+        setDatosDueno(data);
       } else {
         const data = await obtenerDetallesPersonal(usuario.id);
         setEditForm(prev => ({ ...prev, nombreCompleto: data.nombreCompleto || "", dni: data.dni || "", telefono: data.telefono || "" }));
@@ -95,7 +95,7 @@ const UsuariosPage = () => {
     } catch (error) {
       console.error("Ficha no encontrada:", error);
     } finally {
-      setLoadingDueño(false);
+      setLoadingDueno(false);
     }
   };
 
@@ -276,11 +276,11 @@ const UsuariosPage = () => {
               {usuarioSeleccionado.rol === "CLIENTE" && (
                 <div className="border-t border-slate-100 pt-5 space-y-4">
                   <h4 className="font-black text-slate-800 text-sm tracking-widest uppercase">Información de Dueño Asociada</h4>
-                  {loadingDueño ? <p className="text-xs text-sky-600 animate-pulse font-medium">Cargando datos...</p> : datosDueño ? (
+                  {loadingDueno ? <p className="text-xs text-sky-600 animate-pulse font-medium">Cargando datos...</p> : datosDueno ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-sky-50/50 p-5 rounded-2xl border border-sky-100/50 text-sm">
-                      <div><span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nombre</span><p className="font-bold text-slate-800">{datosDueño.nombreCompleto}</p></div>
-                      <div><span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Teléfono</span><p className="font-bold text-slate-800">{datosDueño.telefono}</p></div>
-                      <div className="sm:col-span-2"><span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Dirección</span><p className="font-bold text-slate-800">{datosDueño.direccion}</p></div>
+                      <div><span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nombre</span><p className="font-bold text-slate-800">{datosDueno.nombreCompleto}</p></div>
+                      <div><span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Teléfono</span><p className="font-bold text-slate-800">{datosDueno.telefono}</p></div>
+                      <div className="sm:col-span-2"><span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Dirección</span><p className="font-bold text-slate-800">{datosDueno.direccion}</p></div>
                     </div>
                   ) : <div className="text-xs text-amber-600 bg-amber-50 p-4 rounded-xl border border-amber-200">Este cliente no ha completado el registro de contacto físico.</div>}
                 </div>

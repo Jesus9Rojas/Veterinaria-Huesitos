@@ -29,7 +29,7 @@ public class RecordatorioControlador {
     public ResponseEntity<?> listarRecordatorios(Principal principal) {
         try {
             Usuario usuario = obtenerUsuarioAutenticado(principal);
-            List<Recordatorio> recordatorios = recordatorioRepositorio.findByMascotaDueñoUsuarioId(usuario.getId());
+            List<Recordatorio> recordatorios = recordatorioRepositorio.findByMascotaDuenoUsuarioId(usuario.getId());
             return ResponseEntity.ok(recordatorios);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

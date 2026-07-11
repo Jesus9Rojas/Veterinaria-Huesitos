@@ -2,7 +2,7 @@ package huesitos_backend.servicios;
 
 import huesitos_backend.entidades.Mascota;
 import huesitos_backend.repositorios.MascotaRepositorio;
-import huesitos_backend.repositorios.DueñoRepositorio;
+import huesitos_backend.repositorios.DuenoRepositorio;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +13,7 @@ import java.util.List;
 public class MascotaServicio {
 
     private final MascotaRepositorio mascotaRepositorio;
-    private final DueñoRepositorio dueñoRepositorio;
+    private final DuenoRepositorio duenoRepositorio;
 
     /**
      * Registra una nueva mascota en el sistema, previa verificación de la existencia de su dueño.
@@ -23,8 +23,8 @@ public class MascotaServicio {
      */
     @Transactional
     public Mascota registrarMascota(Mascota mascota) {
-        if (mascota.getDueño() == null || mascota.getDueño().getId() == null || 
-            !dueñoRepositorio.existsById(mascota.getDueño().getId())) {
+        if (mascota.getDueno() == null || mascota.getDueno().getId() == null || 
+            !duenoRepositorio.existsById(mascota.getDueno().getId())) {
             throw new RuntimeException("El dueño especificado no existe");
         }
         return mascotaRepositorio.save(mascota);
@@ -33,12 +33,12 @@ public class MascotaServicio {
     /**
      * Obtiene todas las mascotas asociadas a un dueño.
      *
-     * @param dueñoId El ID del dueño.
+     * @param duenoId El ID del dueño.
      * @return La lista de mascotas del dueño.
      */
     @Transactional(readOnly = true)
-    public List<Mascota> obtenerMascotasPorDueño(Long dueñoId) {
-        return mascotaRepositorio.findByDueñoId(dueñoId);
+    public List<Mascota> obtenerMascotasPorDueno(Long duenoId) {
+        return mascotaRepositorio.findByDuenoId(duenoId);
     }
 
     /**

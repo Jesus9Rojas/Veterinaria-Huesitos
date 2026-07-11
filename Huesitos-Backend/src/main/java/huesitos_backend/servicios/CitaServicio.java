@@ -323,7 +323,7 @@ public class CitaServicio {
     }
 
     @Transactional(readOnly = true)
-    public List<Cita> obtenerCitasPorDueño(Long duenoId) {
-        return citaRepositorio.findByMascotaDueñoIdOrderByFechaHoraDesc(duenoId);
+    public List<Cita> obtenerCitasPorDueno(Long duenoId) {
+        return citaRepositorio.findByMascotaDuenoIdOrderByFechaHoraDesc(duenoId);
     }
 }

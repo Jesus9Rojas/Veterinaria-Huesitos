@@ -39,7 +39,7 @@ const MisPacientesPage = () => {
   const pacientesFiltrados = pacientes.filter(p => {
     const termino = busqueda.toLowerCase();
     const nombreMascota = p.nombre?.toLowerCase() || '';
-    const nombreDueno = (p.dueño?.nombreCompleto || p.dueno?.nombreCompleto || '').toLowerCase();
+    const nombreDueno = (p.dueno?.nombreCompleto || p.dueno?.nombreCompleto || '').toLowerCase();
     
     return nombreMascota.includes(termino) || nombreDueno.includes(termino);
   });
@@ -67,12 +67,12 @@ const MisPacientesPage = () => {
   };
 
   const pesoMascota = pacienteActivo?.pesoActual || pacienteActivo?.peso;
-  const nombreDueno = pacienteActivo?.dueño?.nombreCompleto || pacienteActivo?.dueno?.nombreCompleto || 'No registrado';
-  const telefonoDueno = pacienteActivo?.dueño?.telefono || pacienteActivo?.dueno?.telefono || 'No registrado';
+  const nombreDueno = pacienteActivo?.dueno?.nombreCompleto || pacienteActivo?.dueno?.nombreCompleto || 'No registrado';
+  const telefonoDueno = pacienteActivo?.dueno?.telefono || pacienteActivo?.dueno?.telefono || 'No registrado';
 
-  const correoDueno = pacienteActivo?.dueño?.usuario?.correo || 
+  const correoDueno = pacienteActivo?.dueno?.usuario?.correo || 
                       pacienteActivo?.dueno?.usuario?.correo || 
-                      pacienteActivo?.dueño?.correo || 
+                      pacienteActivo?.dueno?.correo || 
                       pacienteActivo?.dueno?.correo || 
                       'No registrado';
 

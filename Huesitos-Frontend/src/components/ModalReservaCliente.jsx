@@ -12,7 +12,7 @@ const ModalReservaCliente = ({ cerrarModal }) => {
   const [veterinarios, setVeterinarios] = useState([]);
 
   const [idUsuario] = useState(() => localStorage.getItem('usuarioId'));
-  const [idDueño, setIdDueño] = useState(null); 
+  const [idDueno, setIdDueno] = useState(null); 
 
   const [seleccion, setSeleccion] = useState({
     mascotaId: '', servicioId: '', veterinarioId: '', fecha: '', hora: '', motivo: '' 
@@ -34,9 +34,9 @@ const ModalReservaCliente = ({ cerrarModal }) => {
     const cargarDatos = async () => {
       if (!idUsuario) return;
       try {
-        const resDueno = await axios.get(`http://localhost:8080/api/usuarios/${idUsuario}/dueño`, getConfig());
+        const resDueno = await axios.get(`http://localhost:8080/api/usuarios/${idUsuario}/dueno`, getConfig());
         const duenoId = resDueno.data.id;
-        if (isMounted) setIdDueño(duenoId);
+        if (isMounted) setIdDueno(duenoId);
 
         let resMascotas;
 
@@ -48,7 +48,7 @@ const ModalReservaCliente = ({ cerrarModal }) => {
 
           console.warn("Intentando ruta alternativa para mascotas...", error.message);
 
-          resMascotas = await axios.get(`http://localhost:8080/api/mascotas/dueño/${duenoId}`, getConfig());
+          resMascotas = await axios.get(`http://localhost:8080/api/mascotas/dueno/${duenoId}`, getConfig());
 
         }
 
@@ -73,7 +73,7 @@ const ModalReservaCliente = ({ cerrarModal }) => {
 
   const handleCrearMascota = async (e) => {
     e.preventDefault();
-    if (!idDueño) {
+    if (!idDueno) {
       Swal.fire('Error', 'No se detectó tu perfil de cliente.', 'error');
       return;
     }
@@ -89,7 +89,7 @@ const ModalReservaCliente = ({ cerrarModal }) => {
         pesoActual: parseFloat(nuevaMascota.pesoActual) || 0.0,
         alertasMedicas: nuevaMascota.alertasMedicas || '',
         fotoUrl: '/uploads/defecto-mascota.png', 
-        dueño: { id: parseInt(idDueño) } 
+        dueno: { id: parseInt(idDueno) } 
       };
       
       const res = await axios.post('http://localhost:8080/api/mascotas', payload, getConfig());
@@ -173,7 +173,7 @@ const ModalReservaCliente = ({ cerrarModal }) => {
                 <>
                   <div className="flex justify-between items-center">
                     <label className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2"><Heart size={14}/> ¿A quién atenderemos?</label>
-                    <button onClick={() => setModoCrearMascota(true)} disabled={!idDueño} className="text-xs font-black text-blue-600 flex items-center gap-1 hover:underline disabled:opacity-50"><Plus size={14}/> Nueva mascota</button>
+                    <button onClick={() => setModoCrearMascota(true)} disabled={!idDueno} className="text-xs font-black text-blue-600 flex items-center gap-1 hover:underline disabled:opacity-50"><Plus size={14}/> Nueva mascota</button>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {mascotas.map(m => (

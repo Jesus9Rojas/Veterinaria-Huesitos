@@ -2,7 +2,7 @@ import { PawPrint, User, Stethoscope, CheckCircle2, PlayCircle, AlertCircle } fr
 
 const CitaCardVeterinario = ({ cita, onAtender, onFinalizar }) => {
   const horaFormat = new Date(cita.fechaHora).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
-  const nombreDueño = cita.mascota?.dueño?.nombreCompleto || cita.mascota?.dueno?.nombreCompleto || 'Desconocido';
+  const nombreDueno = cita.mascota?.dueno?.nombreCompleto || cita.mascota?.dueno?.nombreCompleto || 'Desconocido';
 
   const isEnEspera = cita.estado === 'EN_ESPERA';
   const isCompletada = cita.estado === 'COMPLETADA';
@@ -43,7 +43,7 @@ const CitaCardVeterinario = ({ cita, onAtender, onFinalizar }) => {
             </span>
           </p>
           <p className="text-xs font-medium text-slate-500 flex items-center gap-1.5 pt-1">
-            <User size={12}/> {nombreDueño}
+            <User size={12}/> {nombreDueno}
           </p>
         </div>
 

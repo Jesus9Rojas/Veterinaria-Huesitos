@@ -9,8 +9,8 @@ public interface MascotaRepositorio extends JpaRepository<Mascota, Long> {
     /**
      * Busca todas las mascotas que pertenecen a un dueño específico.
      *
-     * @param dueñoId El ID del dueño.
+     * @param duenoId El ID del dueño.
      * @return La lista de mascotas asociadas a ese dueño.
      */
-    List<Mascota> findByDueñoId(Long dueñoId);
+    List<Mascota> findByDuenoId(Long duenoId);
 }

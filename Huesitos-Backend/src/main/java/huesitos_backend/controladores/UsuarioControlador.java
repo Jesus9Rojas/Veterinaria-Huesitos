@@ -36,7 +36,7 @@ public class UsuarioControlador {
             
             String nombreVisible = "Usuario del Sistema";
             if (u.getRol() == Rol.CLIENTE) {
-                huesitos_backend.entidades.Dueño d = usuarioServicio.obtenerDatosDueño(u.getId()).orElse(null);
+                huesitos_backend.entidades.Dueno d = usuarioServicio.obtenerDatosDueno(u.getId()).orElse(null);
                 if (d != null && d.getNombreCompleto() != null) {
                     nombreVisible = d.getNombreCompleto();
                 }
@@ -56,10 +56,10 @@ public class UsuarioControlador {
     // ==============================================================================
     // CORRECCIÓN MAESTRA: Se añade 'CLIENTE' para que el modal no dé error 403
     // ==============================================================================
-    @GetMapping("/{id}/dueño")
+    @GetMapping("/{id}/dueno")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA', 'CLIENTE')")
-    public ResponseEntity<?> obtenerDatosDueño(@PathVariable Long id) {
-        return usuarioServicio.obtenerDatosDueño(id)
+    public ResponseEntity<?> obtenerDatosDueno(@PathVariable Long id) {
+        return usuarioServicio.obtenerDatosDueno(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

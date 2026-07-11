@@ -31,5 +31,5 @@ public interface CitaRepositorio extends JpaRepository<Cita, Long> {
     @Query("SELECT c FROM Cita c WHERE c.fechaHora <= :limite AND c.estado IN :estados")
     List<Cita> buscarCitasExpiradas(@Param("limite") LocalDateTime limite, @Param("estados") List<EstadoCita> estados);
 
-    List<Cita> findByMascotaDueñoIdOrderByFechaHoraDesc(Long duenoId);
+    List<Cita> findByMascotaDuenoIdOrderByFechaHoraDesc(Long duenoId);
 }

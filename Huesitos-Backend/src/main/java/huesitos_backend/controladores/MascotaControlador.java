@@ -51,8 +51,8 @@ public class MascotaControlador {
      * @return Lista de mascotas asociadas.
      */
     @GetMapping("/dueno/{duenoId}")
-    public ResponseEntity<List<Mascota>> listarPorDueño(@PathVariable Long duenoId) {
-        List<Mascota> mascotas = mascotaServicio.obtenerMascotasPorDueño(duenoId);
+    public ResponseEntity<List<Mascota>> listarPorDueno(@PathVariable Long duenoId) {
+        List<Mascota> mascotas = mascotaServicio.obtenerMascotasPorDueno(duenoId);
         return ResponseEntity.ok(mascotas);
     }
 

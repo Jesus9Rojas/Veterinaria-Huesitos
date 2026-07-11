@@ -1,6 +1,6 @@
 package huesitos_backend.controladores;
 
-import huesitos_backend.servicios.DueñoServicio;
+import huesitos_backend.servicios.DuenoServicio;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -12,19 +12,19 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/duenos")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'RECEPCIONISTA')")
-public class DueñoControlador {
+public class DuenoControlador {
 
-    private final DueñoServicio dueñoServicio;
+    private final DuenoServicio duenoServicio;
 
     @GetMapping
     public ResponseEntity<?> obtenerTodos() {
-        return ResponseEntity.ok(dueñoServicio.listarTodosDuenos());
+        return ResponseEntity.ok(duenoServicio.listarTodosDuenos());
     }
 
     @PostMapping
-    public ResponseEntity<?> crearDueño(@RequestBody DueñoRequest request) {
+    public ResponseEntity<?> crearDueno(@RequestBody DuenoRequest request) {
         try {
-            DueñoResponse guardado = dueñoServicio.guardarDueño(request);
+            DuenoResponse guardado = duenoServicio.guardarDueno(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(guardado);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -32,9 +32,9 @@ public class DueñoControlador {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarDueño(@PathVariable Long id, @RequestBody DueñoRequest request) {
+    public ResponseEntity<?> actualizarDueno(@PathVariable Long id, @RequestBody DuenoRequest request) {
         try {
-            DueñoResponse actualizado = dueñoServicio.actualizarDueño(id, request);
+            DuenoResponse actualizado = duenoServicio.actualizarDueno(id, request);
             return ResponseEntity.ok(actualizado);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -42,7 +42,7 @@ public class DueñoControlador {
     }
 
     @Data
-    public static class DueñoRequest {
+    public static class DuenoRequest {
         private String correo;
         private String contrasena;
         private String nombreCompleto;
@@ -51,7 +51,7 @@ public class DueñoControlador {
     }
 
     @Data
-    public static class DueñoResponse {
+    public static class DuenoResponse {
         private Long id;
         private Long usuarioId;
         private String correo;
