@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const finanzasAPI = axios.create({
-  baseURL: "http://localhost:8080/api/transacciones",
+  baseURL: "https://veterinaria-huesitos-production.up.railway.app/api/transacciones",
   headers: { "Content-Type": "application/json" }
 });
 

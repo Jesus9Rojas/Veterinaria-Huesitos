@@ -37,7 +37,7 @@ const GestionHorariosPage = () => {
     const cargarUsuarios = async () => {
       try {
         const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
-        const res = await axios.get('http://localhost:8080/api/usuarios', { headers });
+        const res = await axios.get('https://veterinaria-huesitos-production.up.railway.app/api/usuarios', { headers });
         if (isMounted) {
           const personalClinica = res.data.filter(u => u.activo === true && u.rol !== 'CLIENTE');
           setUsuarios(personalClinica);

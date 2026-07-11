@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const usuarioAPI = axios.create({
-  baseURL: "http://localhost:8080/api/usuarios",
+  baseURL: "https://veterinaria-huesitos-production.up.railway.app/api/usuarios",
   headers: {
     "Content-Type": "application/json",
   },

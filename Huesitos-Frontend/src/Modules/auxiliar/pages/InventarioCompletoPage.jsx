@@ -30,10 +30,10 @@ const InventarioCompletoPage = () => {
         const headers = { Authorization: `Bearer ${token}` };
 
         const [resProductos, resVacunas, resMedicinas, resAntiparasitarios] = await Promise.all([
-          axios.get('http://localhost:8080/api/productos/todos', { headers }).catch(() => ({ data: [] })),
-          axios.get('http://localhost:8080/api/vacunas', { headers }).catch(() => ({ data: [] })),
-          axios.get('http://localhost:8080/api/medicinas', { headers }).catch(() => ({ data: [] })),
-          axios.get('http://localhost:8080/api/antiparasitarios', { headers }).catch(() => ({ data: [] }))
+          axios.get('https://veterinaria-huesitos-production.up.railway.app/api/productos/todos', { headers }).catch(() => ({ data: [] })),
+          axios.get('https://veterinaria-huesitos-production.up.railway.app/api/vacunas', { headers }).catch(() => ({ data: [] })),
+          axios.get('https://veterinaria-huesitos-production.up.railway.app/api/medicinas', { headers }).catch(() => ({ data: [] })),
+          axios.get('https://veterinaria-huesitos-production.up.railway.app/api/antiparasitarios', { headers }).catch(() => ({ data: [] }))
         ]);
 
         if (isMounted) {

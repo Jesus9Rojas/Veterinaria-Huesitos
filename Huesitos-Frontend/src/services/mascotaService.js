@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const mascotaAPI = axios.create({
-  baseURL: "http://localhost:8080/api/mascotas",
+  baseURL: "https://veterinaria-huesitos-production.up.railway.app/api/mascotas",
   headers: {
     "Content-Type": "application/json",
   },

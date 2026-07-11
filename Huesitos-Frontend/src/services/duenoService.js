@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const duenosAPI = axios.create({
-  baseURL: "http://localhost:8080/api/duenos",
+  baseURL: "https://veterinaria-huesitos-production.up.railway.app/api/duenos",
   headers: {
     "Content-Type": "application/json",
   },

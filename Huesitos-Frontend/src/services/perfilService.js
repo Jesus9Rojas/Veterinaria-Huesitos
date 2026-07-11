@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = "http://localhost:8080/api/perfiles";
+const API_BASE = "https://veterinaria-huesitos-production.up.railway.app/api/perfiles";
 
 const getHeaders = () => {
   const token = localStorage.getItem("token");

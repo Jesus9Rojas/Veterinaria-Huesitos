@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080/api/vacunas";
+const API_URL = "https://veterinaria-huesitos-production.up.railway.app/api/vacunas";
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");

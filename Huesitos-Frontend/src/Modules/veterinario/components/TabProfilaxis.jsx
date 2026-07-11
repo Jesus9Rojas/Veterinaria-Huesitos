@@ -13,7 +13,7 @@ const TabProfilaxis = ({ vacunas, desparasitaciones, onGuardarVacuna, onGuardarD
     const cargarCatalogo = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:8080/api/vacunas', {
+        const response = await axios.get('https://veterinaria-huesitos-production.up.railway.app/api/vacunas', {
           headers: { Authorization: `Bearer ${token}` }
         });
         setCatalogoVacunas(response.data || []);

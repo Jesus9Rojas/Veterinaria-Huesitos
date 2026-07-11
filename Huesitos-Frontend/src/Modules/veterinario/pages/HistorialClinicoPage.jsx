@@ -44,9 +44,9 @@ const HistorialClinicoPage = () => {
       try {
         const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
         const [vacs, antis, meds, consData, hvData, haData, recData] = await Promise.all([
-          axios.get("http://localhost:8080/api/vacunas", { headers }),
-          axios.get("http://localhost:8080/api/antiparasitarios", { headers }),
-          axios.get("http://localhost:8080/api/medicinas", { headers }),
+          axios.get("https://veterinaria-huesitos-production.up.railway.app/api/vacunas", { headers }),
+          axios.get("https://veterinaria-huesitos-production.up.railway.app/api/antiparasitarios", { headers }),
+          axios.get("https://veterinaria-huesitos-production.up.railway.app/api/medicinas", { headers }),
           obtenerConsultasMascota(mascotaId), 
           obtenerHistorialVacunas(mascotaId),
           obtenerHistorialAnti(mascotaId), 
@@ -210,7 +210,7 @@ const HistorialClinicoPage = () => {
   const handleImprimirReceta = async (recetaId) => {
     try {
       setProcesando(true);
-      const response = await axios.get(`http://localhost:8080/api/recetas/${recetaId}/pdf`, {
+      const response = await axios.get(`https://veterinaria-huesitos-production.up.railway.app/api/recetas/${recetaId}/pdf`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         responseType: 'blob' 
       });

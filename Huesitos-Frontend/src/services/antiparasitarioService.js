@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080/api/antiparasitarios";
+const API_URL = "https://veterinaria-huesitos-production.up.railway.app/api/antiparasitarios";
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");

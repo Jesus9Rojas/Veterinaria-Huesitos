@@ -67,7 +67,7 @@ const RegistroClientePage = () => {
         }
       };
 
-      const peticion = axios.post('http://localhost:8080/api/autenticacion/registro', payload);
+      const peticion = axios.post('https://veterinaria-huesitos-production.up.railway.app/api/autenticacion/registro', payload);
 
       sileo.promise(peticion, {
         loading: { title: 'Creando cuenta...' },

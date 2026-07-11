@@ -15,9 +15,9 @@ const RecetaCobroAdicionalModal = ({ citaId, onClose, onGuardadoExitoso }) => {
     const fetchCatalogos = async () => {
       const headers = { Authorization: `Bearer ${localStorage.getItem("token")}` };
       const [resMed, resVac, resAnti] = await Promise.all([
-        axios.get("http://localhost:8080/api/medicinas", { headers }),
-        axios.get("http://localhost:8080/api/vacunas", { headers }),
-        axios.get("http://localhost:8080/api/antiparasitarios", { headers })
+        axios.get("https://veterinaria-huesitos-production.up.railway.app/api/medicinas", { headers }),
+        axios.get("https://veterinaria-huesitos-production.up.railway.app/api/vacunas", { headers }),
+        axios.get("https://veterinaria-huesitos-production.up.railway.app/api/antiparasitarios", { headers })
       ]);
 
       const meds = resMed.data.map(i => ({ ...i, tipoItem: "MEDICINA" }));
@@ -55,7 +55,7 @@ const RecetaCobroAdicionalModal = ({ citaId, onClose, onGuardadoExitoso }) => {
     try {
       const payload = carrito.map(c => ({ tipoItem: c.tipoItem, itemId: c.itemId, cantidad: c.cantidad }));
       
-      const peticion = axios.post(`http://localhost:8080/api/citas/${citaId}/recetar-items`, payload, {
+      const peticion = axios.post(`https://veterinaria-huesitos-production.up.railway.app/api/citas/${citaId}/recetar-items`, payload, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
 

@@ -85,7 +85,7 @@ const VeterinarioDashboard = () => {
   const handleLimpiarTodas = async () => {
     if (!usuarioId) return;
     try {
-      await axios.delete(`http://localhost:8080/api/notificaciones/usuario/${usuarioId}/todas`, {
+      await axios.delete(`https://veterinaria-huesitos-production.up.railway.app/api/notificaciones/usuario/${usuarioId}/todas`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setNotificaciones([]);
@@ -240,7 +240,7 @@ const VeterinarioDashboard = () => {
               <button onClick={() => { setMenuPerfilOpen(!menuPerfilOpen); setMenuNotificacionesOpen(false); }} className="flex items-center gap-3 bg-white p-2 pr-4 rounded-2xl shadow-sm border border-slate-200 transition-colors hover:border-sky-300">
                 {!imgError ? (
                   <img 
-                    src={`http://localhost:8080${usuarioFoto}`} 
+                    src={`https://veterinaria-huesitos-production.up.railway.app${usuarioFoto}`} 
                     alt="Perfil" 
                     className="w-10 h-10 rounded-xl border border-slate-200 object-cover bg-slate-100 shrink-0" 
                     onError={() => setImgError(true)} 

@@ -63,7 +63,7 @@ const Landing = () => {
   useEffect(() => {
     const cargarConfig = async () => {
       try {
-        const res = await axios.get("http://localhost:8080/api/configuracion-negocio");
+        const res = await axios.get("https://veterinaria-huesitos-production.up.railway.app/api/configuracion-negocio");
         if (res.data) setConfig(res.data);
       } catch (err) {
         console.error("Error cargando la configuración: ", err);

@@ -14,7 +14,7 @@ const ConfiguracionDinamica = () => {
   useEffect(() => {
     const cargarConfiguracion = async () => {
       try {
-        const response = await axios.get("http://localhost:8080/api/configuracion-negocio");
+        const response = await axios.get("https://veterinaria-huesitos-production.up.railway.app/api/configuracion-negocio");
         if (response.data) setConfig(response.data);
       } catch (error) {
         console.error("Error cargando configuración:", error);
@@ -32,7 +32,7 @@ const ConfiguracionDinamica = () => {
     setGuardando(true);
     try {
       const token = localStorage.getItem("token");
-      const peticion = axios.put("http://localhost:8080/api/configuracion-negocio", config, { headers: { Authorization: `Bearer ${token}` } });
+      const peticion = axios.put("https://veterinaria-huesitos-production.up.railway.app/api/configuracion-negocio", config, { headers: { Authorization: `Bearer ${token}` } });
       
       sileo.promise(peticion, {
          loading: { title: 'Guardando configuración...' },

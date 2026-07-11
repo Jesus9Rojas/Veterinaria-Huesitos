@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const servicioAPI = axios.create({
-  baseURL: "http://localhost:8080/api/servicios",
+  baseURL: "https://veterinaria-huesitos-production.up.railway.app/api/servicios",
   headers: {
     "Content-Type": "application/json",
   },
