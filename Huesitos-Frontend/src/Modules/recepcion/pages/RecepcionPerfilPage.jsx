@@ -70,7 +70,7 @@ const handleChange = (e) => {
     
     try {
       const token = localStorage.getItem("token");
-      const peticion = axios.post(`https://veterinaria-huesitos-production.up.railway.app://localhost:8080/api/perfiles/usuario/${usuarioId}/foto`, formData, {
+      const peticion = axios.post(`${import.meta.env.VITE_BACKEND_URL}://localhost:8080/api/perfiles/usuario/${usuarioId}/foto`, formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -141,7 +141,7 @@ const handleChange = (e) => {
             {/* LÓGICA DE IMAGEN BLINDADA AQUÍ TAMBIÉN */}
             {!imgError ? (
               <img 
-                src={`https://veterinaria-huesitos-production.up.railway.app${fotoUrl}`} 
+                src={`${import.meta.env.VITE_BACKEND_URL}${fotoUrl}`} 
                 alt="Mi Perfil" 
                 className={`w-full h-full object-cover transition-opacity duration-300 ${subiendoFoto ? 'opacity-50' : 'group-hover:opacity-70'}`}
                 onError={() => setImgError(true)}

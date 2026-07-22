@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const duenosAPI = axios.create({
-  baseURL: "https://veterinaria-huesitos-production.up.railway.app/api/duenos",
+  baseURL: `${import.meta.env.VITE_API_URL}/duenos`,
   headers: {
     "Content-Type": "application/json",
   },

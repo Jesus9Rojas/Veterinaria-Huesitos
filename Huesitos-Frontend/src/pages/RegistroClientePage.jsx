@@ -67,7 +67,7 @@ const RegistroClientePage = () => {
         }
       };
 
-      const peticion = axios.post('https://veterinaria-huesitos-production.up.railway.app/api/autenticacion/registro', payload);
+      const peticion = axios.post(`${import.meta.env.VITE_API_URL}/autenticacion/registro`, payload);
 
       sileo.promise(peticion, {
         loading: { title: 'Creando cuenta...' },

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://veterinaria-huesitos-production.up.railway.app/api/antiparasitarios";
+const API_URL = `${import.meta.env.VITE_API_URL}/antiparasitarios`;
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");

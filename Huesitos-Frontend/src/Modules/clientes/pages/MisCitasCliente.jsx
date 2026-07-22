@@ -26,10 +26,10 @@ const MisCitasCliente = () => {
     const cargarMisCitas = async () => {
       if (!idUsuario) return;
       try {
-        const resDueno = await axios.get(`https://veterinaria-huesitos-production.up.railway.app/api/usuarios/${idUsuario}/dueno`, getConfig());
+        const resDueno = await axios.get(`${import.meta.env.VITE_API_URL}/usuarios/${idUsuario}/dueno`, getConfig());
         const duenoId = resDueno.data.id;
 
-        const resCitas = await axios.get(`https://veterinaria-huesitos-production.up.railway.app/api/citas/dueno/${duenoId}`, getConfig());
+        const resCitas = await axios.get(`${import.meta.env.VITE_API_URL}/citas/dueno/${duenoId}`, getConfig());
         if (isMounted) {
           setCitas(resCitas.data || []);
         }

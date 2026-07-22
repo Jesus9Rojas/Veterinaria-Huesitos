@@ -18,7 +18,7 @@ const FinanzasPage = () => {
     const fetchTransacciones = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("https://veterinaria-huesitos-production.up.railway.app/api/transacciones", {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/transacciones`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (isMounted) {

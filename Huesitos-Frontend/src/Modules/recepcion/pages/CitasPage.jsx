@@ -150,7 +150,7 @@ const CitasPage = () => {
     e.preventDefault();
     setAsignando(true);
     try {
-      const peticion = axios.patch(`https://veterinaria-huesitos-production.up.railway.app/api/citas/${citaActivaId}/asignar-veterinario?veterinarioId=${vetAsignarId}`, null, getConfig());
+      const peticion = axios.patch(`${import.meta.env.VITE_API_URL}/citas/${citaActivaId}/asignar-veterinario?veterinarioId=${vetAsignarId}`, null, getConfig());
       
       sileo.promise(peticion, {
         loading: { title: 'Asignando médico...' },

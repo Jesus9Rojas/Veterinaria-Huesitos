@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const mascotaAPI = axios.create({
-  baseURL: "https://veterinaria-huesitos-production.up.railway.app/api/mascotas",
+  baseURL: `${import.meta.env.VITE_API_URL}/mascotas`,
   headers: {
     "Content-Type": "application/json",
   },

@@ -28,17 +28,17 @@ const MisMascotasCliente = () => {
     const inicializarDatos = async () => {
       if (!idUsuario) return;
       try {
-        const resDueno = await axios.get(`https://veterinaria-huesitos-production.up.railway.app/api/usuarios/${idUsuario}/dueno`, getConfig());
+        const resDueno = await axios.get(`${import.meta.env.VITE_API_URL}/usuarios/${idUsuario}/dueno`, getConfig());
         const duenoId = resDueno.data.id;
         
         if (isMounted) setIdDueno(duenoId);
 
         let resMascotas;
         try {
-          resMascotas = await axios.get(`https://veterinaria-huesitos-production.up.railway.app/api/mascotas/dueno/${duenoId}`, getConfig());
+          resMascotas = await axios.get(`${import.meta.env.VITE_API_URL}/mascotas/dueno/${duenoId}`, getConfig());
         } catch (error) {
           console.warn("Intentando ruta alternativa para mascotas...", error.message);
-          resMascotas = await axios.get(`https://veterinaria-huesitos-production.up.railway.app/api/mascotas/dueno/${duenoId}`, getConfig());
+          resMascotas = await axios.get(`${import.meta.env.VITE_API_URL}/mascotas/dueno/${duenoId}`, getConfig());
         }
 
         if (isMounted) setMascotas(resMascotas?.data || []);
@@ -93,7 +93,7 @@ const MisMascotasCliente = () => {
         dueno: { id: parseInt(idDueno) }  
       };
 
-      const peticion = axios.post('https://veterinaria-huesitos-production.up.railway.app/api/mascotas', payload, getConfig());
+      const peticion = axios.post(`${import.meta.env.VITE_API_URL}/mascotas`, payload, getConfig());
       
       sileo.promise(peticion, {
         loading: { title: 'Registrando mascota...' },

@@ -34,7 +34,7 @@ const ModalReservaCliente = ({ cerrarModal }) => {
     const cargarDatos = async () => {
       if (!idUsuario) return;
       try {
-        const resDueno = await axios.get(`https://veterinaria-huesitos-production.up.railway.app/api/usuarios/${idUsuario}/dueno`, getConfig());
+        const resDueno = await axios.get(`${import.meta.env.VITE_API_URL}/usuarios/${idUsuario}/dueno`, getConfig());
         const duenoId = resDueno.data.id;
         if (isMounted) setIdDueno(duenoId);
 
@@ -42,13 +42,13 @@ const ModalReservaCliente = ({ cerrarModal }) => {
 
         try {
 
-          resMascotas = await axios.get(`https://veterinaria-huesitos-production.up.railway.app/api/mascotas/dueno/${duenoId}`, getConfig());
+          resMascotas = await axios.get(`${import.meta.env.VITE_API_URL}/mascotas/dueno/${duenoId}`, getConfig());
 
         } catch (error) {
 
           console.warn("Intentando ruta alternativa para mascotas...", error.message);
 
-          resMascotas = await axios.get(`https://veterinaria-huesitos-production.up.railway.app/api/mascotas/dueno/${duenoId}`, getConfig());
+          resMascotas = await axios.get(`${import.meta.env.VITE_API_URL}/mascotas/dueno/${duenoId}`, getConfig());
 
         }
 
@@ -57,10 +57,10 @@ const ModalReservaCliente = ({ cerrarModal }) => {
           if (resMascotas?.data.length === 0) setModoCrearMascota(true);
         }
 
-        const resServicios = await axios.get('https://veterinaria-huesitos-production.up.railway.app/api/servicios', getConfig());
+        const resServicios = await axios.get(`${import.meta.env.VITE_API_URL}/servicios`, getConfig());
         if (isMounted) setServicios(resServicios.data || []);
 
-        const resVets = await axios.get('https://veterinaria-huesitos-production.up.railway.app/api/usuarios/veterinarios', getConfig());
+        const resVets = await axios.get(`${import.meta.env.VITE_API_URL}/usuarios/veterinarios`, getConfig());
         if (isMounted) setVeterinarios(resVets.data || []);
       } catch (error) {
         console.error("Error al sincronizar datos:", error);
@@ -92,7 +92,7 @@ const ModalReservaCliente = ({ cerrarModal }) => {
         dueno: { id: parseInt(idDueno) } 
       };
       
-      const res = await axios.post('https://veterinaria-huesitos-production.up.railway.app/api/mascotas', payload, getConfig());
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/mascotas`, payload, getConfig());
       
       setMascotas([...mascotas, res.data]);
       setSeleccion({ ...seleccion, mascotaId: res.data.id });
@@ -123,7 +123,7 @@ const ModalReservaCliente = ({ cerrarModal }) => {
         payload.veterinario = { id: parseInt(seleccion.veterinarioId) };
       }
 
-      await axios.post('https://veterinaria-huesitos-production.up.railway.app/api/citas', payload, getConfig());
+      await axios.post(`${import.meta.env.VITE_API_URL}/citas`, payload, getConfig());
 
       Swal.fire({
         icon: 'success',

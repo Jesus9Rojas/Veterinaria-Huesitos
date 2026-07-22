@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const usuarioAPI = axios.create({
-  baseURL: "https://veterinaria-huesitos-production.up.railway.app/api/usuarios",
+  baseURL: `${import.meta.env.VITE_API_URL}/usuarios`,
   headers: {
     "Content-Type": "application/json",
   },

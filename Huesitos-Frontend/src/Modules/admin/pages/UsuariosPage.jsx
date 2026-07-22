@@ -199,7 +199,7 @@ const UsuariosPage = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-400 overflow-hidden">
-                        {usuario.fotoPerfilUrl && usuario.fotoPerfilUrl !== "/uploads/defecto-usuario.png" ? <img src={`https://veterinaria-huesitos-production.up.railway.app${usuario.fotoPerfilUrl}`} alt="Perfil" className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src='/uploads/defecto-usuario.png'; }} /> : <UserCircle size={24} strokeWidth={1.5} />}
+                        {usuario.fotoPerfilUrl && usuario.fotoPerfilUrl !== "/uploads/defecto-usuario.png" ? <img src={`${import.meta.env.VITE_BACKEND_URL}${usuario.fotoPerfilUrl}`} alt="Perfil" className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src='/uploads/defecto-usuario.png'; }} /> : <UserCircle size={24} strokeWidth={1.5} />}
                       </div>
                       <div>
                         <div className="font-bold text-slate-800 text-base">{usuario.nombreVisible || "Usuario del Sistema"}</div>
@@ -264,7 +264,7 @@ const UsuariosPage = () => {
             <div className="p-6 overflow-y-auto space-y-6 custom-scrollbar">
               <div className="flex flex-col sm:flex-row items-center gap-6 bg-slate-50 p-5 rounded-2xl border border-slate-100">
                 <div className="w-20 h-20 rounded-full bg-white border-2 border-slate-200 flex items-center justify-center overflow-hidden text-slate-400">
-                  {usuarioSeleccionado.fotoPerfilUrl && usuarioSeleccionado.fotoPerfilUrl !== "/uploads/defecto-usuario.png" ? <img src={`https://veterinaria-huesitos-production.up.railway.app${usuarioSeleccionado.fotoPerfilUrl}`} alt="Perfil" className="w-full h-full object-cover" /> : <UserCircle size={40} strokeWidth={1.5} />}
+                  {usuarioSeleccionado.fotoPerfilUrl && usuarioSeleccionado.fotoPerfilUrl !== "/uploads/defecto-usuario.png" ? <img src={`${import.meta.env.VITE_BACKEND_URL}${usuarioSeleccionado.fotoPerfilUrl}`} alt="Perfil" className="w-full h-full object-cover" /> : <UserCircle size={40} strokeWidth={1.5} />}
                 </div>
                 <div className="space-y-1 text-center sm:text-left">
                   <p className="font-bold text-slate-800 text-lg tracking-tight">{usuarioSeleccionado.nombreVisible || "Usuario del Sistema"}</p>

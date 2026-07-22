@@ -37,7 +37,7 @@ export const actualizarPersonal = async (id, data) => {
 };
 
 // NUEVAS FUNCIONES PARA RECUPERACIÓN DE CONTRASEÑA
-const AUTH_API_URL = 'https://veterinaria-huesitos-production.up.railway.app/api/autenticacion';
+const AUTH_API_URL = `${import.meta.env.VITE_API_URL}/autenticacion`;
 
 export const solicitarRecuperacion = async (correo) => {
   const response = await axios.post(`${AUTH_API_URL}/olvide-contrasena`, { correo });

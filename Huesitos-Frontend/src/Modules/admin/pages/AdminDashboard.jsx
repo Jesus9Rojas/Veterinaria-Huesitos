@@ -133,7 +133,7 @@ const AdminDashboard = () => {
             <div className="relative">
               <button onClick={() => setMenuPerfilOpen(!menuPerfilOpen)} className="flex items-center gap-3 bg-white p-2 pr-4 rounded-2xl shadow-sm border border-slate-200 transition-colors hover:border-sky-300">
                 <img 
-                  src={`https://veterinaria-huesitos-production.up.railway.app${usuarioFoto}`} 
+                  src={`${import.meta.env.VITE_BACKEND_URL}${usuarioFoto}`} 
                   alt="Perfil" 
                   className="w-10 h-10 rounded-xl border border-slate-200 object-cover bg-slate-100" 
                   onError={(e) => { 

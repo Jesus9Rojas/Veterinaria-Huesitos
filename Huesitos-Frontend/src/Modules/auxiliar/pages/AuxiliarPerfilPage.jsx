@@ -63,7 +63,7 @@ const AuxiliarPerfilPage = () => {
     setImgError(false); // Reiniciamos el error al subir nueva foto
     try {
       const token = localStorage.getItem("token");
-      const peticion = axios.post(`https://veterinaria-huesitos-production.up.railway.appapi/perfiles/usuario/${usuarioId}/foto`, formData, {
+      const peticion = axios.post(`${import.meta.env.VITE_BACKEND_URL}api/perfiles/usuario/${usuarioId}/foto`, formData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -137,7 +137,7 @@ const AuxiliarPerfilPage = () => {
             {/* LÓGICA DE IMAGEN BLINDADA */}
             {!imgError ? (
               <img 
-                src={`https://veterinaria-huesitos-production.up.railway.app${fotoUrl}`} 
+                src={`${import.meta.env.VITE_BACKEND_URL}${fotoUrl}`} 
                 alt="Mi Perfil" 
                 className={`w-full h-full object-cover transition-opacity duration-300 ${subiendoFoto ? 'opacity-50' : 'group-hover:opacity-70'}`}
                 onError={() => setImgError(true)} 

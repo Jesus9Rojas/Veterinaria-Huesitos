@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const finanzasAPI = axios.create({
-  baseURL: "https://veterinaria-huesitos-production.up.railway.app/api/transacciones",
+  baseURL: `${import.meta.env.VITE_API_URL}/transacciones`,
   headers: { "Content-Type": "application/json" }
 });
 

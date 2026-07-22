@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const dashboardAPI = axios.create({
-  baseURL: "https://veterinaria-huesitos-production.up.railway.app/api/dashboard",
+  baseURL: `${import.meta.env.VITE_API_URL}/dashboard`,
   headers: { "Content-Type": "application/json" },
 });
 

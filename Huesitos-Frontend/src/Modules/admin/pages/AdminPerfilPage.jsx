@@ -62,7 +62,7 @@ const AdminPerfilPage = () => {
     setSubiendoFoto(true);
     try {
       const token = localStorage.getItem("token");
-      const peticion = axios.post(`https://veterinaria-huesitos-production.up.railway.app/api/perfiles/usuario/${usuarioId}/foto`, formData, {
+      const peticion = axios.post(`${import.meta.env.VITE_API_URL}/perfiles/usuario/${usuarioId}/foto`, formData, {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
       });
 
@@ -130,7 +130,7 @@ const AdminPerfilPage = () => {
           <div className="w-28 h-28 rounded-full border-4 border-white shadow-lg overflow-hidden bg-slate-100 relative">
             {!imgError ? (
               <img 
-                src={`https://veterinaria-huesitos-production.up.railway.app${fotoUrl}`} 
+                src={`${import.meta.env.VITE_BACKEND_URL}${fotoUrl}`} 
                 alt="Mi Perfil" 
                 className={`w-full h-full object-cover transition-opacity duration-300 ${subiendoFoto ? 'opacity-50' : 'group-hover:opacity-70'}`}
                 onError={() => setImgError(true)}
